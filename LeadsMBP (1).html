@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Leads MBP">
+<title>Leads MBP</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f4f2;color:#1a1a1a;min-height:100vh;}
+.app{max-width:480px;margin:0 auto;background:#fff;min-height:100vh;position:relative;}
+.topbar{padding:1rem 1rem 0.5rem;border-bottom:1px solid #e8e6e1;background:#fff;}
+.topbar-brand{font-size:10px;letter-spacing:.12em;color:#888;text-transform:uppercase;margin-bottom:2px;}
+.topbar-row{display:flex;align-items:center;justify-content:space-between;}
+.topbar-name{font-size:15px;font-weight:600;color:#1a1a1a;}
+.tabs{display:flex;border-bottom:1px solid #e8e6e1;background:#fff;}
+.tab{flex:1;font-size:13px;padding:.65rem .5rem;cursor:pointer;color:#888;border:none;background:none;border-bottom:2px solid transparent;font-family:inherit;}
+.tab.active{color:#1a1a1a;border-bottom-color:#1a1a1a;font-weight:600;}
+.section{padding:.75rem 1rem;}
+.badge{display:inline-block;font-size:11px;padding:2px 9px;border-radius:20px;font-weight:600;}
+.badge-hot{background:#fde8e8;color:#c0392b;}
+.badge-warm{background:#fef3e2;color:#b7770d;}
+.badge-cold{background:#f0efed;color:#666;}
+.badge-done{background:#e8f5e9;color:#2e7d32;}
+.lead-card{background:#fff;border:1px solid #e8e6e1;border-radius:12px;padding:1rem 1.25rem;margin-bottom:.75rem;cursor:pointer;transition:border-color .15s;}
+.lead-card:active{border-color:#aaa;}
+.lead-header{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+.avatar{width:40px;height:40px;border-radius:50%;background:#f0efed;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:#666;flex-shrink:0;}
+.lead-name{font-size:15px;font-weight:600;color:#1a1a1a;}
+.lead-car{font-size:12px;color:#888;margin-top:1px;}
+.lead-follow{font-size:12px;color:#888;display:flex;align-items:center;gap:4px;}
+.urgent{color:#c0392b;font-weight:500;}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;font-size:13px;padding:8px 16px;border:1px solid #ccc;border-radius:22px;cursor:pointer;background:#fff;color:#1a1a1a;font-family:inherit;transition:background .15s;}
+.btn:active{background:#f0efed;}
+.btn.primary{background:#1a1a1a;color:#fff;border-color:#1a1a1a;}
+.btn.primary:active{background:#333;}
+.btn.full{width:100%;}
+.divider{height:1px;background:#e8e6e1;margin:1rem 0;}
+.stat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:1rem;}
+.stat-card{background:#f5f4f2;border-radius:10px;padding:.75rem 1rem;}
+.stat-label{font-size:11px;color:#888;margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em;}
+.stat-value{font-size:24px;font-weight:700;color:#1a1a1a;}
+.overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:#fff;z-index:100;overflow-y:auto;max-width:480px;margin:0 auto;transform:translateX(100%);transition:transform .25s ease;}
+.overlay.open{transform:translateX(0);}
+.back-btn{display:flex;align-items:center;gap:8px;font-size:14px;color:#888;cursor:pointer;padding:1rem;border:none;background:none;font-family:inherit;}
+.nota-block{background:#f5f4f2;border-radius:10px;padding:.75rem 1rem;margin-bottom:8px;}
+.nota-meta{font-size:11px;color:#888;margin-bottom:4px;}
+.nota-text{font-size:13px;color:#1a1a1a;line-height:1.5;}
+.finput{width:100%;border:1px solid #ccc;border-radius:10px;padding:.65rem .85rem;font-size:14px;background:#fff;color:#1a1a1a;font-family:inherit;resize:none;margin-bottom:8px;outline:none;}
+.finput:focus{border-color:#1a1a1a;}
+.resumo-box{background:#f5f4f2;border-radius:10px;padding:.85rem;font-size:12px;color:#1a1a1a;line-height:1.6;font-family:'Courier New',monospace;white-space:pre-wrap;word-break:break-word;}
+.flabel{font-size:12px;color:#888;margin-bottom:4px;display:block;}
+.ffield{margin-bottom:.75rem;}
+.trow{display:flex;align-items:center;justify-content:space-between;padding:.5rem 0;border-bottom:1px solid #e8e6e1;}
+.stitle{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#888;margin-bottom:.75rem;font-weight:600;}
+.campo-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:2px;margin-bottom:1rem;}
+.campo{padding:7px 0;border-bottom:1px solid #e8e6e1;}
+.campo-label{font-size:11px;color:#888;margin-bottom:1px;}
+.campo-val{font-size:13px;color:#1a1a1a;}
+.sync-bar{font-size:11px;color:#888;display:flex;align-items:center;gap:6px;padding:.35rem 1rem;border-bottom:1px solid #e8e6e1;background:#fafaf9;}
+.sdot{width:6px;height:6px;border-radius:50%;background:#2e7d32;flex-shrink:0;}
+.sdot.syncing{background:#b7770d;animation:blink 1s infinite;}
+.sdot.error{background:#c0392b;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.voz-bar{background:#fff;border-top:1px solid #e8e6e1;padding:.85rem 1rem;display:flex;align-items:center;gap:12px;}
+.voz-hint{font-size:12px;color:#888;flex:1;line-height:1.4;}
+.voz-hint b{color:#1a1a1a;}
+.mic-btn{width:48px;height:48px;border-radius:50%;background:#1a1a1a;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:22px;color:#fff;}
+.mic-btn.rec{background:#c0392b;animation:pulse 1s infinite;}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}
+.tbox{background:#fef3e2;border-radius:10px;padding:.85rem;margin:.5rem 1rem;display:none;border:1px solid #f0d090;}
+.tbox.open{display:block;}
+.tbox-text{font-size:13px;color:#1a1a1a;line-height:1.5;margin-bottom:10px;}
+.tbox-actions{display:flex;gap:8px;}
+.ficha-pad{padding:0 1rem 6rem;}
+.action-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-bottom:1rem;}
+.action-link{display:flex;align-items:center;gap:8px;padding:10px 12px;border:1px solid #ccc;border-radius:10px;text-decoration:none;color:#1a1a1a;font-size:13px;cursor:pointer;background:#fff;font-family:inherit;}
+.action-link:active{background:#f0efed;}
+.empty{text-align:center;padding:3rem 1rem;color:#888;font-size:14px;}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+
+<div id="main-view">
+  <div class="topbar">
+    <div class="topbar-brand">Mercedes-Benz · Sociedade Comercial C. Santos</div>
+    <div class="topbar-row">
+      <span class="topbar-name">Mariana Magalhães</span>
+      <button class="btn primary" onclick="abrirNova()">+ Nova</button>
+    </div>
+  </div>
+  <div class="sync-bar"><div class="sdot" id="sdot"></div><span id="smsg">A carregar...</span></div>
+  <div class="tabs">
+    <button class="tab active" onclick="mudaTab(this,'hoje')">Hoje</button>
+    <button class="tab" onclick="mudaTab(this,'todas')">Todas</button>
+    <button class="tab" onclick="mudaTab(this,'stats')">Resumo</button>
+  </div>
+  <div id="tab-hoje" class="section"><div id="lista-hoje"></div></div>
+  <div id="tab-todas" class="section" style="display:none"><div id="lista-todas"></div></div>
+  <div id="tab-stats" class="section" style="display:none">
+    <div class="stat-grid" id="stat-cards"></div>
+    <div class="divider"></div>
+    <p class="stitle">Por estado</p>
+    <div id="stat-estados"></div>
+  </div>
+  <div class="tbox" id="tbox-main">
+    <div class="tbox-text" id="ttext-main"></div>
+    <div class="tbox-actions">
+      <button class="btn primary" onclick="usarT()" style="font-size:13px;">✓ Guardar nota</button>
+      <button class="btn" onclick="descartarT()" style="font-size:13px;">✕ Descartar</button>
+    </div>
+  </div>
+  <div class="voz-bar">
+    <div class="voz-hint" id="vh-main"><b>Assistente</b><br>Toca no microfone e fala</div>
+    <button class="mic-btn" id="mb-main" onclick="toggleVoz()" aria-label="Microfone">🎤</button>
+  </div>
+</div>
+
+<div class="overlay" id="ov-ficha">
+  <button class="back-btn" onclick="fecharFicha()">← Voltar</button>
+  <div class="ficha-pad" id="ficha-content"></div>
+  <div style="padding:0 1rem;">
+    <div class="tbox" id="tbox-ficha">
+      <div class="tbox-text" id="ttext-ficha"></div>
+      <div class="tbox-actions">
+        <button class="btn primary" onclick="usarT()" style="font-size:13px;">✓ Guardar nota</button>
+        <button class="btn" onclick="descartarT()" style="font-size:13px;">✕ Descartar</button>
+      </div>
+    </div>
+  </div>
+  <div class="voz-bar">
+    <div class="voz-hint" id="vh-ficha"><b>Fala</b><br>Gravo directamente na ficha</div>
+    <button class="mic-btn" id="mb-ficha" onclick="toggleVoz()" aria-label="Microfone">🎤</button>
+  </div>
+</div>
+
+<div class="overlay" id="ov-nova">
+  <button class="back-btn" onclick="fecharNova()">← Cancelar</button>
+  <div style="padding:0 1rem 6rem;">
+    <p class="stitle" style="margin-bottom:1rem;">Nova lead</p>
+    <div id="nova-form"></div>
+  </div>
+</div>
+
+</div>
+
+<script>
+const SCRIPT='https://script.google.com/macros/s/AKfycbx8sQIbum1sOBfoglUk9pTfKm9id17Mn0wLjqYpzhTds6tm-twqqlOrbCoCLKL4XWkT/exec';
+const HOJE=new Date();
+let leads=[],fichaId=null,SR=null,recording=false,transcript='',tabAtual='hoje';
+
+function setSyncStatus(s,msg){
+  document.getElementById('sdot').className='sdot'+(s==='syncing'?' syncing':s==='error'?' error':'');
+  document.getElementById('smsg').textContent=msg;
+}
+
+function carregar(){
+  setSyncStatus('syncing','A carregar...');
+  const cb='cb'+Date.now();
+  window[cb]=function(data){
+    delete window[cb];
+    const s=document.getElementById('jsonp-script');if(s)s.remove();
+    leads=Array.isArray(data)?data:[];
+    localStorage.setItem('leads_mb',JSON.stringify(leads));
+    setSyncStatus('ok','Sincronizado · '+new Date().toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'}));
+    renderAtual();
+  };
+  const script=document.createElement('script');
+  script.id='jsonp-script';
+  script.src=SCRIPT+'?action=load&callback='+cb;
+  script.onerror=function(){
+    delete window[cb];script.remove();
+    setSyncStatus('error','Sem ligação — dados locais');
+    try{leads=JSON.parse(localStorage.getItem('leads_mb')||'[]');}catch(e2){leads=[];}
+    renderAtual();
+  };
+  document.head.appendChild(script);
+}
+
+async function guardar(lead){
+  const i=leads.findIndex(x=>String(x.id)===String(lead.id));
+  if(i>=0)leads[i]=lead;else leads.unshift(lead);
+  localStorage.setItem('leads_mb',JSON.stringify(leads));
+  setSyncStatus('syncing','A guardar...');
+  try{
+    const r=await fetch(SCRIPT+'?action=save',{method:'POST',body:JSON.stringify({action:'save',lead})});
+    setSyncStatus('ok','Guardado · '+new Date().toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'}));
+  }catch(e){setSyncStatus('error','Guardado localmente');}
+}
+
+function ini(n){return n.split(' ').slice(0,2).map(x=>x[0]).join('').toUpperCase();}
+function isUrg(l){return l.estado==='contactar'||(l.follow_data&&new Date(l.follow_data)<=HOJE);}
+function bdg(e){return{contactar:'<span class="badge badge-hot">Contactar</span>',follow_up:'<span class="badge badge-warm">Follow-up</span>',td_agendado:'<span class="badge badge-done">TD Agendado</span>',fechado:'<span class="badge badge-cold">Fechado</span>',sem_retorno:'<span class="badge badge-cold">Sem retorno</span>'}[e]||e;}
+
+function cardHTML(l){
+  return`<div class="lead-card" onclick="abrirFicha('${l.id}')">
+    <div class="lead-header">
+      <div class="avatar">${ini(l.nome)}</div>
+      <div style="flex:1;min-width:0;"><div class="lead-name">${l.nome}</div><div class="lead-car">${l.carro}${l.kom?' · '+l.kom:''}</div></div>
+      ${bdg(l.estado)}
+    </div>
+    <div class="lead-follow ${isUrg(l)?'urgent':''}">
+      ⏰ ${isUrg(l)?'Hoje — ':''}${l.follow_nota||'Sem follow-up'}
+    </div>
+  </div>`;}
+
+function renderHoje(){document.getElementById('lista-hoje').innerHTML=leads.filter(isUrg).map(cardHTML).join('')||'<div class="empty">Sem urgências hoje</div>';}
+function renderTodas(){document.getElementById('lista-todas').innerHTML=leads.length?leads.map(cardHTML).join(''):'<div class="empty">Sem leads registadas</div>';}
+function renderStats(){
+  const t=leads.length,h=leads.filter(isUrg).length,td=leads.filter(x=>x.td_agendado).length,s=leads.filter(x=>x.estado==='sem_retorno').length;
+  document.getElementById('stat-cards').innerHTML=`<div class="stat-card"><div class="stat-label">Total</div><div class="stat-value">${t}</div></div><div class="stat-card"><div class="stat-label">Para hoje</div><div class="stat-value" style="color:#c0392b">${h}</div></div><div class="stat-card"><div class="stat-label">TD agendados</div><div class="stat-value">${td}</div></div><div class="stat-card"><div class="stat-label">Sem retorno</div><div class="stat-value">${s}</div></div>`;
+  const es={};leads.forEach(l=>{es[l.estado]=(es[l.estado]||0)+1;});
+  document.getElementById('stat-estados').innerHTML=Object.entries(es).map(([e,n])=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #e8e6e1">${bdg(e)}<span style="font-size:14px;font-weight:600">${n}</span></div>`).join('');
+}
+function renderAtual(){if(tabAtual==='hoje')renderHoje();else if(tabAtual==='todas')renderTodas();else renderStats();}
+function mudaTab(btn,t){tabAtual=t;document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));btn.classList.add('active');['hoje','todas','stats'].forEach(x=>{document.getElementById('tab-'+x).style.display=x===t?'':'none';});renderAtual();}
+
+function campo(label,val){return`<div class="campo"><div class="campo-label">${label}</div><div class="campo-val">${val||'—'}</div></div>`;}
+
+function resumo(l){
+  return[`LEAD MBP: ${l.opp_id}`,`Nome: ${l.nome}`,`Tel: ${l.tel} | Email: ${l.email}`,`Viatura: ${l.carro}${l.kom?' | KOM: '+l.kom:''}`,`Tipo: ${l.tipo}${l.nif?' | NIF: '+l.nif:''}`,`Cliente existente: ${l.cliente_existente?'Sim':'Não'}`,l.negociacao_fora?`A negociar: ${l.negociacao_fora}`:'',l.relacao_interna?`Referência: ${l.relacao_interna}`:'',l.td_pedido?`TD: ${l.td_agendado||'por agendar'}${l.td_stand?' — '+l.td_stand:''}${l.td_esp?' c/ '+l.td_esp:''}`:'','','HISTÓRICO:',...(l.notas||[]).map(n=>`[${n.data}] ${n.texto}`),'',`Estado: ${l.estado.replace('_',' ').toUpperCase()}`,l.follow_nota?`Próximo passo: ${l.follow_nota}`:''].filter(x=>x!='').join('\n');}
+
+function abrirFicha(id){fichaId=String(id);document.getElementById('ov-ficha').classList.add('open');const l=leads.find(x=>String(x.id)===fichaId);if(l)renderFicha(l);atualizarVoz();}
+function fecharFicha(){fichaId=null;document.getElementById('ov-ficha').classList.remove('open');atualizarVoz();renderAtual();}
+
+function renderFicha(l){
+  const notas=(l.notas||[]).slice().reverse().map(n=>`<div class="nota-block"><div class="nota-meta">${n.data}</div><div class="nota-text">${n.texto}</div></div>`).join('');
+  document.getElementById('ficha-content').innerHTML=`
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:1.25rem;">
+      <div class="avatar" style="width:48px;height:48px;font-size:16px;">${ini(l.nome)}</div>
+      <div><div style="font-size:17px;font-weight:700;">${l.nome}</div><div style="font-size:12px;color:#888;margin-top:2px;">${l.opp_id} · Lead MBP</div></div>
+    </div>
+    <div class="action-grid">
+      <a href="tel:${l.tel}" class="action-link">📞 Ligar</a>
+      <a href="https://wa.me/351${String(l.tel).replace(/\D/g,'')}" class="action-link">💬 WhatsApp</a>
+      <a href="mailto:${l.email}" class="action-link">✉️ E-mail</a>
+      <button onclick="mudarEstado('${l.id}')" class="action-link">🔄 ${bdg(l.estado)}</button>
+    </div>
+    <div class="divider"></div><p class="stitle">Dados</p>
+    <div class="campo-grid">
+      ${campo('Telemóvel',l.tel)}${campo('E-mail',l.email)}${campo('Viatura',l.carro)}${campo('KOM',l.kom)}${campo('Tipo',l.tipo)}${campo('Cliente exist.',l.cliente_existente?'Sim':'Não')}${l.nif?campo('NIF',l.nif):''}
+    </div>
+    ${l.negociacao_fora||l.relacao_interna?`<div class="divider"></div><p class="stitle">Contexto</p><div style="margin-bottom:1rem;">${l.negociacao_fora?`<div class="nota-block"><div class="nota-meta">A negociar fora</div><div class="nota-text">${l.negociacao_fora}</div></div>`:''}${l.relacao_interna?`<div class="nota-block"><div class="nota-meta">Referência</div><div class="nota-text">${l.relacao_interna}</div></div>`:''}</div>`:''}
+    ${l.td_pedido?`<div class="divider"></div><p class="stitle">Test Drive</p><div class="campo-grid">${campo('Data',l.td_agendado)}${campo('Stand',l.td_stand)}${campo('Especialista',l.td_esp)}</div>`:''}
+    <div class="divider"></div><p class="stitle">Follow-up</p>
+    <div style="display:flex;gap:8px;margin-bottom:.75rem;flex-wrap:wrap;">
+      ${['Hoje','Amanhã','3 dias','1 semana'].map((t,i)=>`<button class="btn" style="font-size:12px;padding:6px 12px;" onclick="setFollow('${l.id}',${[0,1,3,7][i]},'${t}')">${t}</button>`).join('')}
+    </div>
+    <input class="finput" id="fn-${l.id}" placeholder="Nota do follow-up..." value="${l.follow_nota||''}" onblur="salvarFN('${l.id}')">
+    <div class="divider"></div><p class="stitle">Adicionar nota</p>
+    <textarea class="finput" id="ni-${l.id}" placeholder="O que aconteceu? (ou usa o microfone)" style="height:80px;"></textarea>
+    <button class="btn primary full" onclick="addNota('${l.id}')" style="margin-bottom:1rem;">+ Guardar nota</button>
+    <div class="divider"></div><p class="stitle">Histórico</p>
+    <div style="margin-bottom:1rem;">${notas||'<p style="font-size:13px;color:#888;">Sem notas ainda</p>'}</div>
+    <div class="divider"></div><p class="stitle">Resumo para Bitrix</p>
+    <div class="resumo-box" id="res-${l.id}">${resumo(l)}</div>
+    <button class="btn full" onclick="copiar('${l.id}')" style="margin-top:8px;margin-bottom:1rem;">📋 Copiar resumo</button>
+  `;}
+
+function salvarFN(id){const l=leads.find(x=>String(x.id)===String(id));const el=document.getElementById('fn-'+id);if(l&&el){l.follow_nota=el.value;guardar(l);}}
+function addNota(id){
+  const l=leads.find(x=>String(x.id)===String(id));const inp=document.getElementById('ni-'+id);
+  const txt=inp.value.trim();if(!txt)return;
+  const agora=new Date();if(!l.notas)l.notas=[];
+  l.notas.push({data:agora.toLocaleDateString('pt-PT')+' '+agora.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'}),texto:txt});
+  inp.value='';guardar(l);renderFicha(l);
+}
+function setFollow(id,dias,label){
+  const l=leads.find(x=>String(x.id)===String(id));const d=new Date();d.setDate(d.getDate()+dias);l.follow_data=d.toISOString().split('T')[0];
+  const el=document.getElementById('fn-'+id);l.follow_nota=el&&el.value?el.value:'Follow-up: '+label;guardar(l);renderFicha(l);
+}
+function mudarEstado(id){
+  const l=leads.find(x=>String(x.id)===String(id));const es=['contactar','follow_up','td_agendado','sem_retorno','fechado'];
+  l.estado=es[(es.indexOf(l.estado)+1)%es.length];guardar(l);renderFicha(l);
+}
+function copiar(id){const el=document.getElementById('res-'+id);if(el&&navigator.clipboard)navigator.clipboard.writeText(el.textContent);}
+
+function abrirNova(){
+  document.getElementById('ov-nova').classList.add('open');
+  document.getElementById('nova-form').innerHTML=`
+    <div class="ffield"><label class="flabel">Nome completo *</label><input class="finput" id="nf-nome" placeholder="Ex: Pedro Ribas Oliveira"></div>
+    <div class="ffield"><label class="flabel">Telemóvel *</label><input class="finput" id="nf-tel" type="tel" placeholder="+351 9XX XXX XXX"></div>
+    <div class="ffield"><label class="flabel">E-mail</label><input class="finput" id="nf-email" type="email"></div>
+    <div class="ffield"><label class="flabel">ID (OPP/LEAD)</label><input class="finput" id="nf-opp" placeholder="OPP002578137"></div>
+    <div class="ffield"><label class="flabel">Viatura pretendida</label><input class="finput" id="nf-carro" placeholder="Ex: GLC EQ (SUV)"></div>
+    <div class="ffield"><label class="flabel">KOM</label><input class="finput" id="nf-kom"></div>
+    <div class="ffield"><label class="flabel">Tipo de cliente</label><select class="finput" id="nf-tipo"><option>Particular</option><option>Empresa</option><option>ENI</option></select></div>
+    <div class="ffield"><label class="flabel">NIF (empresa)</label><input class="finput" id="nf-nif"></div>
+    <div class="trow"><span style="font-size:13px;">Cliente existente</span><input type="checkbox" id="nf-exist" style="width:18px;height:18px;"></div>
+    <div class="trow" style="margin-bottom:.75rem;"><span style="font-size:13px;">CAE Rent-a-car / Comércio auto</span><input type="checkbox" id="nf-cae" style="width:18px;height:18px;"></div>
+    <div class="ffield"><label class="flabel">Negociação fora / concorrência</label><input class="finput" id="nf-neg"></div>
+    <div class="ffield"><label class="flabel">Relação / referência</label><input class="finput" id="nf-rel"></div>
+    <div class="ffield"><label class="flabel">Notas iniciais</label><textarea class="finput" id="nf-nota" style="height:80px;" placeholder="Informação específica, observações..."></textarea></div>
+    <button class="btn primary full" onclick="criarLead()" style="margin-bottom:2rem;">✓ Criar lead</button>`;}
+function fecharNova(){document.getElementById('ov-nova').classList.remove('open');}
+function criarLead(){
+  const g=id=>document.getElementById(id);
+  const nome=g('nf-nome').value.trim(),tel=g('nf-tel').value.trim();
+  if(!nome||!tel){alert('Nome e telemóvel são obrigatórios');return;}
+  const agora=new Date();const ds=agora.toLocaleDateString('pt-PT')+' '+agora.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'});
+  const nova={id:Date.now(),nome,tel,email:g('nf-email').value.trim(),opp_id:g('nf-opp').value.trim()||'(sem ID)',tipo_lead:'Lead MBP',carro:g('nf-carro').value.trim()||'—',kom:g('nf-kom').value.trim(),tipo:g('nf-tipo').value,nif:g('nf-nif').value.trim(),frota:'',cae_rent:g('nf-cae').checked,cliente_existente:g('nf-exist').checked,sector:'',estado:'contactar',notas:[{data:ds,texto:g('nf-nota').value.trim()||'Lead criada.'}],follow_data:agora.toISOString().split('T')[0],follow_nota:'Primeiro contacto',negociacao_fora:g('nf-neg').value.trim(),relacao_interna:g('nf-rel').value.trim(),td_pedido:false,td_agendado:'',td_stand:'',td_esp:'',reuniao:'',criado:agora.toISOString().split('T')[0]};
+  guardar(nova);fecharNova();renderAtual();}
+
+function atualizarVoz(){
+  const emF=!!fichaId;
+  const l=emF?leads.find(x=>String(x.id)===fichaId):null;
+  document.getElementById('vh-ficha').innerHTML=l?`<b>${l.nome.split(' ')[0]}</b><br>Fala — gravo na ficha`:'<b>Fala</b><br>Gravo na ficha';
+}
+function toggleVoz(){if(recording)pararVoz();else iniciarVoz();}
+function iniciarVoz(){
+  const SRClass=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SRClass){alert('Usa o Chrome para reconhecimento de voz.');return;}
+  SR=new SRClass();SR.lang='pt-PT';SR.continuous=true;SR.interimResults=true;
+  SR.onresult=e=>{
+    let interim='',final='';
+    for(let i=e.resultIndex;i<e.results.length;i++){if(e.results[i].isFinal)final+=e.results[i][0].transcript;else interim+=e.results[i][0].transcript;}
+    if(final)transcript+=final;
+    mostrarT((transcript+interim).trim());
+  };
+  SR.onerror=()=>pararVoz();SR.onend=()=>{if(recording)pararVoz();};
+  SR.start();recording=true;transcript='';
+  ['mb-main','mb-ficha'].forEach(id=>{const b=document.getElementById(id);if(b){b.classList.add('rec');b.textContent='⏹';}});
+}
+function pararVoz(){
+  if(SR){try{SR.stop();}catch(e){}}recording=false;
+  ['mb-main','mb-ficha'].forEach(id=>{const b=document.getElementById(id);if(b){b.classList.remove('rec');b.textContent='🎤';}});
+}
+function mostrarT(txt){
+  if(!txt)return;const emF=!!fichaId;
+  document.getElementById('tbox-main').classList.toggle('open',!emF);
+  document.getElementById('tbox-ficha').classList.toggle('open',emF);
+  if(!emF)document.getElementById('ttext-main').textContent=txt;
+  else document.getElementById('ttext-ficha').textContent=txt;
+}
+function usarT(){
+  const txt=transcript.trim();
+  ['tbox-main','tbox-ficha'].forEach(id=>document.getElementById(id).classList.remove('open'));
+  transcript='';
+  if(fichaId&&txt){
+    const l=leads.find(x=>String(x.id)===fichaId);
+    if(l){const agora=new Date();if(!l.notas)l.notas=[];l.notas.push({data:agora.toLocaleDateString('pt-PT')+' '+agora.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'}),texto:txt});guardar(l);renderFicha(l);}
+  }
+}
+function descartarT(){['tbox-main','tbox-ficha'].forEach(id=>document.getElementById(id).classList.remove('open'));transcript='';}
+
+carregar();
+</script>
+</body>
+</html>
