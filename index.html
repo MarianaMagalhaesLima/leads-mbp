@@ -439,6 +439,8 @@ function renderFicha(l){
       ${['Hoje','Amanhã','3 dias','1 semana'].map((t,i)=>`<button class="btn" style="font-size:12px;padding:6px 12px;" onclick="setFollow('${l.id}',${[0,1,3,7][i]},'${t}')">${t}</button>`).join('')}
     </div>
     <input class="finput" id="fn-${l.id}" placeholder="Nota do follow-up..." value="${l.follow_nota||''}" onblur="salvarFN('${l.id}')" style="margin-bottom:8px;">
+    <label class="flabel" style="margin-top:4px;">Data e hora específica</label>
+    <input class="finput" type="datetime-local" id="fdt-${l.id}" value="${l.follow_data&&l.follow_data.length>10?l.follow_data:''}" onchange="setFollowData('${l.id}')" style="margin-bottom:8px;">
     <div class="divider"></div><p class="stitle">Adicionar nota</p>
     <textarea class="finput" id="ni-${l.id}" placeholder="O que aconteceu? (ou usa o microfone)" style="height:80px;margin-bottom:8px;"></textarea>
     <button class="btn primary full" onclick="addNota('${l.id}')" style="margin-bottom:1rem;">+ Guardar nota</button>
@@ -455,6 +457,16 @@ function renderFicha(l){
     </div>
   `;}
 
+function setFollowData(id){
+  const l=leads.find(x=>String(x.id)===String(id));
+  const el=document.getElementById('fdt-'+id);
+  if(l&&el&&el.value){
+    l.follow_data=el.value;
+    const fn=document.getElementById('fn-'+id);
+    if(fn&&fn.value)l.follow_nota=fn.value;
+    guardar(l);
+  }
+}
 function salvarFN(id){const l=leads.find(x=>String(x.id)===String(id));const el=document.getElementById('fn-'+id);if(l&&el){l.follow_nota=el.value;guardar(l);}}
 function addNota(id){
   const l=leads.find(x=>String(x.id)===String(id));const inp=document.getElementById('ni-'+id);
