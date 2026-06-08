@@ -148,7 +148,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <div id="stat-estados"></div>
   </div>
   <div class="tbox" id="tbox-main" style="display:none;">
-    <div class="tbox-text" id="ttext-main"></div>
+    <p style="font-size:11px;color:#b7770d;margin-bottom:4px;">✏️ Podes editar antes de guardar</p>
+    <textarea id="ttext-main" class="finput" style="height:80px;margin-bottom:8px;font-size:13px;"></textarea>
     <div class="tbox-actions">
       <button class="btn primary" onclick="usarT()" style="font-size:13px;">✓ Guardar</button>
       <button class="btn" onclick="descartarT()" style="font-size:13px;">✕ Descartar</button>
@@ -166,8 +167,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <div class="ficha-pad" id="ficha-content"></div>
   <div style="padding:0 1rem;">
     <div class="tbox" id="tbox-ficha" style="display:none;">
-      <div class="tbox-text" id="ttext-ficha"></div>
-      <div class="ai-indicator" id="ai-ind">✨ A processar com IA...</div>
+      <p style="font-size:11px;color:#b7770d;margin-bottom:4px;">✏️ Podes editar antes de guardar</p>
+      <textarea id="ttext-ficha" class="finput" style="height:80px;margin-bottom:8px;font-size:13px;"></textarea>
+      <div class="ai-indicator" id="ai-ind" style="display:none;">✨ A processar com IA...</div>
       <div class="tbox-actions" style="margin-top:8px;">
         <button class="btn primary" onclick="usarT()" style="font-size:13px;">✓ Guardar</button>
         <button class="btn" onclick="descartarT()" style="font-size:13px;">✕ Descartar</button>
@@ -804,27 +806,49 @@ function mostrarT(txt){
   if(!txt)return;const emF=!!fichaId;
   const box=document.getElementById(emF?'tbox-ficha':'tbox-main');
   box.style.display='block';
-  document.getElementById(emF?'ttext-ficha':'ttext-main').textContent=txt;
+  const el=document.getElementById(emF?'ttext-ficha':'ttext-main');
+  el.value=txt;
 }
 async function usarT(){
-  const txt=transcript.trim();
+  const emF=!!fichaId;
+  const editado=(document.getElementById(emF?'ttext-ficha':'ttext-main').value||'').trim();
+  const txt=editado||transcript.trim();
   ['tbox-main','tbox-ficha'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
   transcript='';
   if(!fichaId||!txt)return;
   const l=leads.find(x=>String(x.id)===fichaId);if(!l)return;
   const ind=document.getElementById('ai-ind');if(ind)ind.style.display='flex';
   try{
-    const resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:`Analisa este texto falado por uma comercial Mercedes-Benz sobre um cliente e extrai informação estruturada.
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:`És uma assistente especializada em leads de vendas da Mercedes-Benz Portugal. Analisa o texto falado por uma comercial e extrai informação estruturada.
+
+CONHECIMENTO DE MODELOS MERCEDES (corrige erros de transcrição de voz):
+- Modelos elétricos EQ: EQA, EQB, EQC, EQE, EQS, EQV, EQT
+- Modelos: Classe A, Classe B, Classe C, Classe E, Classe S, CLA, CLE, CLS, GLA, GLB, GLC, GLE, GLS, G-Class, AMG GT, SL, SLC, Maybach, Sprinter, Vito, V-Class
+- Motorizações: 180, 200, 220, 250, 300, 350, 400, 450, 580 + sufixos d (diesel), e (híbrido plug-in), de (diesel híbrido)
+- "250+" ou "duzentos e cinquenta mais" → 250+
+- "450+" ou "quatrocentos e cinquenta mais" → 450+  
+- "100% elétrico" ou "cem por cento elétrico" ou "totalmente elétrico" → 100% elétrico
+- "four mátique" ou "four matic" ou "4 matic" → 4MATIC
+- "IKEA" num contexto de carro → provavelmente EQA
+- "EQ" + número → modelo da linha elétrica
+- SUV, berlina, cabrio, coupé, break, monovolume → tipo de carroçaria
+
+EXTRACÇÃO DE PREFERÊNCIAS (muito importante):
+- Cores mencionadas como preferência → preferencias_gosta
+- Cores mencionadas como não gostar → preferencias_nao_gosta  
+- "prefere X" ou "gosta de X" → preferencias_gosta
+- "não gosta de X" ou "não quer X" ou "detesta X" → preferencias_nao_gosta
+- Características do carro (teto de abrir, interiores claros, automático, diesel, elétrico, etc.) → preferencias
 
 Texto: "${txt}"
 
 Responde APENAS com JSON válido, sem mais nada, neste formato:
 {
-  "nota": "texto da nota de contacto",
+  "nota": "texto da nota de contacto (corrige termos Mercedes mal transcritos)",
   "follow_up_dias": null ou número de dias (0=hoje,1=amanhã,3=3dias,7=semana),
   "follow_nota": null ou texto,
-  "preferencias_gosta": [],
-  "preferencias_nao_gosta": [],
+  "preferencias_gosta": ["lista de preferências positivas incluindo cores e características"],
+  "preferencias_nao_gosta": ["lista de preferências negativas incluindo cores e características"],
   "td_pedido": false,
   "td_data": null,
   "td_stand": null,
