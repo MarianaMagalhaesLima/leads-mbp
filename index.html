@@ -109,19 +109,38 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <div class="topbar-row">
       <span class="topbar-name">Mariana Magalhães</span>
       <div class="topbar-btns">
-        <button class="btn" onclick="abrirImport()" style="font-size:12px;padding:6px 10px;">⬇ Importar</button>
+        <button class="btn" onclick="abrirCampanhas()" style="font-size:12px;padding:6px 10px;">📢</button>
+        <button class="btn" onclick="abrirImport()" style="font-size:12px;padding:6px 10px;">⬇</button>
         <button class="btn primary" onclick="abrirNova()" style="font-size:12px;padding:6px 12px;">+ Nova</button>
       </div>
     </div>
   </div>
   <div class="sync-bar"><div class="sdot" id="sdot"></div><span id="smsg">A carregar...</span></div>
+  <div style="padding:.5rem 1rem;border-bottom:1px solid #e8e6e1;display:flex;gap:8px;align-items:center;">
+    <input class="finput" id="search-input" placeholder="🔍 Pesquisar nome, modelo, notas..." oninput="pesquisar()" style="margin-bottom:0;flex:1;padding:.5rem .75rem;font-size:13px;">
+    <select id="sort-select" class="finput" onchange="pesquisar()" style="margin-bottom:0;width:auto;font-size:12px;padding:.5rem .6rem;">
+      <option value="recente">↓ Recente</option>
+      <option value="antiga">↑ Antiga</option>
+      <option value="nome">A–Z</option>
+    </select>
+  </div>
   <div class="tabs">
     <button class="tab active" onclick="mudaTab(this,'hoje')">Hoje</button>
     <button class="tab" onclick="mudaTab(this,'todas')">Todas</button>
     <button class="tab" onclick="mudaTab(this,'stats')">Resumo</button>
+    <button class="tab" onclick="mudaTab(this,'arquivo')">Arquivo</button>
   </div>
   <div id="tab-hoje" class="section"><div id="lista-hoje"></div></div>
   <div id="tab-todas" class="section" style="display:none"><div id="lista-todas"></div></div>
+  <div id="tab-arquivo" class="section" style="display:none">
+    <div style="display:flex;gap:6px;margin-bottom:.75rem;flex-wrap:wrap;">
+      <button class="btn active-filter" id="filtro-todas" onclick="filtroArquivo('todas')" style="font-size:12px;padding:5px 12px;background:#1a1a1a;color:#fff;border-color:#1a1a1a;">Todas</button>
+      <button class="btn" id="filtro-sucesso" onclick="filtroArquivo('sucesso')" style="font-size:12px;padding:5px 12px;">✅ Sucesso</button>
+      <button class="btn" id="filtro-insucesso" onclick="filtroArquivo('insucesso')" style="font-size:12px;padding:5px 12px;">❌ Sem sucesso</button>
+      <button class="btn" id="filtro-apagadas" onclick="filtroArquivo('apagadas')" style="font-size:12px;padding:5px 12px;">🗑 Apagadas</button>
+    </div>
+    <div id="lista-arquivo"></div>
+  </div>
   <div id="tab-stats" class="section" style="display:none">
     <div class="stat-grid" id="stat-cards"></div>
     <div class="divider"></div>
@@ -158,6 +177,31 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <div class="voz-bar">
     <div class="voz-hint" id="vh-ficha"><b>Fala</b><br>Gravo directamente na ficha</div>
     <button class="mic-btn" id="mb-ficha" onclick="toggleVoz()" aria-label="Microfone">🎤</button>
+  </div>
+</div>
+
+
+<!-- CAMPANHAS -->
+<div class="overlay" id="ov-campanhas">
+  <button class="back-btn" onclick="fecharCampanhas()">← Voltar</button>
+  <div style="padding:0 1rem 6rem;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+      <p class="stitle" style="margin-bottom:0;">Circulares & Campanhas</p>
+      <button class="btn primary" style="font-size:12px;padding:6px 12px;" onclick="abrirNovaCampanha()">+ Nova</button>
+    </div>
+    <div id="lista-campanhas"></div>
+    <div id="form-campanha" style="display:none;margin-top:1rem;">
+      <div class="divider"></div>
+      <p class="stitle">Nova campanha</p>
+      <div class="ffield"><label class="flabel">Título *</label><input class="finput" id="camp-titulo" placeholder="Ex: GLC EQ — Campanha Primavera"></div>
+      <div class="ffield"><label class="flabel">Modelo(s)</label><input class="finput" id="camp-modelos" placeholder="Ex: GLC EQ, GLC 300de"></div>
+      <div class="ffield"><label class="flabel">Condições / descrição</label><textarea class="finput" id="camp-desc" style="height:80px;" placeholder="Juros, descontos, condições especiais..."></textarea></div>
+      <div class="ffield"><label class="flabel">Validade</label><input class="finput" type="date" id="camp-validade"></div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn primary full" onclick="guardarCampanha()">Guardar</button>
+        <button class="btn full" onclick="fecharFormCampanha()">Cancelar</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -325,8 +369,8 @@ function cardHTML(l){
     </div>
   </div>`;}
 
-function renderHoje(){document.getElementById('lista-hoje').innerHTML=leads.filter(isUrg).map(cardHTML).join('')||'<div class="empty">Sem urgências hoje 🎉</div>';}
-function renderTodas(){document.getElementById('lista-todas').innerHTML=leads.length?leads.map(cardHTML).join(''):'<div class="empty">Sem leads registadas</div>';}
+function renderHoje(){const ativos=leads.filter(l=>l.estado!=='fechado'&&l.estado!=='sem_retorno');document.getElementById('lista-hoje').innerHTML=ordenarLeads(ativos.filter(isUrg)).map(cardHTML).join('')||'<div class="empty">Sem urgências hoje 🎉</div>';}
+function renderTodas(){const ativos=leads.filter(l=>l.estado!=='fechado'&&l.estado!=='sem_retorno');document.getElementById('lista-todas').innerHTML=ativos.length?ordenarLeads(ativos).map(cardHTML).join(''):'<div class="empty">Sem leads registadas</div>';}
 function renderStats(){
   const t=leads.length,h=leads.filter(isUrg).length,td=leads.filter(x=>x.td_agendado).length,s=leads.filter(x=>x.estado==='sem_retorno').length,f=leads.filter(x=>x.estado==='fechado').length;
   document.getElementById('stat-cards').innerHTML=`
@@ -337,8 +381,61 @@ function renderStats(){
   const es={};leads.forEach(l=>{es[l.estado]=(es[l.estado]||0)+1;});
   document.getElementById('stat-estados').innerHTML=Object.entries(es).map(([e,n])=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #e8e6e1">${bdg(e)}<span style="font-size:14px;font-weight:600">${n}</span></div>`).join('');
 }
-function renderAtual(){if(tabAtual==='hoje')renderHoje();else if(tabAtual==='todas')renderTodas();else renderStats();}
-function mudaTab(btn,t){tabAtual=t;document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));btn.classList.add('active');['hoje','todas','stats'].forEach(x=>{document.getElementById('tab-'+x).style.display=x===t?'':'none';});renderAtual();}
+let filtroArquivoAtual='todas';
+function filtroArquivo(tipo){
+  filtroArquivoAtual=tipo;
+  document.querySelectorAll('[id^="filtro-"]').forEach(b=>{b.style.background='';b.style.color='#1a1a1a';b.style.borderColor='#ccc';});
+  const btn=document.getElementById('filtro-'+tipo);if(btn){btn.style.background='#1a1a1a';btn.style.color='#fff';btn.style.borderColor='#1a1a1a';}
+  renderArquivo();
+}
+function renderArquivo(){
+  const apagadas=JSON.parse(localStorage.getItem('leads_apagadas')||'[]');
+  const fechadas=leads.filter(l=>l.estado==='fechado'||l.estado==='sem_retorno');
+  let lista=[];
+  if(filtroArquivoAtual==='todas')lista=[...fechadas,...apagadas];
+  else if(filtroArquivoAtual==='sucesso')lista=fechadas.filter(l=>l.estado==='fechado');
+  else if(filtroArquivoAtual==='insucesso')lista=fechadas.filter(l=>l.estado==='sem_retorno');
+  else if(filtroArquivoAtual==='apagadas')lista=apagadas;
+  lista=ordenarLeads(lista);
+  document.getElementById('lista-arquivo').innerHTML=lista.length?lista.map(l=>`
+    <div class="lead-card" onclick="${apagadas.find(x=>String(x.id)===String(l.id))?'':"abrirFicha('"+l.id+"')"}">
+      <div class="lead-header">
+        <div class="avatar">${ini(l.nome)}</div>
+        <div style="flex:1;min-width:0;"><div class="lead-name">${l.nome}</div><div class="lead-car">${l.carro||'—'}${l.data_apagada?' · Apagada '+l.data_apagada:''}</div></div>
+        ${bdg(l.estado)}
+      </div>
+      <div class="lead-follow">${(l.notas&&l.notas.length?l.notas[l.notas.length-1].texto:'').substring(0,60)}${(l.notas&&l.notas.length&&l.notas[l.notas.length-1].texto.length>60?'...':'')}</div>
+      ${apagadas.find(x=>String(x.id)===String(l.id))?`<div style="margin-top:8px;"><button onclick="restaurarLead('${l.id}')" class="btn" style="font-size:12px;padding:5px 10px;">↩ Restaurar</button></div>`:''}
+    </div>`).join(''):'<div class="empty">Sem leads nesta categoria</div>';
+}
+function ordenarLeads(arr){
+  const sort=document.getElementById('sort-select');
+  const v=sort?sort.value:'recente';
+  return [...arr].sort((a,b)=>{
+    if(v==='nome')return a.nome.localeCompare(b.nome);
+    const da=new Date(a.criado||0),db=new Date(b.criado||0);
+    return v==='antiga'?da-db:db-da;
+  });
+}
+function pesquisar(){
+  const q=(document.getElementById('search-input').value||'').toLowerCase().trim();
+  if(!q){renderAtual();return;}
+  const ativos=leads.filter(l=>l.estado!=='fechado'&&l.estado!=='sem_retorno');
+  const resultados=ordenarLeads(ativos).filter(l=>{
+    const txt=[l.nome,l.carro,l.tel,l.email,l.opp_id,l.kom,l.tipo,l.nif,l.negociacao_fora,l.relacao_interna,
+      ...(l.notas||[]).map(n=>n.texto),(l.preferencias||[]).map(p=>p.texto)].join(' ').toLowerCase();
+    return txt.includes(q);
+  });
+  const destino=tabAtual==='hoje'?'lista-hoje':tabAtual==='todas'?'lista-todas':'lista-hoje';
+  const el=document.getElementById(destino);
+  if(el)el.innerHTML=resultados.length?resultados.map(cardHTML).join(''):'<div class="empty">Sem resultados para "'+q+'"</div>';
+}
+function renderAtual(){
+  const q=(document.getElementById('search-input')?.value||'').toLowerCase().trim();
+  if(q){pesquisar();return;}
+  if(tabAtual==='hoje')renderHoje();else if(tabAtual==='todas')renderTodas();else if(tabAtual==='arquivo')renderArquivo();else renderStats();
+}
+function mudaTab(btn,t){tabAtual=t;document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));btn.classList.add('active');['hoje','todas','stats','arquivo'].forEach(x=>{document.getElementById('tab-'+x).style.display=x===t?'':'none';});renderAtual();}
 
 function campo(label,val){return`<div class="campo"><div class="campo-label">${label}</div><div class="campo-val">${val||'—'}</div></div>`;}
 
@@ -399,7 +496,7 @@ function abrirFicha(id){fichaId=String(id);document.getElementById('ov-ficha').c
 function fecharFicha(){fichaId=null;document.getElementById('ov-ficha').classList.remove('open');atualizarVoz();renderAtual();}
 
 function renderFicha(l){
-  const notas=(l.notas||[]).slice().reverse().map(n=>`<div class="nota-block"><div class="nota-meta">${n.data}</div><div class="nota-text">${n.texto}</div></div>`).join('');
+  const notas=(l.notas||[]).slice().reverse().map((n,ri)=>{const i=(l.notas.length-1-ri);return`<div class="nota-block"><div style="display:flex;justify-content:space-between;align-items:flex-start;"><div><div class="nota-meta">${n.data}</div><div class="nota-text">${n.texto}</div></div><button onclick="apagarNota('${l.id}',${i})" style="background:none;border:none;color:#ccc;cursor:pointer;font-size:16px;padding:0 0 0 8px;flex-shrink:0;">✕</button></div></div>`;}).join('');
   document.getElementById('ficha-content').innerHTML=`
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:1.25rem;">
       <div class="avatar" style="width:48px;height:48px;font-size:16px;">${ini(l.nome)}</div>
@@ -415,6 +512,7 @@ function renderFicha(l){
     <div class="campo-grid">
       ${campo('Telemóvel',l.tel)}${campo('E-mail',l.email)}${campo('Viatura',l.carro)}${campo('KOM',l.kom)}${campo('Tipo',l.tipo)}${campo('Cliente exist.',l.cliente_existente?'Sim':'Não')}${l.nif?campo('NIF',l.nif):''}${l.frota?campo('Frota',l.frota):''}${l.cae_rent?campo('CAE','Sim'):''}
     </div>
+    ${(()=>{const sugs=campanhasParaModelo(l.carro);return sugs.length?`<div class="divider"></div><p class="stitle">💡 Campanhas sugeridas</p><div style="margin-bottom:1rem;">${sugs.map(c=>`<div class="nota-block" style="border-left:3px solid #b7770d;"><div class="nota-meta">📢 ${c.titulo} ${c.validade?'· Val: '+c.validade:''}</div><div class="nota-text">${c.desc||''}</div></div>`).join('')}</div>`:'';})()}
     ${l.negociacao_fora||l.relacao_interna?`<div class="divider"></div><p class="stitle">Contexto</p><div style="margin-bottom:1rem;">${l.negociacao_fora?`<div class="nota-block"><div class="nota-meta">A negociar fora</div><div class="nota-text">${l.negociacao_fora}</div></div>`:''}${l.relacao_interna?`<div class="nota-block"><div class="nota-meta">Referência</div><div class="nota-text">${l.relacao_interna}</div></div>`:''}</div>`:''}
     ${l.td_pedido?`<div class="divider"></div><p class="stitle">Test Drive</p><div class="campo-grid">${campo('Data',l.td_agendado)}${campo('Stand',l.td_stand)}${campo('Especialista',l.td_esp)}</div>`:''}
     <div class="divider"></div>
@@ -476,15 +574,26 @@ function addNota(id){
   inp.value='';guardar(l);renderFicha(l);
 }
 function setFollow(id,dias,label){
-  const l=leads.find(x=>String(x.id)===String(id));const d=new Date();d.setDate(d.getDate()+dias);l.follow_data=d.toISOString().split('T')[0];
+  const l=leads.find(x=>String(x.id)===String(id));const d=new Date();d.setDate(d.getDate()+dias);
+  d.setHours(9,0,0,0);l.follow_data=d.toISOString().split('T')[0];
   const el=document.getElementById('fn-'+id);l.follow_nota=el&&el.value?el.value:'Follow-up: '+label;
   guardar(l);renderFicha(l);
+  const fim=new Date(d.getTime()+30*60*1000);
+  const fmt=x=>x.toISOString().replace(/[-:]/g,'').split('.')[0]+'Z';
+  const title=encodeURIComponent('Follow-up Mercedes — '+l.nome);
+  const url='https://outlook.office.com/calendar/action/compose?subject='+title+'&startdt='+fmt(d)+'&enddt='+fmt(fim);
+  if(confirm('Adicionar lembrete ao Outlook para '+label+'?'))window.open(url,'_blank');
 }
 function ciclarEstado(id){
   const l=leads.find(x=>String(x.id)===String(id));const es=['contactar','follow_up','td_agendado','sem_retorno','fechado'];
   l.estado=es[(es.indexOf(l.estado)+1)%es.length];guardar(l);renderFicha(l);
 }
 function copiar(id){const el=document.getElementById('res-'+id);if(el&&navigator.clipboard)navigator.clipboard.writeText(el.textContent);}
+function apagarNota(leadId,idx){
+  const l=leads.find(x=>String(x.id)===String(leadId));if(!l||!l.notas)return;
+  if(!confirm('Apagar esta nota?'))return;
+  l.notas.splice(idx,1);guardar(l);renderFicha(l);
+}
 function apagarPref(leadId,idx){const l=leads.find(x=>String(x.id)===String(leadId));if(!l||!l.preferencias)return;l.preferencias.splice(idx,1);guardar(l);renderFicha(l);}
 function apagarProposta(leadId,idx){const l=leads.find(x=>String(x.id)===String(leadId));if(!l||!l.propostas)return;l.propostas.splice(idx,1);guardar(l);renderFicha(l);}
 
@@ -497,6 +606,7 @@ function fecharComSucesso(){
   const agora=new Date();const ds=agora.toLocaleDateString('pt-PT')+' '+agora.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'});
   l.estado='fechado';if(!l.notas)l.notas=[];l.notas.push({data:ds,texto:'✅ Fechado com sucesso — '+txt});l.follow_nota='Fechado com sucesso';
   guardar(l);fecharModalSucesso();fecharFicha();
+  setTimeout(()=>renderAtual(),500);
 }
 
 function abrirModalInsucesso(id){
@@ -524,11 +634,23 @@ function fecharComInsucesso(){
 
 function confirmarApagar(id){
   const l=leads.find(x=>String(x.id)===String(id));if(!l)return;
-  if(confirm('Tens a certeza que queres apagar a lead de '+l.nome+'?')){
+  if(confirm('Tens a certeza que queres apagar a lead de '+l.nome+'? Ficará no Arquivo.')){
+    const agora=new Date();l.data_apagada=agora.toLocaleDateString('pt-PT');
+    const apagadas=JSON.parse(localStorage.getItem('leads_apagadas')||'[]');
+    apagadas.unshift(l);localStorage.setItem('leads_apagadas',JSON.stringify(apagadas));
     leads=leads.filter(x=>String(x.id)!==String(id));
     localStorage.setItem('leads_mb',JSON.stringify(leads));
     eliminarNoSheets(id);fecharFicha();renderAtual();
   }
+}
+function restaurarLead(id){
+  const apagadas=JSON.parse(localStorage.getItem('leads_apagadas')||'[]');
+  const l=apagadas.find(x=>String(x.id)===String(id));if(!l)return;
+  delete l.data_apagada;
+  leads.unshift(l);guardar(l);
+  const novas=apagadas.filter(x=>String(x.id)!==String(id));
+  localStorage.setItem('leads_apagadas',JSON.stringify(novas));
+  renderAtual();alert('Lead de '+l.nome+' restaurada!');
 }
 
 // Reunião
@@ -611,6 +733,40 @@ function criarLead(){
 }
 
 // Importar
+let campanhas=JSON.parse(localStorage.getItem('campanhas')||'[]');
+
+function abrirCampanhas(){
+  document.getElementById('ov-campanhas').classList.add('open');
+  renderCampanhas();
+}
+function fecharCampanhas(){document.getElementById('ov-campanhas').classList.remove('open');}
+function abrirNovaCampanha(){document.getElementById('form-campanha').style.display='block';}
+function fecharFormCampanha(){document.getElementById('form-campanha').style.display='none';}
+function guardarCampanha(){
+  const titulo=document.getElementById('camp-titulo').value.trim();if(!titulo){alert('Título obrigatório');return;}
+  const agora=new Date();
+  campanhas.unshift({id:Date.now(),titulo,modelos:document.getElementById('camp-modelos').value.trim(),desc:document.getElementById('camp-desc').value.trim(),validade:document.getElementById('camp-validade').value,criada:agora.toLocaleDateString('pt-PT'),ativa:true});
+  localStorage.setItem('campanhas',JSON.stringify(campanhas));
+  fecharFormCampanha();renderCampanhas();
+}
+function renderCampanhas(){
+  const hoje=new Date();
+  document.getElementById('lista-campanhas').innerHTML=campanhas.length?campanhas.map((c,i)=>{
+    const expirou=c.validade&&new Date(c.validade)<hoje;
+    return`<div class="proposta-card" style="${expirou?'opacity:.5':''}">
+      <div class="proposta-header"><span class="proposta-modelo">${c.titulo}</span><span style="font-size:11px;color:${expirou?'#c0392b':'#2e7d32'}">${expirou?'Expirada':'✅ Ativa'}</span></div>
+      <div class="proposta-meta">${c.modelos?'Modelos: '+c.modelos+' · ':''} Val: ${c.validade||'—'}</div>
+      ${c.desc?`<div style="font-size:12px;color:#555;margin-top:4px;">${c.desc}</div>`:''}
+      <button onclick="apagarCampanha(${i})" style="background:none;border:none;color:#ccc;cursor:pointer;font-size:11px;margin-top:4px;">Apagar</button>
+    </div>`;}).join(''):'<div class="empty">Sem campanhas registadas</div>';
+}
+function apagarCampanha(idx){if(!confirm('Apagar esta campanha?'))return;campanhas.splice(idx,1);localStorage.setItem('campanhas',JSON.stringify(campanhas));renderCampanhas();}
+function campanhasParaModelo(carro){
+  if(!carro)return[];
+  const hoje=new Date();
+  return campanhas.filter(c=>c.ativa&&(!c.validade||new Date(c.validade)>=hoje)&&(!c.modelos||c.modelos.toLowerCase().split(',').some(m=>carro.toLowerCase().includes(m.trim()))));
+}
+
 function abrirImport(){document.getElementById('ov-import').classList.add('open');}
 function fecharImport(){document.getElementById('ov-import').classList.remove('open');document.getElementById('import-input').value='';}
 function importarLead(){
