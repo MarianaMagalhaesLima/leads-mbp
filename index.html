@@ -570,7 +570,12 @@ function apagarProposta(leadId,idx){const l=leads.find(x=>String(x.id)===String(
 function salvarFN(id){const l=leads.find(x=>String(x.id)===String(id));const el=document.getElementById('fn-'+id);if(l&&el){l.follow_nota=el.value;guardar(l);}}
 function setFollowData(id){
   const l=leads.find(x=>String(x.id)===String(id));const el=document.getElementById('fdt-'+id);
-  if(l&&el&&el.value){l.follow_data=el.value;const fn=document.getElementById('fn-'+id);if(fn&&fn.value)l.follow_nota=fn.value;guardar(l);}
+  if(l&&el&&el.value){
+    l.follow_data=el.value;
+    l.estado='follow_up';
+    const fn=document.getElementById('fn-'+id);if(fn&&fn.value)l.follow_nota=fn.value;
+    guardar(l);
+  }
 }
 function addNota(id){
   const l=leads.find(x=>String(x.id)===String(id));const inp=document.getElementById('ni-'+id);
@@ -582,12 +587,9 @@ function addNota(id){
 function setFollow(id,dias,label){
   const l=leads.find(x=>String(x.id)===String(id));const d=new Date();d.setDate(d.getDate()+dias);d.setHours(9,0,0,0);
   l.follow_data=d.toISOString().split('T')[0];
+  l.estado='follow_up';
   const el=document.getElementById('fn-'+id);l.follow_nota=el&&el.value?el.value:'Follow-up: '+label;
   guardar(l);renderFicha(l);
-  const fim=new Date(d.getTime()+30*60*1000);const fmt=x=>x.toISOString().replace(/[-:]/g,'').split('.')[0]+'Z';
-  const title=encodeURIComponent('Follow-up Mercedes — '+l.nome);
-  const url='https://outlook.office.com/calendar/action/compose?subject='+title+'&startdt='+fmt(d)+'&enddt='+fmt(fim);
-  if(confirm('Adicionar lembrete ao Outlook para '+label+'?'))window.open(url,'_blank');
 }
 function ciclarEstado(id){
   const l=leads.find(x=>String(x.id)===String(id));const es=['contactar','follow_up','td_agendado','sem_retorno','fechado'];
