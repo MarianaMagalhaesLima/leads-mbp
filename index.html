@@ -223,6 +223,16 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   </div>
 </div>
 
+
+<!-- EDITAR LEAD -->
+<div class="overlay" id="ov-editar">
+  <button class="back-btn" onclick="fecharEditar()">← Cancelar</button>
+  <div style="padding:0 1rem 6rem;">
+    <p class="stitle" style="margin-bottom:1rem;">Editar dados</p>
+    <div id="editar-form"></div>
+  </div>
+</div>
+
 <!-- MODAL SUCESSO -->
 <div class="modal-bg" id="modal-sucesso">
   <div class="modal">
@@ -497,6 +507,7 @@ function renderFicha(l){
       <a href="mailto:${l.email}" class="action-link">✉️ E-mail</a>
       <button onclick="ciclarEstado('${l.id}')" class="action-link">🔄 ${bdg(l.estado)}</button>
     </div>
+    <button onclick="abrirEditar('${l.id}')" class="btn full" style="margin-bottom:1rem;font-size:13px;">✏️ Editar dados do cliente</button>
     ${sugsHtml}
     <div class="divider"></div><p class="stitle">Dados</p>
     <div class="campo-grid">
@@ -684,6 +695,53 @@ function guardarProposta(){
   l.propostas.push({modelo,kom:document.getElementById('prop-kom').value,preco,validade:document.getElementById('prop-validade').value,estado:document.getElementById('prop-estado').value,data:agora.toLocaleDateString('pt-PT')});
   if(!l.notas)l.notas=[];l.notas.push({data:ds,texto:'📄 Proposta enviada: '+modelo+(preco?' — '+Number(preco).toLocaleString('pt-PT')+'€':'')});
   guardar(l);fecharModalProposta();renderFicha(l);
+}
+
+function abrirEditar(id){
+  modalLeadId=String(id);
+  const l=leads.find(x=>String(x.id)===String(id));if(!l)return;
+  document.getElementById('ov-editar').classList.add('open');
+  document.getElementById('editar-form').innerHTML=`
+    <div class="ffield"><label class="flabel">Nome completo</label><input class="finput" id="ed-nome" value="${l.nome||''}"></div>
+    <div class="ffield"><label class="flabel">Telemóvel (PT sem 351, estrangeiros com indicativo)</label><input class="finput" id="ed-tel" type="tel" value="${l.tel||''}"></div>
+    <div class="ffield"><label class="flabel">E-mail</label><input class="finput" id="ed-email" type="email" value="${l.email||''}"></div>
+    <div class="ffield"><label class="flabel">ID (OPP/LEAD)</label><input class="finput" id="ed-opp" value="${l.opp_id||''}"></div>
+    <div class="ffield"><label class="flabel">Viatura pretendida</label><input class="finput" id="ed-carro" value="${l.carro||''}"></div>
+    <div class="ffield"><label class="flabel">KOM</label><input class="finput" id="ed-kom" value="${l.kom||''}"></div>
+    <div class="ffield"><label class="flabel">Tipo de cliente</label>
+      <select class="finput" id="ed-tipo">
+        <option ${l.tipo==='Particular'?'selected':''}>Particular</option>
+        <option ${l.tipo==='Empresa'?'selected':''}>Empresa</option>
+        <option ${l.tipo==='ENI'?'selected':''}>ENI</option>
+      </select>
+    </div>
+    <div class="ffield"><label class="flabel">NIF (empresa)</label><input class="finput" id="ed-nif" value="${l.nif||''}"></div>
+    <div class="ffield"><label class="flabel">Frota</label><input class="finput" id="ed-frota" value="${l.frota||''}"></div>
+    <div class="ffield"><label class="flabel">Negociação fora / concorrência</label><input class="finput" id="ed-neg" value="${l.negociacao_fora||''}"></div>
+    <div class="ffield"><label class="flabel">Relação / referência</label><input class="finput" id="ed-rel" value="${l.relacao_interna||''}"></div>
+    <div class="trow"><span style="font-size:13px;">Cliente existente</span><input type="checkbox" id="ed-exist" ${l.cliente_existente?'checked':''} style="width:18px;height:18px;"></div>
+    <div class="trow" style="margin-bottom:.75rem;"><span style="font-size:13px;">CAE Rent-a-car / Comércio auto</span><input type="checkbox" id="ed-cae" ${l.cae_rent?'checked':''} style="width:18px;height:18px;"></div>
+    <button class="btn primary full" onclick="guardarEditar()" style="margin-top:1rem;margin-bottom:2rem;">✓ Guardar alterações</button>
+  `;
+}
+function fecharEditar(){document.getElementById('ov-editar').classList.remove('open');}
+function guardarEditar(){
+  const l=leads.find(x=>String(x.id)===String(modalLeadId));if(!l)return;
+  const g=id=>document.getElementById(id);
+  l.nome=g('ed-nome').value.trim()||l.nome;
+  l.tel=g('ed-tel').value.trim()||l.tel;
+  l.email=g('ed-email').value.trim();
+  l.opp_id=g('ed-opp').value.trim()||l.opp_id;
+  l.carro=g('ed-carro').value.trim()||l.carro;
+  l.kom=g('ed-kom').value.trim();
+  l.tipo=g('ed-tipo').value;
+  l.nif=g('ed-nif').value.trim();
+  l.frota=g('ed-frota').value.trim();
+  l.negociacao_fora=g('ed-neg').value.trim();
+  l.relacao_interna=g('ed-rel').value.trim();
+  l.cliente_existente=g('ed-exist').checked;
+  l.cae_rent=g('ed-cae').checked;
+  guardar(l);fecharEditar();renderFicha(l);
 }
 
 function abrirNova(){document.getElementById('ov-nova').classList.add('open');document.getElementById('nova-form').innerHTML=`
