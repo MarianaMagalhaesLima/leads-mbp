@@ -874,7 +874,7 @@ function fecharFicha(){fichaId=null;document.getElementById('ov-ficha').classLis
 function renderFicha(l){
   const opp=isOpp(l);
   const sugs=campanhasParaModelo(l.carro);
-  const sugsHtml=sugs.length?`<div class="ficha-section alt"><p class="sec-title" style="color:#9a6510;">Campanhas sugeridas</p><div>${sugs.map(c=>`<div class="nota-block" style="border-left:3px solid #b7770d;"><div class="nota-meta">${c.titulo}${c.validade?' · Val: '+c.validade:''}</div><div class="nota-text">${c.desc||''}</div></div>`).join('')}</div></div>`:'';
+  const sugsHtml=sugs.length?`<div class="ficha-section alt" style="border-left:3px solid #b7770d;"><p class="sec-title" style="color:#9a6510;">Campanhas sugeridas</p>${sugs.map(c=>`<div style="font-size:12px;margin-bottom:4px;"><span style="font-weight:600;">${c.titulo}</span>${c.validade?' · até '+c.validade:''}<br><span style="color:#888;">${c.desc||''}</span></div>`).join('')}</div>`:'';
   const notas=(l.notas||[]).slice().reverse().map((n,ri)=>{
     const i=(l.notas.length-1-ri);
     return`<div class="nota-block" id="nb-${l.id}-${i}">
@@ -882,26 +882,51 @@ function renderFicha(l){
         <div style="flex:1;">
           <div class="nota-meta">${n.data}</div>
           <div class="nota-text" id="nt-${l.id}-${i}">${n.texto}</div>
-          <textarea id="ne-${l.id}-${i}" class="finput" style="display:none;height:80px;margin-top:6px;font-size:13px;">${n.texto}</textarea>
-          <div id="neb-${l.id}-${i}" style="display:none;margin-top:6px;">
+          <textarea id="ne-${l.id}-${i}" class="finput" style="display:none;height:70px;margin-top:5px;font-size:13px;">${n.texto}</textarea>
+          <div id="neb-${l.id}-${i}" style="display:none;margin-top:5px;">
             <button onclick="guardarEdicaoNota('${l.id}',${i})" class="btn primary" style="font-size:12px;padding:4px 10px;margin-right:6px;">✓ Guardar</button>
             <button onclick="cancelarEdicaoNota('${l.id}',${i})" class="btn" style="font-size:12px;padding:4px 10px;">✕</button>
           </div>
         </div>
-        <div style="display:flex;flex-direction:column;gap:4px;padding-left:8px;">
-          <button onclick="editarNota('${l.id}',${i})" style="background:none;border:none;color:#bbb;cursor:pointer;font-size:13px;">✏️</button>
-          <button onclick="apagarNota('${l.id}',${i})" style="background:none;border:none;color:#ccc;cursor:pointer;font-size:13px;">✕</button>
+        <div style="display:flex;gap:4px;padding-left:8px;">
+          <button onclick="editarNota('${l.id}',${i})" style="background:none;border:none;color:#ccc;cursor:pointer;font-size:12px;">✏️</button>
+          <button onclick="apagarNota('${l.id}',${i})" style="background:none;border:none;color:#ccc;cursor:pointer;font-size:12px;">✕</button>
         </div>
       </div>
     </div>`;}).join('');
 
-  // Helper: campo em linha label/valor
-  const cr=(lbl,val)=>val&&val!=='—'?`<div class="drow"><span class="dlbl">${lbl}</span><span class="dval">${val}</span></div>`:'';
+  const cr=(lbl,val)=>val&&val!=='—'&&val!==''&&val!==null&&val!==undefined?`<div class="drow"><span class="dlbl">${lbl}</span><span class="dval">${val}</span></div>`:'';
   const crTel=(lbl,val)=>{
     const clean=String(val||'').replace(/[^\d+]/g,'');
     const display=formatTelDisplay(val);
     return`<div class="drow"><span class="dlbl">${lbl}</span><span class="dval" style="display:flex;align-items:center;gap:5px;"><span>${display}</span><button onclick="event.stopPropagation();navigator.clipboard&&navigator.clipboard.writeText('${clean}')" style="background:none;border:none;color:#bbb;cursor:pointer;font-size:11px;padding:0;" title="Copiar">📋</button></span></div>`;
   };
+  // collapse helper
+  const col=(id,label,badge,content,defaultOpen=false)=>`
+    <div class="collapse-row" onclick="toggleCol('col-${id}',this)" style="background:#fff;">
+      <span class="collapse-label">${label}${badge?` <span style="background:#e8e6e1;color:#555;font-size:10px;padding:1px 6px;border-radius:10px;font-weight:600;margin-left:4px;">${badge}</span>`:''}</span>
+      <span style="color:#bbb;font-size:13px;transition:transform .2s;" id="col-arrow-${id}">${defaultOpen?'▲':'▼'}</span>
+    </div>
+    <div id="col-${id}" class="collapse-content" style="display:${defaultOpen?'block':'none'};">${content}</div>`;
+
+  const nPropostas=(l.propostas||[]).length;
+  const nPrefs=(l.preferencias||[]).length;
+
+  // Follow-up box
+  const followBox=`<div id="follow-box-${l.id}" style="background:${l.follow_data?'#e6f4ea':'#f5f4f2'};border-radius:10px;padding:.65rem;border:${l.follow_data?'1.5px solid #2e7d32':'1px solid #e8e6e1'};">
+    ${l.follow_data?`<div style="font-size:12px;color:#276b2f;font-weight:600;margin-bottom:5px;">Agendado para ${new Date(l.follow_data).toLocaleDateString('pt-PT')}${l.follow_data.length>10?' '+l.follow_data.slice(11,16):''}</div>`:'<div style="font-size:12px;color:#999;margin-bottom:5px;">Sem follow-up agendado</div>'}
+    <input class="finput" type="date" id="fdt-${l.id}" value="${l.follow_data?l.follow_data.slice(0,10):''}" onchange="setFollowDataNew('${l.id}')" style="margin-bottom:5px;">
+    <div id="hora-toggle-${l.id}" style="margin-bottom:5px;${l.follow_data&&l.follow_data.length>10?'display:none':''}">
+      <button onclick="toggleHora('${l.id}')" class="btn sm" style="color:#888;">+ Definir hora</button>
+    </div>
+    <div id="hora-input-${l.id}" style="display:${l.follow_data&&l.follow_data.length>10?'block':'none'};margin-bottom:5px;">
+      <input class="finput" type="time" id="fhora-${l.id}" value="${l.follow_data&&l.follow_data.length>10?l.follow_data.slice(11,16):''}" onchange="setFollowDataNew('${l.id}')">
+    </div>
+    <input class="finput" id="fn-${l.id}" placeholder="Nota do follow-up..." value="${l.follow_nota||''}" onblur="salvarFN('${l.id}')" style="margin-bottom:0;">
+  </div>`;
+
+  // sub-title in header: viatura + tipo
+  const subInfo=[l.carro,l.tipo].filter(Boolean).join(' · ');
 
   document.getElementById('ficha-content').innerHTML=`
     <!-- CABEÇALHO COLORIDO -->
@@ -909,7 +934,7 @@ function renderFicha(l){
       <div class="ficha-av">${ini(l.nome)}</div>
       <div style="flex:1;min-width:0;">
         <div class="ficha-name">${l.nome}</div>
-        <div class="ficha-sub">${l.opp_id} · ${opp?'Oportunidade':'Lead'} MBP</div>
+        <div class="ficha-sub">${l.opp_id}${subInfo?' · '+subInfo:''}</div>
         <div class="ficha-badge">${bdg(l.estado).replace(/<[^>]+>/g,'').trim()}</div>
       </div>
     </div>
@@ -922,120 +947,85 @@ function renderFicha(l){
       <button onclick="abrirTmplEmail()" class="action-btn"><span>✉️</span>Email</button>
     </div>
 
-    <!-- EDITAR -->
-    <div class="ficha-section" style="padding-top:.5rem;padding-bottom:.5rem;">
-      <button onclick="abrirEditar('${l.id}')" class="btn full" style="font-size:13px;">✏️ Editar dados</button>
+    <!-- NÃO ATENDEU + EDITAR (logo abaixo dos botões) -->
+    <div class="ficha-section" style="padding:.5rem 1rem;display:flex;gap:8px;align-items:center;">
+      <button onclick="naoAtendeu('${l.id}')" class="btn full" style="background:#fff3cd;border-color:#e0b84a;color:#7a5c00;font-size:13px;font-weight:600;">Não atendeu</button>
+      <button onclick="abrirEditar('${l.id}')" class="btn" style="font-size:12px;padding:7px 12px;color:#888;flex-shrink:0;">✏️ Editar</button>
+    </div>
+
+    <!-- NOTA RÁPIDA (logo abaixo, sempre visível) -->
+    <div class="ficha-section alt">
+      <p class="sec-title">Adicionar nota</p>
+      <textarea class="finput" id="ni-${l.id}" placeholder="O que aconteceu? (ou usa o microfone)" style="height:68px;margin-bottom:6px;font-size:13px;"></textarea>
+      <div style="display:flex;gap:8px;">
+        <button class="btn primary full" onclick="addNota('${l.id}')" style="font-size:13px;">Guardar nota</button>
+        <button class="btn sm" onclick="resumirNotas('${l.id}')" style="white-space:nowrap;font-size:12px;">✨ Resumir</button>
+      </div>
     </div>
 
     ${sugsHtml}
 
-    <!-- DADOS PRINCIPAIS -->
+    <!-- DADOS (compactos) -->
     <div class="ficha-section">
-      <p class="sec-title">Dados de contacto</p>
+      <p class="sec-title">Dados</p>
       ${crTel('Telemóvel',l.tel)}
       ${cr('Email',l.email)}
-    </div>
-    <div class="ficha-section alt">
-      <p class="sec-title">Viatura e perfil</p>
       ${cr('Viatura',l.carro)}
       ${cr('KOM',l.kom)}
       ${cr('Tipo',l.tipo)}
-      ${cr('Cliente existente',l.cliente_existente?'Sim':'Não')}
+      ${cr('Financiamento',l.financiamento)}
+      ${cr('Retoma',l.retoma)}
+      ${cr('Cliente exist.',l.cliente_existente?'Sim':'Não')}
       ${l.nif?cr('NIF',l.nif):''}
       ${l.frota?cr('Frota',l.frota):''}
+      ${l.negociacao_fora?cr('Negoc. fora',l.negociacao_fora):''}
+      ${l.relacao_interna?cr('Referência',l.relacao_interna):''}
     </div>
-
-    ${l.negociacao_fora||l.relacao_interna?`<div class="ficha-section">
-      <p class="sec-title">Contexto</p>
-      ${l.negociacao_fora?`<div class="nota-block" style="margin-bottom:6px;"><div class="nota-meta">A negociar fora</div><div class="nota-text">${l.negociacao_fora}</div></div>`:''}
-      ${l.relacao_interna?`<div class="nota-block"><div class="nota-meta">Referência</div><div class="nota-text">${l.relacao_interna}</div></div>`:''}
-    </div>`:''}
 
     ${l.td_pedido?`<div class="ficha-section alt">
       <p class="sec-title">Test Drive</p>
       ${cr('Data',l.td_agendado)}${cr('Stand',l.td_stand)}${cr('Especialista',l.td_esp)}
     </div>`:''}
 
-    <!-- PREFERÊNCIAS -->
-    <div class="ficha-section">
-      <p class="sec-title">Preferências</p>
-      <div id="prefs-${l.id}" style="margin-bottom:.5rem;">${renderPrefs(l)}</div>
-    </div>
-
-    <!-- REUNIÃO -->
-    <div class="ficha-section alt">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.4rem;">
-        <p class="sec-title" style="margin-bottom:0;">Reunião presencial</p>
-        <button onclick="abrirModalReuniao('${l.id}')" class="btn sm">+ Agendar</button>
-      </div>
-      ${renderReuniao(l)}
-    </div>
-
-    <!-- PROPOSTAS -->
-    <div class="ficha-section">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.4rem;">
-        <p class="sec-title" style="margin-bottom:0;">Propostas</p>
-        <button onclick="abrirModalProposta('${l.id}')" class="btn sm">+ Nova</button>
-      </div>
-      ${renderPropostas(l)}
-    </div>
-
     <!-- FOLLOW-UP -->
     <div class="ficha-section alt">
       <p class="sec-title">Follow-up</p>
-      <div id="follow-box-${l.id}" style="background:${l.follow_data?'#e6f4ea':'#f5f4f2'};border-radius:10px;padding:.7rem;border:${l.follow_data?'1.5px solid #2e7d32':'1px solid #e8e6e1'};">
-        ${l.follow_data?`<div style="font-size:12px;color:#276b2f;font-weight:600;margin-bottom:6px;">Agendado para ${new Date(l.follow_data).toLocaleDateString('pt-PT')}${l.follow_data.length>10?' '+l.follow_data.slice(11,16):''}</div>`:'<div style="font-size:12px;color:#999;margin-bottom:6px;">Sem follow-up agendado</div>'}
-        <label class="flabel">Data</label>
-        <input class="finput" type="date" id="fdt-${l.id}" value="${l.follow_data?l.follow_data.slice(0,10):''}" onchange="setFollowDataNew('${l.id}')" style="margin-bottom:6px;">
-        <div id="hora-toggle-${l.id}" style="margin-bottom:6px;">
-          <button onclick="toggleHora('${l.id}')" class="btn sm" style="color:#888;">+ Definir hora</button>
-        </div>
-        <div id="hora-input-${l.id}" style="display:${l.follow_data&&l.follow_data.length>10?'block':'none'};margin-bottom:6px;">
-          <label class="flabel">Hora</label>
-          <input class="finput" type="time" id="fhora-${l.id}" value="${l.follow_data&&l.follow_data.length>10?l.follow_data.slice(11,16):''}" onchange="setFollowDataNew('${l.id}')">
-        </div>
-        <input class="finput" id="fn-${l.id}" placeholder="Nota do follow-up..." value="${l.follow_nota||''}" onblur="salvarFN('${l.id}')" style="margin-bottom:0;">
-      </div>
-    </div>
-
-    <!-- NOTA -->
-    <div class="ficha-section">
-      <p class="sec-title">Adicionar nota</p>
-      <textarea class="finput" id="ni-${l.id}" placeholder="O que aconteceu? (ou usa o microfone)" style="height:76px;margin-bottom:7px;"></textarea>
-      <button class="btn primary full" onclick="addNota('${l.id}')">+ Guardar nota</button>
+      ${followBox}
     </div>
 
     <!-- HISTÓRICO -->
-    <div class="ficha-section alt">
+    <div class="ficha-section">
       <p class="sec-title">Histórico</p>
       ${notas||'<p style="font-size:13px;color:#999;">Sem notas</p>'}
     </div>
 
-    <!-- RESUMO BITRIX -->
-    <div class="ficha-section">
-      <p class="sec-title">Resumo para Bitrix</p>
-      <div class="resumo-box" id="res-${l.id}">${resumo(l)}</div>
-      <button class="btn full" onclick="copiar('${l.id}')" style="margin-top:8px;">📋 Copiar resumo</button>
-    </div>
-
-    <!-- FECHAR LEAD -->
-    <div class="ficha-section alt">
-      <p class="sec-title">Fechar lead</p>
-      <div style="display:flex;flex-direction:column;gap:7px;">
+    <!-- COLAPSADOS -->
+    ${col(l.id+'-prefs','PREFERÊNCIAS',nPrefs||'',`<div id="prefs-${l.id}">${renderPrefs(l)}</div>`)}
+    ${col(l.id+'-props','PROPOSTAS',nPropostas||'',`<div style="margin-bottom:6px;">${renderPropostas(l)}</div><button onclick="abrirModalProposta('${l.id}')" class="btn sm" style="margin-top:4px;">+ Nova proposta</button>`)}
+    ${col(l.id+'-reun','REUNIÃO','',`${renderReuniao(l)}<button onclick="abrirModalReuniao('${l.id}')" class="btn sm" style="margin-top:6px;">+ Agendar reunião</button>`)}
+    ${col(l.id+'-bitrix','RESUMO BITRIX','',`<div class="resumo-box" id="res-${l.id}" style="font-size:11px;">${resumo(l)}</div><button class="btn full" onclick="copiar('${l.id}')" style="margin-top:7px;font-size:12px;">📋 Copiar resumo</button>`)}
+    ${col(l.id+'-fechar','FECHAR LEAD','',`
+      <div style="display:flex;flex-direction:column;gap:7px;margin-bottom:${(l.estado==='fechado'||l.estado==='sem_retorno')?'10px':'0'};">
         <button class="btn full success" onclick="abrirModalSucesso('${l.id}')">✅ Fechar com sucesso</button>
         <button class="btn full warning" onclick="abrirModalInsucesso('${l.id}')">❌ Fechar sem sucesso</button>
         <button class="btn full danger" onclick="confirmarApagar('${l.id}')">Apagar lead</button>
       </div>
-    </div>
-
-    ${(l.estado==='fechado'||l.estado==='sem_retorno')?`
-    <div class="ficha-section" style="padding:.75rem 1rem;">
-      <div style="background:${l.bitrix_ok?'#e6f4ea':'#fff3cd'};border:1.5px solid ${l.bitrix_ok?'#2e7d32':'#b7770d'};border-radius:10px;padding:.85rem;display:flex;align-items:center;gap:10px;">
+      ${(l.estado==='fechado'||l.estado==='sem_retorno')?`<div style="background:${l.bitrix_ok?'#e6f4ea':'#fff3cd'};border:1.5px solid ${l.bitrix_ok?'#2e7d32':'#b7770d'};border-radius:10px;padding:.75rem;display:flex;align-items:center;gap:10px;">
         <input type="checkbox" id="bitrix-chk-${l.id}" ${l.bitrix_ok?'checked':''} onchange="marcarBitrix('${l.id}',this.checked)" style="width:20px;height:20px;flex-shrink:0;cursor:pointer;">
         <label for="bitrix-chk-${l.id}" style="font-size:13px;font-weight:600;cursor:pointer;color:${l.bitrix_ok?'#276b2f':'#9a6510'};">${l.bitrix_ok?'Inserida no Bitrix':'Pendente — inserir no Bitrix'}</label>
-      </div>
-    </div>`:''}
+      </div>`:''}
+    `)}
+    <div style="height:1rem;"></div>
   `;}
+
+function toggleCol(id,row){
+  const el=document.getElementById(id);
+  const arrow=document.getElementById('col-arrow-'+id);
+  if(!el)return;
+  const open=el.style.display==='block';
+  el.style.display=open?'none':'block';
+  if(arrow)arrow.textContent=open?'▼':'▲';
+}
 
 function editarNota(leadId,idx){
   document.getElementById('nt-'+leadId+'-'+idx).style.display='none';
