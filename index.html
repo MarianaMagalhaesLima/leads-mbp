@@ -304,7 +304,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <div class="modal">
     <div class="modal-title">📄 Registar proposta</div>
     <div class="ffield" style="margin-top:.75rem;"><label class="flabel">Modelo</label><input class="finput" id="prop-modelo" placeholder="Ex: GLC 300de 4MATIC"></div>
-    <div class="ffield"><label class="flabel">KOM</label><input class="finput" id="prop-kom"></div>
+    <div class="ffield"><label class="flabel">KOM</label><input class="finput" id="prop-kom" inputmode="text"></div>
     <div class="ffield"><label class="flabel">Preço de venda (€)</label><input class="finput" id="prop-preco" type="number"></div>
     <div class="ffield"><label class="flabel">Validade</label><input class="finput" id="prop-validade" type="date"></div>
     <div class="ffield"><label class="flabel">Estado</label>
@@ -418,12 +418,12 @@ const TMPLS_WA_EN=[
 ];
 
 const TMPLS_EMAIL_PT=[
-  {label:'Apresentação — Bom dia', subject:'Mercedes-Benz | Sociedade Comercial C. Santos – Mariana Magalhães', body:`Bom dia,\nTentei entrar em contacto por telefone mas não consegui estabelecer ligação, pelo que aproveito para me apresentar por esta via.\nO meu nome é Mariana Magalhães e sou consultora comercial Mercedes-Benz na Sociedade Comercial C. Santos. Recebi o seu interesse num dos nossos modelos e gostaria de me colocar à sua disposição para ajudar no que precisar — seja esclarecer dúvidas, apresentar opções ou agendar uma visita ao stand.\nPode contactar-me a qualquer momento por resposta a este email ou diretamente pelo 918 080 238.`},
-  {label:'Apresentação — Boa tarde', subject:'Mercedes-Benz | Sociedade Comercial C. Santos – Mariana Magalhães', body:`Boa tarde,\nTentei entrar em contacto por telefone mas não consegui estabelecer ligação, pelo que aproveito para me apresentar por esta via.\nO meu nome é Mariana Magalhães e sou consultora comercial Mercedes-Benz na Sociedade Comercial C. Santos. Recebi o seu interesse num dos nossos modelos e gostaria de me colocar à sua disposição para ajudar no que precisar — seja esclarecer dúvidas, apresentar opções ou agendar uma visita ao stand.\nPode contactar-me a qualquer momento por resposta a este email ou diretamente pelo 918 080 238.`},
-  {label:'N.º incorreto — Bom dia', subject:'Mercedes-Benz | Sociedade Comercial C. Santos – Mariana Magalhães', body:`Bom dia,\nO meu nome é Mariana Magalhães e sou consultora comercial Mercedes-Benz na Sociedade Comercial C. Santos. Tentei entrar em contacto por telefone a propósito do seu interesse num dos nossos modelos, mas o número que temos em sistema não está correto.\nCaso pretenda, pode responder a este email ou contactar-me diretamente através do 918 080 238 — terei todo o gosto em ajudar e dar seguimento ao seu pedido.`},
-  {label:'N.º incorreto — Boa tarde', subject:'Mercedes-Benz | Sociedade Comercial C. Santos – Mariana Magalhães', body:`Boa tarde,\nO meu nome é Mariana Magalhães e sou consultora comercial Mercedes-Benz na Sociedade Comercial C. Santos. Tentei entrar em contacto por telefone a propósito do seu interesse num dos nossos modelos, mas o número que temos em sistema não está correto.\nCaso pretenda, pode responder a este email ou contactar-me diretamente através do 918 080 238 — terei todo o gosto em ajudar e dar seguimento ao seu pedido.`},
-  {label:'Envio de proposta — Bom dia', subject:'Proposta Mercedes-Benz | Sociedade Comercial C. Santos', body:`Bom dia,\nConforme acordado, remeto, em anexo, a proposta referente ao modelo do seu interesse.\nEstou à sua inteira disposição para esclarecer qualquer dúvida ou ajustar a proposta de acordo com as suas necessidades.`},
-  {label:'Envio de proposta — Boa tarde', subject:'Proposta Mercedes-Benz | Sociedade Comercial C. Santos', body:`Boa tarde,\nConforme acordado, remeto, em anexo, a proposta referente ao modelo do seu interesse.\nEstou à sua inteira disposição para esclarecer qualquer dúvida ou ajustar a proposta de acordo com as suas necessidades.`},
+  {label:'Apresentação — Bom dia', subject:'Mercedes-Benz | Sociedade Comercial C. Santos – Mariana Magalhães', body:`Bom dia,\nTentei entrar em contacto por telefone mas não consegui estabelecer ligação, pelo que aproveito para me apresentar por esta via.\nO meu nome é Mariana Magalhães e sou consultora comercial Mercedes-Benz na Sociedade Comercial C. Santos. Recebi o seu interesse num dos nossos modelos e gostaria de me colocar à sua disposição para ajudar no que precisar — seja esclarecer dúvidas, apresentar opções ou agendar uma visita ao stand.\nPode contactar-me a qualquer momento por resposta a este email ou diretamente pelo 918 080 238.\nObrigada.`},
+  {label:'Apresentação — Boa tarde', subject:'Mercedes-Benz | Sociedade Comercial C. Santos – Mariana Magalhães', body:`Boa tarde,\nTentei entrar em contacto por telefone mas não consegui estabelecer ligação, pelo que aproveito para me apresentar por esta via.\nO meu nome é Mariana Magalhães e sou consultora comercial Mercedes-Benz na Sociedade Comercial C. Santos. Recebi o seu interesse num dos nossos modelos e gostaria de me colocar à sua disposição para ajudar no que precisar — seja esclarecer dúvidas, apresentar opções ou agendar uma visita ao stand.\nPode contactar-me a qualquer momento por resposta a este email ou diretamente pelo 918 080 238.\nObrigada.`},
+  {label:'N.º incorreto — Bom dia', subject:'Mercedes-Benz | Sociedade Comercial C. Santos – Mariana Magalhães', body:`Bom dia,\nO meu nome é Mariana Magalhães e sou consultora comercial Mercedes-Benz na Sociedade Comercial C. Santos. Tentei entrar em contacto por telefone a propósito do seu interesse num dos nossos modelos, mas o número que temos em sistema não está correto.\nCaso pretenda, pode responder a este email ou contactar-me diretamente através do 918 080 238 — terei todo o gosto em ajudar e dar seguimento ao seu pedido.\nObrigada.`},
+  {label:'N.º incorreto — Boa tarde', subject:'Mercedes-Benz | Sociedade Comercial C. Santos – Mariana Magalhães', body:`Boa tarde,\nO meu nome é Mariana Magalhães e sou consultora comercial Mercedes-Benz na Sociedade Comercial C. Santos. Tentei entrar em contacto por telefone a propósito do seu interesse num dos nossos modelos, mas o número que temos em sistema não está correto.\nCaso pretenda, pode responder a este email ou contactar-me diretamente através do 918 080 238 — terei todo o gosto em ajudar e dar seguimento ao seu pedido.\nObrigada.`},
+  {label:'Envio de proposta — Bom dia', subject:'Proposta Mercedes-Benz | Sociedade Comercial C. Santos', body:`Bom dia,\nAntes de mais, permita-me agradecer-lhe o contacto, bem como o interesse demonstrado na Sociedade Comercial C. Santos e na Mercedes-Benz.\nConforme acordado, remeto, em anexo, a proposta referente ao modelo do seu interesse. Estou à sua inteira disposição para esclarecer qualquer dúvida ou ajustar a proposta de acordo com as suas necessidades.\nMuito obrigada.`},
+  {label:'Envio de proposta — Boa tarde', subject:'Proposta Mercedes-Benz | Sociedade Comercial C. Santos', body:`Boa tarde,\nAntes de mais, permita-me agradecer-lhe o contacto, bem como o interesse demonstrado na Sociedade Comercial C. Santos e na Mercedes-Benz.\nConforme acordado, remeto, em anexo, a proposta referente ao modelo do seu interesse. Estou à sua inteira disposição para esclarecer qualquer dúvida ou ajustar a proposta de acordo com as suas necessidades.\nMuito obrigada.`},
   {label:'Follow-up proposta — Bom dia', subject:'Proposta Mercedes-Benz | Sociedade Comercial C. Santos', body:`Bom dia,\nVenho verificar se teve oportunidade de analisar a proposta que lhe enviei e se tem alguma questão em que eu possa ajudar.\nMuito obrigada.`},
   {label:'Follow-up proposta — Boa tarde', subject:'Proposta Mercedes-Benz | Sociedade Comercial C. Santos', body:`Boa tarde,\nVenho verificar se teve oportunidade de analisar a proposta que lhe enviei e se tem alguma questão em que eu possa ajudar.\nMuito obrigada.`},
   {label:'Lembrete test drive — Bom dia', subject:'Test Drive Mercedes-Benz | Sociedade Comercial C. Santos', body:`Bom dia,\nVenho relembrar o test drive agendado para amanhã e recordar que estarei à sua disposição para qualquer questão que surja até lá.\nObrigada.`},
@@ -495,7 +495,14 @@ function enviarTemplate(tipo, encodedTmpl){
 
   if(tipo==='wa'){
     fecharModalTmpl('wa');
-    const url='https://wa.me/351'+telRaw+'?text='+encodeURIComponent(t.body);
+    const telWA=(()=>{
+      const raw=String(l?l.tel||'':'').trim();
+      if(raw.startsWith('+'))return raw.replace('+','');
+      if(raw.startsWith('00'))return raw.slice(2);
+      // 9-digit PT number
+      return '351'+raw.replace(/\D/g,'');
+    })();
+    const url='https://wa.me/'+telWA+'?text='+encodeURIComponent(t.body);
     window.open(url,'_blank');
   } else if(tipo==='sms'){
     fecharModalTmpl('sms');
@@ -579,7 +586,7 @@ async function eliminarNoSheets(id){
 
 function ini(n){return n.split(' ').slice(0,2).map(x=>x[0]).join('').toUpperCase();}
 function isUrg(l){return l.estado==='contactar'||(l.follow_data&&new Date(l.follow_data)<=HOJE);}
-function bdg(e){return{contactar:'<span class="badge badge-hot">Contactar</span>',follow_up:'<span class="badge badge-warm">Follow-up</span>',td_agendado:'<span class="badge badge-done">TD Agendado</span>',fechado:'<span class="badge badge-cold">Fechado ✅</span>',sem_retorno:'<span class="badge badge-cold">Sem retorno ❌</span>'}[e]||e;}
+function bdg(e){return{contactar:'<span class="badge badge-hot">Contactar</span>',follow_up:'<span class="badge badge-warm">Follow-up</span>',td_agendado:'<span class="badge badge-done">TD Agendado</span>',fechado:'<span class="badge badge-cold">Fechado ✅</span>',sem_retorno:'<span class="badge badge-cold">Sem sucesso ❌</span>'}[e]||e;}
 
 function ordenar(arr){
   const v=(document.getElementById('sort-select')||{}).value||'recente';
@@ -590,14 +597,22 @@ function ordenar(arr){
   });
 }
 
+function isAtraso(l){
+  if(!l.follow_data)return false;
+  const fd=new Date(l.follow_data);fd.setHours(0,0,0,0);
+  const hj=new Date();hj.setHours(0,0,0,0);
+  return fd<hj;
+}
 function cardHTML(l){
+  const atraso=isAtraso(l);
+  const dataAtraso=atraso?new Date(l.follow_data).toLocaleDateString('pt-PT'):'';
   return`<div class="lead-card" onclick="abrirFicha('${l.id}')">
     <div class="lead-header">
       <div class="avatar">${ini(l.nome)}</div>
       <div style="flex:1;min-width:0;"><div class="lead-name">${l.nome}</div><div class="lead-car">${l.carro}${l.kom?' · '+l.kom:''}</div></div>
       ${bdg(l.estado)}
     </div>
-    <div class="lead-follow ${isUrg(l)?'urgent':''}">⏰ ${isUrg(l)?'Hoje — ':''}${l.follow_nota||'Sem follow-up'}</div>
+    <div class="lead-follow ${isUrg(l)?'urgent':''}">${atraso?`⚠️ <span style="color:#c0392b;font-weight:600;">Em atraso desde ${dataAtraso} — ${l.follow_nota||''}</span>`:`⏰ ${l.follow_nota||'Sem follow-up'}`}</div>
   </div>`;}
 
 function ativos(){return leads.filter(l=>l.estado!=='fechado'&&l.estado!=='sem_retorno');}
@@ -645,6 +660,7 @@ function renderArquivo(){
         ${bdg(l.estado)}
       </div>
       <div class="lead-follow">${((l.notas&&l.notas.length?l.notas[l.notas.length-1].texto:'')||'').substring(0,60)}</div>
+      ${!isAp&&!l.bitrix_ok?'<div style="margin-top:6px;font-size:11px;font-weight:600;color:#b7770d;">⚠️ Bitrix pendente</div>':''}
       ${isAp?`<div style="margin-top:8px;"><button onclick="restaurarLead('${l.id}')" class="btn" style="font-size:12px;padding:5px 10px;">↩ Restaurar</button></div>`:''}
     </div>`;}).join(''):'<div class="empty">Sem leads nesta categoria</div>';
 }
@@ -657,10 +673,14 @@ function mudaTab(btn,t){tabAtual=t;document.querySelectorAll('.tab').forEach(x=>
 
 function campo(label,val){return`<div class="campo"><div class="campo-label">${label}</div><div class="campo-val">${val||'—'}</div></div>`;}
 function campoTel(label,val){
-  // Display with spacing, value clean for copy
-  const clean=String(val||'').replace(/\D/g,'');
+  const clean=String(val||'').replace(/[^\d+]/g,'');
   const display=formatTelDisplay(val);
-  return`<div class="campo"><div class="campo-label">${label}</div><div class="campo-val"><span class="tel-display" data-tel="${clean}">${display}</span></div></div>`;
+  // Rendered as two spans: visual (with spacing) + hidden clean value for copy
+  return`<div class="campo"><div class="campo-label">${label}</div><div class="campo-val" style="display:flex;align-items:center;gap:6px;">
+    <span aria-hidden="true" style="pointer-events:none;">${display}</span>
+    <input type="text" value="${clean}" readonly style="position:absolute;opacity:0;pointer-events:none;width:1px;" tabindex="-1">
+    <button onclick="event.stopPropagation();navigator.clipboard&&navigator.clipboard.writeText('${clean}')" style="background:none;border:none;color:#aaa;cursor:pointer;font-size:11px;padding:0;flex-shrink:0;" title="Copiar">📋</button>
+  </div></div>`;
 }
 
 function renderPrefs(l){
@@ -758,12 +778,19 @@ function renderFicha(l){
     </div>
     <div style="margin-bottom:1rem;">${renderPropostas(l)}</div>
     <div class="divider"></div><p class="stitle">Follow-up</p>
-    <div style="display:flex;gap:8px;margin-bottom:.75rem;flex-wrap:wrap;">
-      ${['Hoje','Amanhã','3 dias','1 semana'].map((t,i)=>`<button class="btn" style="font-size:12px;padding:6px 12px;" onclick="setFollow('${l.id}',${[0,1,3,7][i]},'${t}')">${t}</button>`).join('')}
+    <div id="follow-box-${l.id}" style="background:${l.follow_data?'#e8f5e9':'#f5f4f2'};border-radius:10px;padding:.75rem;margin-bottom:.75rem;border:${l.follow_data?'1.5px solid #2e7d32':'1px solid #e8e6e1'};">
+      ${l.follow_data?`<div style="font-size:12px;color:#2e7d32;font-weight:600;margin-bottom:6px;">✅ Agendado para ${new Date(l.follow_data).toLocaleDateString('pt-PT')}${l.follow_data.length>10?' '+l.follow_data.slice(11,16):''}</div>`:'<div style="font-size:12px;color:#888;margin-bottom:6px;">Sem follow-up agendado</div>'}
+      <label class="flabel">Data</label>
+      <input class="finput" type="date" id="fdt-${l.id}" value="${l.follow_data?l.follow_data.slice(0,10):''}" onchange="setFollowDataNew('${l.id}')" style="margin-bottom:6px;">
+      <div id="hora-toggle-${l.id}" style="margin-bottom:6px;">
+        <button onclick="toggleHora('${l.id}')" class="btn" style="font-size:11px;padding:4px 10px;color:#888;">+ Definir hora</button>
+      </div>
+      <div id="hora-input-${l.id}" style="display:${l.follow_data&&l.follow_data.length>10?'block':'none'};margin-bottom:6px;">
+        <label class="flabel">Hora</label>
+        <input class="finput" type="time" id="fhora-${l.id}" value="${l.follow_data&&l.follow_data.length>10?l.follow_data.slice(11,16):''}" onchange="setFollowDataNew('${l.id}')">
+      </div>
+      <input class="finput" id="fn-${l.id}" placeholder="Nota do follow-up..." value="${l.follow_nota||''}" onblur="salvarFN('${l.id}')" style="margin-bottom:0;">
     </div>
-    <label class="flabel">Data e hora específica</label>
-    <input class="finput" type="datetime-local" id="fdt-${l.id}" value="${l.follow_data&&l.follow_data.length>10?l.follow_data:''}" onchange="setFollowData('${l.id}')" style="margin-bottom:8px;">
-    <input class="finput" id="fn-${l.id}" placeholder="Nota do follow-up..." value="${l.follow_nota||''}" onblur="salvarFN('${l.id}')" style="margin-bottom:8px;">
     <div class="divider"></div><p class="stitle">Adicionar nota</p>
     <textarea class="finput" id="ni-${l.id}" placeholder="O que aconteceu? (ou usa o microfone)" style="height:80px;margin-bottom:8px;"></textarea>
     <button class="btn primary full" onclick="addNota('${l.id}')" style="margin-bottom:1rem;">+ Guardar nota</button>
@@ -778,6 +805,11 @@ function renderFicha(l){
       <button class="btn full warning" onclick="abrirModalInsucesso('${l.id}')">❌ Fechar sem sucesso</button>
       <button class="btn full danger" onclick="confirmarApagar('${l.id}')">🗑 Apagar lead</button>
     </div>
+    ${(l.estado==='fechado'||l.estado==='sem_retorno')?`
+    <div style="background:${l.bitrix_ok?'#e8f5e9':'#fff3cd'};border:1.5px solid ${l.bitrix_ok?'#2e7d32':'#b7770d'};border-radius:10px;padding:.85rem;margin-bottom:1rem;display:flex;align-items:center;gap:10px;">
+      <input type="checkbox" id="bitrix-chk-${l.id}" ${l.bitrix_ok?'checked':''} onchange="marcarBitrix('${l.id}',this.checked)" style="width:20px;height:20px;flex-shrink:0;cursor:pointer;">
+      <label for="bitrix-chk-${l.id}" style="font-size:13px;font-weight:600;cursor:pointer;color:${l.bitrix_ok?'#2e7d32':'#b7770d'};">${l.bitrix_ok?'✅ Inserida no Bitrix':'⚠️ Pendente — inserir no Bitrix'}</label>
+    </div>`:''}
   `;}
 
 function editarNota(leadId,idx){
@@ -934,7 +966,7 @@ function abrirEditar(id){
     <div class="ffield"><label class="flabel">E-mail</label><input class="finput" id="ed-email" type="email" value="${l.email||''}"></div>
     <div class="ffield"><label class="flabel">ID (OPP/LEAD)</label><input class="finput" id="ed-opp" value="${l.opp_id||''}"></div>
     <div class="ffield"><label class="flabel">Viatura pretendida</label><input class="finput" id="ed-carro" value="${l.carro||''}"></div>
-    <div class="ffield"><label class="flabel">KOM</label><input class="finput" id="ed-kom" value="${l.kom||''}"></div>
+    <div class="ffield"><label class="flabel">KOM</label><input class="finput" id="ed-kom" value="${l.kom||''}" inputmode="text"></div>
     <div class="ffield"><label class="flabel">Tipo de cliente</label>
       <select class="finput" id="ed-tipo">
         <option ${l.tipo==='Particular'?'selected':''}>Particular</option>
@@ -977,7 +1009,7 @@ function abrirNova(){document.getElementById('ov-nova').classList.add('open');do
   <div class="ffield"><label class="flabel">E-mail</label><input class="finput" id="nf-email" type="email"></div>
   <div class="ffield"><label class="flabel">ID (OPP/LEAD)</label><input class="finput" id="nf-opp"></div>
   <div class="ffield"><label class="flabel">Viatura pretendida</label><input class="finput" id="nf-carro"></div>
-  <div class="ffield"><label class="flabel">KOM</label><input class="finput" id="nf-kom"></div>
+  <div class="ffield"><label class="flabel">KOM</label><input class="finput" id="nf-kom" inputmode="text"></div>
   <div class="ffield"><label class="flabel">Tipo de cliente</label><select class="finput" id="nf-tipo"><option>Particular</option><option>Empresa</option><option>ENI</option></select></div>
   <div class="ffield"><label class="flabel">NIF (empresa)</label><input class="finput" id="nf-nif"></div>
   <div class="trow"><span style="font-size:13px;">Cliente existente</span><input type="checkbox" id="nf-exist" style="width:18px;height:18px;"></div>
@@ -1112,6 +1144,36 @@ Responde APENAS com JSON válido, sem mais nada:
   if(ind)ind.style.display='none';
 }
 function descartarT(){['tbox-main','tbox-ficha'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});transcript='';}
+
+function toggleHora(id){
+  const inp=document.getElementById('hora-input-'+id);
+  const btn=document.getElementById('hora-toggle-'+id);
+  if(inp.style.display==='none'){
+    inp.style.display='block';
+    btn.innerHTML='<button onclick="toggleHora(\''+id+'\')" class="btn" style="font-size:11px;padding:4px 10px;color:#c0392b;">✕ Remover hora</button>';
+  }else{
+    inp.style.display='none';
+    btn.innerHTML='<button onclick="toggleHora(\''+id+'\')" class="btn" style="font-size:11px;padding:4px 10px;color:#888;">+ Definir hora</button>';
+  }
+}
+function setFollowDataNew(id){
+  const l=leads.find(x=>String(x.id)===String(id));
+  const dateEl=document.getElementById('fdt-'+id);
+  const horaEl=document.getElementById('fhora-'+id);
+  if(!l||!dateEl||!dateEl.value)return;
+  const hora=horaEl&&horaEl.value?'T'+horaEl.value:'';
+  l.follow_data=dateEl.value+hora;
+  l.estado='follow_up';
+  const fn=document.getElementById('fn-'+id);if(fn&&fn.value)l.follow_nota=fn.value;
+  guardar(l);renderFicha(l);
+}
+function marcarBitrix(id,checked){
+  const l=leads.find(x=>String(x.id)===String(id));if(!l)return;
+  l.bitrix_ok=checked;
+  const agora=new Date();const ds=agora.toLocaleDateString('pt-PT')+' '+agora.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'});
+  if(checked){if(!l.notas)l.notas=[];l.notas.push({data:ds,texto:'✅ Inserida no Bitrix'});}
+  guardar(l);renderFicha(l);
+}
 
 iniciarPostCallWatch();
 carregar();
