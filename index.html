@@ -62,6 +62,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .campo{padding:7px 0;border-bottom:1px solid #e8e6e1;}
 .campo-label{font-size:11px;color:#888;margin-bottom:1px;}
 .campo-val{font-size:13px;color:#1a1a1a;word-break:break-all;}
+/* Phone number display formatting */
+.tel-display{letter-spacing:.08em;}
 .sync-bar{font-size:11px;color:#888;display:flex;align-items:center;gap:6px;padding:.35rem 1rem;border-bottom:1px solid #e8e6e1;background:#fafaf9;}
 .sdot{width:6px;height:6px;border-radius:50%;background:#2e7d32;flex-shrink:0;}
 .sdot.syncing{background:#b7770d;animation:blink 1s infinite;}
@@ -94,7 +96,22 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .modal-sub{font-size:13px;color:#888;margin-bottom:1rem;}
 .opcao-btn{width:100%;text-align:left;justify-content:flex-start;margin-bottom:6px;border-radius:10px;font-size:13px;}
 .opcao-btn.selected{background:#1a1a1a;color:#fff;border-color:#1a1a1a;}
-#main-view{height:100vh;overflow-y:auto;}.search-bar{padding:.5rem 1rem;border-bottom:1px solid #e8e6e1;display:flex;gap:8px;align-items:center;}
+#main-view{height:100vh;overflow-y:auto;}
+.search-bar{padding:.5rem 1rem;border-bottom:1px solid #e8e6e1;display:flex;gap:8px;align-items:center;}
+
+/* Template menu modal */
+.tmpl-list{display:flex;flex-direction:column;gap:6px;margin-bottom:.75rem;}
+.tmpl-btn{width:100%;text-align:left;justify-content:flex-start;padding:10px 14px;border:1px solid #e8e6e1;border-radius:10px;font-size:13px;cursor:pointer;background:#fff;color:#1a1a1a;font-family:inherit;}
+.tmpl-btn:active{background:#f0efed;}
+.tmpl-btn.en-toggle{border-color:#1a1a1a;font-weight:600;margin-top:4px;}
+.tmpl-section-title{font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:#aaa;margin:8px 0 4px;font-weight:600;}
+
+/* Post-call popup */
+.postcall-popup{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:#fff;border-top:2px solid #1a1a1a;padding:1rem;z-index:300;box-shadow:0 -4px 20px rgba(0,0,0,0.15);}
+.postcall-popup.hidden{display:none;}
+.postcall-title{font-size:13px;font-weight:700;margin-bottom:.75rem;color:#1a1a1a;}
+.postcall-btns{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.postcall-close{position:absolute;top:.75rem;right:1rem;background:none;border:none;color:#aaa;cursor:pointer;font-size:18px;}
 </style>
 </head>
 <body>
@@ -223,7 +240,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   </div>
 </div>
 
-
 <!-- EDITAR LEAD -->
 <div class="overlay" id="ov-editar">
   <button class="back-btn" onclick="fecharEditar()">← Cancelar</button>
@@ -258,6 +274,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <button class="btn full opcao-btn" onclick="selInsucesso(this,'Comprou outra marca')">Comprou outra marca</button>
       <button class="btn full opcao-btn" onclick="selInsucesso(this,'Decidiu não avançar')">Decidiu não avançar</button>
       <button class="btn full opcao-btn" onclick="selInsucesso(this,'Sem capacidade financeira')">Sem capacidade financeira</button>
+      <button class="btn full opcao-btn" onclick="selInsucesso(this,'Passei a colega')">Passei a colega</button>
+      <button class="btn full opcao-btn" onclick="selInsucesso(this,'Outro')">Outro</button>
     </div>
     <textarea class="finput" id="insucesso-texto" style="height:70px;margin-bottom:.75rem;" placeholder="Notas adicionais (opcional)..."></textarea>
     <div style="display:flex;gap:8px;">
@@ -304,6 +322,44 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   </div>
 </div>
 
+<!-- MODAL TEMPLATES WHATSAPP/SMS -->
+<div class="modal-bg" id="modal-tmpl-wa">
+  <div class="modal">
+    <div class="modal-title" id="tmpl-wa-title">💬 WhatsApp</div>
+    <div class="tmpl-list" id="tmpl-wa-list"></div>
+    <button class="btn full" onclick="fecharModalTmpl('wa')" style="margin-top:.5rem;">Cancelar</button>
+  </div>
+</div>
+
+<!-- MODAL TEMPLATES EMAIL -->
+<div class="modal-bg" id="modal-tmpl-email">
+  <div class="modal">
+    <div class="modal-title">✉️ Email</div>
+    <div class="tmpl-list" id="tmpl-email-list"></div>
+    <button class="btn full" onclick="fecharModalTmpl('email')" style="margin-top:.5rem;">Cancelar</button>
+  </div>
+</div>
+
+<!-- MODAL TEMPLATES SMS -->
+<div class="modal-bg" id="modal-tmpl-sms">
+  <div class="modal">
+    <div class="modal-title" id="tmpl-sms-title">📱 SMS</div>
+    <div class="tmpl-list" id="tmpl-sms-list"></div>
+    <button class="btn full" onclick="fecharModalTmpl('sms')" style="margin-top:.5rem;">Cancelar</button>
+  </div>
+</div>
+
+<!-- POP-UP PÓS-CHAMADA -->
+<div class="postcall-popup hidden" id="postcall-popup">
+  <button class="postcall-close" onclick="fecharPostCall()">✕</button>
+  <div class="postcall-title">Enviar mensagem?</div>
+  <div class="postcall-btns">
+    <button class="btn full" onclick="abrirTmplWA();fecharPostCall();" style="font-size:12px;">💬 WhatsApp</button>
+    <button class="btn full" onclick="abrirTmplSMS();fecharPostCall();" style="font-size:12px;">📱 SMS</button>
+    <button class="btn full" onclick="abrirTmplEmail();fecharPostCall();" style="font-size:12px;">✉️ Email</button>
+  </div>
+</div>
+
 </div>
 
 <script>
@@ -312,7 +368,171 @@ const HOJE=new Date();
 let leads=[],fichaId=null,SRec=null,recording=false,transcript='',tabAtual='hoje';
 let modalLeadId=null,insucessoSel=null,filtroArquivoAtual='todas';
 let campanhas=JSON.parse(localStorage.getItem('campanhas')||'[]');
+let postCallTimer=null;
+let tmplLang='pt'; // 'pt' or 'en'
 
+// ─── PESQUISA INSENSÍVEL A ACENTOS ───────────────────────────────────────────
+function normalizar(str){
+  return String(str||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+}
+
+// ─── FORMATAÇÃO VISUAL DE TELEFONES ──────────────────────────────────────────
+// Visual only — the actual value in href/wa.me stays clean
+function formatTelDisplay(tel){
+  const d=String(tel||'').replace(/\D/g,'');
+  if(d.length===9) return d.replace(/(\d{3})(\d{3})(\d{3})/,'$1 $2 $3');
+  if(d.length>9) return d; // international — display as-is
+  return tel;
+}
+
+// ─── TEMPLATES ───────────────────────────────────────────────────────────────
+const TMPLS_WA_PT=[
+  {label:'1.º Contacto — Bom dia', body:`Bom dia,\nO meu nome é Mariana Magalhães e sou consultora comercial Mercedes-Benz na Sociedade Comercial C. Santos.\nEntrei em contacto porque recebi o seu interesse num dos nossos modelos e gostaria de me colocar à sua disposição para ajudar no que precisar — seja esclarecer dúvidas, apresentar opções ou agendar uma visita ao stand.\nCom os melhores cumprimentos,\nMariana Magalhães | Mercedes-Benz - Sociedade Comercial C. Santos`},
+  {label:'1.º Contacto — Boa tarde', body:`Boa tarde,\nO meu nome é Mariana Magalhães e sou consultora comercial Mercedes-Benz na Sociedade Comercial C. Santos.\nEntrei em contacto porque recebi o seu interesse num dos nossos modelos e gostaria de me colocar à sua disposição para ajudar no que precisar — seja esclarecer dúvidas, apresentar opções ou agendar uma visita ao stand.\nCom os melhores cumprimentos,\nMariana Magalhães | Mercedes-Benz - Sociedade Comercial C. Santos`},
+  {label:'Não atendeu — Bom dia', body:`Bom dia. Tentei telefonar-lhe mas não consegui. Encontro-me disponível para falar quando for mais conveniente.\nMariana Magalhães | Mercedes-Benz - Sociedade Comercial C. Santos`},
+  {label:'Não atendeu — Boa tarde', body:`Boa tarde. Tentei telefonar-lhe mas não consegui. Encontro-me disponível para falar quando for mais conveniente.\nMariana Magalhães | Mercedes-Benz - Sociedade Comercial C. Santos`},
+  {label:'Follow-up proposta — Bom dia', body:`Bom dia. Venho verificar se teve oportunidade de analisar a proposta que lhe enviei e se tem alguma questão em que possa ajudar. Fico à disposição.\nMariana Magalhães | Mercedes-Benz - Sociedade Comercial C. Santos`},
+  {label:'Follow-up proposta — Boa tarde', body:`Boa tarde. Venho verificar se teve oportunidade de analisar a proposta que lhe enviei e se tem alguma questão em que possa ajudar. Fico à disposição.\nMariana Magalhães | Mercedes-Benz - Sociedade Comercial C. Santos`},
+  {label:'Test drive amanhã — Bom dia', body:`Bom dia. Venho apenas confirmar o test drive agendado para amanhã. Qualquer questão, estou disponível. Obrigada. 😊\nMariana Magalhães | Mercedes-Benz - Sociedade Comercial C. Santos`},
+  {label:'Test drive amanhã — Boa tarde', body:`Boa tarde. Venho apenas confirmar o test drive agendado para amanhã. Qualquer questão, estou disponível. Obrigada. 😊\nMariana Magalhães | Mercedes-Benz - Sociedade Comercial C. Santos`},
+  {label:'Lead inativo — Bom dia', body:`Bom dia. Há algum tempo que não nos falamos e queria saber se o seu interesse num Mercedes-Benz se mantém ou se posso ajudar de alguma forma. Estou à disposição, por favor não hesite em contactar-me.\nMariana Magalhães | Mercedes-Benz - Sociedade Comercial C. Santos`},
+  {label:'Lead inativo — Boa tarde', body:`Boa tarde. Há algum tempo que não nos falamos e queria saber se o seu interesse num Mercedes-Benz se mantém ou se posso ajudar de alguma forma. Estou à disposição, por favor não hesite em contactar-me.\nMariana Magalhães | Mercedes-Benz - Sociedade Comercial C. Santos`},
+  {label:'Pós-visita — Bom dia', body:`Bom dia. Agradeço a visita de hoje ao nosso showroom. Fico à disposição para qualquer questão que surja e espero poder ajudar em breve. 😊\nMariana Magalhães | Mercedes-Benz - Sociedade Comercial C. Santos`},
+  {label:'Pós-visita — Boa tarde', body:`Boa tarde. Agradeço a visita de hoje ao nosso showroom. Fico à disposição para qualquer questão que surja e espero poder ajudar em breve. 😊\nMariana Magalhães | Mercedes-Benz - Sociedade Comercial C. Santos`},
+];
+
+// EN templates — placeholders (to be filled in later)
+const TMPLS_WA_EN=[
+  {label:'1st Contact — Good morning', body:`Good morning,\nMy name is Mariana Magalhães and I am a Mercedes-Benz sales consultant at Sociedade Comercial C. Santos.\nI am reaching out because I received your interest in one of our models and would be happy to assist you — whether that is answering questions, presenting options, or scheduling a visit to our showroom.\nBest regards,\nMariana Magalhães | Mercedes-Benz - Sociedade Comercial C. Santos`},
+  {label:'1st Contact — Good afternoon', body:`Good afternoon,\nMy name is Mariana Magalhães and I am a Mercedes-Benz sales consultant at Sociedade Comercial C. Santos.\nI am reaching out because I received your interest in one of our models and would be happy to assist you — whether that is answering questions, presenting options, or scheduling a visit to our showroom.\nBest regards,\nMariana Magalhães | Mercedes-Benz - Sociedade Comercial C. Santos`},
+  {label:'No answer — Good morning', body:`Good morning. I tried to reach you by phone but was unable to connect. I am available to speak at your convenience.\nMariana Magalhães | Mercedes-Benz - Sociedade Comercial C. Santos`},
+  {label:'No answer — Good afternoon', body:`Good afternoon. I tried to reach you by phone but was unable to connect. I am available to speak at your convenience.\nMariana Magalhães | Mercedes-Benz - Sociedade Comercial C. Santos`},
+  {label:'Proposal follow-up — Good morning', body:`Good morning. I am following up to check whether you have had a chance to review the proposal I sent and whether there is anything I can help with. I remain at your disposal.\nMariana Magalhães | Mercedes-Benz - Sociedade Comercial C. Santos`},
+  {label:'Proposal follow-up — Good afternoon', body:`Good afternoon. I am following up to check whether you have had a chance to review the proposal I sent and whether there is anything I can help with. I remain at your disposal.\nMariana Magalhães | Mercedes-Benz - Sociedade Comercial C. Santos`},
+  {label:'Test drive tomorrow — Good morning', body:`Good morning. I am writing to confirm the test drive scheduled for tomorrow. Please do not hesitate to reach out if you have any questions. Thank you. 😊\nMariana Magalhães | Mercedes-Benz - Sociedade Comercial C. Santos`},
+  {label:'Test drive tomorrow — Good afternoon', body:`Good afternoon. I am writing to confirm the test drive scheduled for tomorrow. Please do not hesitate to reach out if you have any questions. Thank you. 😊\nMariana Magalhães | Mercedes-Benz - Sociedade Comercial C. Santos`},
+  {label:'Inactive lead — Good morning', body:`Good morning. It has been a while since we last spoke and I wanted to check whether your interest in a Mercedes-Benz is still active or whether there is anything I can help with. I remain available — please feel free to contact me at any time.\nMariana Magalhães | Mercedes-Benz - Sociedade Comercial C. Santos`},
+  {label:'Inactive lead — Good afternoon', body:`Good afternoon. It has been a while since we last spoke and I wanted to check whether your interest in a Mercedes-Benz is still active or whether there is anything I can help with. I remain available — please feel free to contact me at any time.\nMariana Magalhães | Mercedes-Benz - Sociedade Comercial C. Santos`},
+  {label:'Post-visit — Good morning', body:`Good morning. Thank you for visiting our showroom today. I remain available for any questions that may arise and look forward to being of assistance. 😊\nMariana Magalhães | Mercedes-Benz - Sociedade Comercial C. Santos`},
+  {label:'Post-visit — Good afternoon', body:`Good afternoon. Thank you for visiting our showroom today. I remain available for any questions that may arise and look forward to being of assistance. 😊\nMariana Magalhães | Mercedes-Benz - Sociedade Comercial C. Santos`},
+];
+
+const TMPLS_EMAIL_PT=[
+  {label:'Apresentação — Bom dia', subject:'Mercedes-Benz | Sociedade Comercial C. Santos – Mariana Magalhães', body:`Bom dia,\nTentei entrar em contacto por telefone mas não consegui estabelecer ligação, pelo que aproveito para me apresentar por esta via.\nO meu nome é Mariana Magalhães e sou consultora comercial Mercedes-Benz na Sociedade Comercial C. Santos. Recebi o seu interesse num dos nossos modelos e gostaria de me colocar à sua disposição para ajudar no que precisar — seja esclarecer dúvidas, apresentar opções ou agendar uma visita ao stand.\nPode contactar-me a qualquer momento por resposta a este email ou diretamente pelo 918 080 238.`},
+  {label:'Apresentação — Boa tarde', subject:'Mercedes-Benz | Sociedade Comercial C. Santos – Mariana Magalhães', body:`Boa tarde,\nTentei entrar em contacto por telefone mas não consegui estabelecer ligação, pelo que aproveito para me apresentar por esta via.\nO meu nome é Mariana Magalhães e sou consultora comercial Mercedes-Benz na Sociedade Comercial C. Santos. Recebi o seu interesse num dos nossos modelos e gostaria de me colocar à sua disposição para ajudar no que precisar — seja esclarecer dúvidas, apresentar opções ou agendar uma visita ao stand.\nPode contactar-me a qualquer momento por resposta a este email ou diretamente pelo 918 080 238.`},
+  {label:'N.º incorreto — Bom dia', subject:'Mercedes-Benz | Sociedade Comercial C. Santos – Mariana Magalhães', body:`Bom dia,\nO meu nome é Mariana Magalhães e sou consultora comercial Mercedes-Benz na Sociedade Comercial C. Santos. Tentei entrar em contacto por telefone a propósito do seu interesse num dos nossos modelos, mas o número que temos em sistema não está correto.\nCaso pretenda, pode responder a este email ou contactar-me diretamente através do 918 080 238 — terei todo o gosto em ajudar e dar seguimento ao seu pedido.`},
+  {label:'N.º incorreto — Boa tarde', subject:'Mercedes-Benz | Sociedade Comercial C. Santos – Mariana Magalhães', body:`Boa tarde,\nO meu nome é Mariana Magalhães e sou consultora comercial Mercedes-Benz na Sociedade Comercial C. Santos. Tentei entrar em contacto por telefone a propósito do seu interesse num dos nossos modelos, mas o número que temos em sistema não está correto.\nCaso pretenda, pode responder a este email ou contactar-me diretamente através do 918 080 238 — terei todo o gosto em ajudar e dar seguimento ao seu pedido.`},
+  {label:'Envio de proposta — Bom dia', subject:'Proposta Mercedes-Benz | Sociedade Comercial C. Santos', body:`Bom dia,\nConforme acordado, remeto, em anexo, a proposta referente ao modelo do seu interesse.\nEstou à sua inteira disposição para esclarecer qualquer dúvida ou ajustar a proposta de acordo com as suas necessidades.`},
+  {label:'Envio de proposta — Boa tarde', subject:'Proposta Mercedes-Benz | Sociedade Comercial C. Santos', body:`Boa tarde,\nConforme acordado, remeto, em anexo, a proposta referente ao modelo do seu interesse.\nEstou à sua inteira disposição para esclarecer qualquer dúvida ou ajustar a proposta de acordo com as suas necessidades.`},
+  {label:'Follow-up proposta — Bom dia', subject:'Proposta Mercedes-Benz | Sociedade Comercial C. Santos', body:`Bom dia,\nVenho verificar se teve oportunidade de analisar a proposta que lhe enviei e se tem alguma questão em que eu possa ajudar.\nMuito obrigada.`},
+  {label:'Follow-up proposta — Boa tarde', subject:'Proposta Mercedes-Benz | Sociedade Comercial C. Santos', body:`Boa tarde,\nVenho verificar se teve oportunidade de analisar a proposta que lhe enviei e se tem alguma questão em que eu possa ajudar.\nMuito obrigada.`},
+  {label:'Lembrete test drive — Bom dia', subject:'Test Drive Mercedes-Benz | Sociedade Comercial C. Santos', body:`Bom dia,\nVenho relembrar o test drive agendado para amanhã e recordar que estarei à sua disposição para qualquer questão que surja até lá.\nObrigada.`},
+  {label:'Lembrete test drive — Boa tarde', subject:'Test Drive Mercedes-Benz | Sociedade Comercial C. Santos', body:`Boa tarde,\nVenho relembrar o test drive agendado para amanhã e recordar que estarei à sua disposição para qualquer questão que surja até lá.\nObrigada.`},
+];
+
+const TMPLS_EMAIL_EN=[
+  {label:'Introduction — Good morning', subject:'Mercedes-Benz | Sociedade Comercial C. Santos – Mariana Magalhães', body:`Good morning,\nI tried to reach you by phone but was unable to connect, so I am taking this opportunity to introduce myself.\nMy name is Mariana Magalhães and I am a Mercedes-Benz sales consultant at Sociedade Comercial C. Santos. I received your interest in one of our models and would be delighted to assist you — whether that is answering questions, presenting options, or scheduling a visit to our showroom.\nYou can reach me at any time by replying to this email or directly on 918 080 238.`},
+  {label:'Introduction — Good afternoon', subject:'Mercedes-Benz | Sociedade Comercial C. Santos – Mariana Magalhães', body:`Good afternoon,\nI tried to reach you by phone but was unable to connect, so I am taking this opportunity to introduce myself.\nMy name is Mariana Magalhães and I am a Mercedes-Benz sales consultant at Sociedade Comercial C. Santos. I received your interest in one of our models and would be delighted to assist you — whether that is answering questions, presenting options, or scheduling a visit to our showroom.\nYou can reach me at any time by replying to this email or directly on 918 080 238.`},
+  {label:'Incorrect number — Good morning', subject:'Mercedes-Benz | Sociedade Comercial C. Santos – Mariana Magalhães', body:`Good morning,\nMy name is Mariana Magalhães and I am a Mercedes-Benz sales consultant at Sociedade Comercial C. Santos. I tried to reach you by phone regarding your interest in one of our models, however the number we have on record does not appear to be correct.\nShould you wish, you are welcome to reply to this email or contact me directly on 918 080 238 — I would be very happy to assist and follow up on your request.`},
+  {label:'Incorrect number — Good afternoon', subject:'Mercedes-Benz | Sociedade Comercial C. Santos – Mariana Magalhães', body:`Good afternoon,\nMy name is Mariana Magalhães and I am a Mercedes-Benz sales consultant at Sociedade Comercial C. Santos. I tried to reach you by phone regarding your interest in one of our models, however the number we have on record does not appear to be correct.\nShould you wish, you are welcome to reply to this email or contact me directly on 918 080 238 — I would be very happy to assist and follow up on your request.`},
+  {label:'Sending proposal — Good morning', subject:'Mercedes-Benz Proposal | Sociedade Comercial C. Santos', body:`Good morning,\nAs agreed, please find attached the proposal for the model you are interested in.\nI remain at your full disposal to answer any questions or adjust the proposal according to your needs.`},
+  {label:'Sending proposal — Good afternoon', subject:'Mercedes-Benz Proposal | Sociedade Comercial C. Santos', body:`Good afternoon,\nAs agreed, please find attached the proposal for the model you are interested in.\nI remain at your full disposal to answer any questions or adjust the proposal according to your needs.`},
+  {label:'Proposal follow-up — Good morning', subject:'Mercedes-Benz Proposal | Sociedade Comercial C. Santos', body:`Good morning,\nI am following up to check whether you have had a chance to review the proposal I sent and whether there is anything I can help with.\nThank you very much.`},
+  {label:'Proposal follow-up — Good afternoon', subject:'Mercedes-Benz Proposal | Sociedade Comercial C. Santos', body:`Good afternoon,\nI am following up to check whether you have had a chance to review the proposal I sent and whether there is anything I can help with.\nThank you very much.`},
+  {label:'Test drive reminder — Good morning', subject:'Test Drive Mercedes-Benz | Sociedade Comercial C. Santos', body:`Good morning,\nI am writing to remind you of the test drive scheduled for tomorrow and to let you know that I am available for any questions in the meantime.\nThank you.`},
+  {label:'Test drive reminder — Good afternoon', subject:'Test Drive Mercedes-Benz | Sociedade Comercial C. Santos', body:`Good afternoon,\nI am writing to remind you of the test drive scheduled for tomorrow and to let you know that I am available for any questions in the meantime.\nThank you.`},
+];
+
+// ─── TEMPLATE MODAL BUILDERS ─────────────────────────────────────────────────
+function buildTmplList(container, tmpls, tipo, lang){
+  const isPT = lang==='pt';
+  const items = tmpls.map(t=>`<button class="tmpl-btn" onclick="enviarTemplate('${tipo}','${encodeURIComponent(JSON.stringify(t))}')">${t.label}</button>`).join('');
+  const enBtn = `<button class="tmpl-btn en-toggle" onclick="toggleTmplLang('${tipo}')">${isPT?'🌐 EN':'🌐 PT'}</button>`;
+  container.innerHTML = items + enBtn;
+}
+
+function toggleTmplLang(tipo){
+  const newLang = tmplLang==='pt'?'en':'pt';
+  tmplLang = newLang;
+  if(tipo==='wa'||tipo==='sms'){
+    const tmpls = newLang==='pt'?TMPLS_WA_PT:TMPLS_WA_EN;
+    buildTmplList(document.getElementById('tmpl-wa-list'), tmpls, 'wa', newLang);
+    buildTmplList(document.getElementById('tmpl-sms-list'), tmpls, 'sms', newLang);
+  } else {
+    const tmpls = newLang==='pt'?TMPLS_EMAIL_PT:TMPLS_EMAIL_EN;
+    buildTmplList(document.getElementById('tmpl-email-list'), tmpls, 'email', newLang);
+  }
+}
+
+function abrirTmplWA(){
+  const l=fichaId?leads.find(x=>String(x.id)===fichaId):null;
+  tmplLang='pt';
+  buildTmplList(document.getElementById('tmpl-wa-list'), TMPLS_WA_PT, 'wa', 'pt');
+  document.getElementById('tmpl-wa-title').textContent = l?`💬 WhatsApp — ${l.nome.split(' ')[0]}`:'💬 WhatsApp';
+  document.getElementById('modal-tmpl-wa').classList.add('open');
+}
+function abrirTmplSMS(){
+  const l=fichaId?leads.find(x=>String(x.id)===fichaId):null;
+  tmplLang='pt';
+  buildTmplList(document.getElementById('tmpl-sms-list'), TMPLS_WA_PT, 'sms', 'pt');
+  document.getElementById('tmpl-sms-title').textContent = l?`📱 SMS — ${l.nome.split(' ')[0]}`:'📱 SMS';
+  document.getElementById('modal-tmpl-sms').classList.add('open');
+}
+function abrirTmplEmail(){
+  tmplLang='pt';
+  buildTmplList(document.getElementById('tmpl-email-list'), TMPLS_EMAIL_PT, 'email', 'pt');
+  document.getElementById('modal-tmpl-email').classList.add('open');
+}
+function fecharModalTmpl(tipo){
+  document.getElementById('modal-tmpl-'+tipo).classList.remove('open');
+}
+
+function enviarTemplate(tipo, encodedTmpl){
+  const t = JSON.parse(decodeURIComponent(encodedTmpl));
+  const l=fichaId?leads.find(x=>String(x.id)===fichaId):null;
+  const telRaw = l?String(l.tel||'').replace(/\D/g,''):'';
+  const emailAddr = l?l.email||'':'';
+
+  if(tipo==='wa'){
+    fecharModalTmpl('wa');
+    const url='https://wa.me/351'+telRaw+'?text='+encodeURIComponent(t.body);
+    window.open(url,'_blank');
+  } else if(tipo==='sms'){
+    fecharModalTmpl('sms');
+    const url='sms:'+telRaw+'?&body='+encodeURIComponent(t.body);
+    window.open(url,'_blank');
+  } else if(tipo==='email'){
+    fecharModalTmpl('email');
+    const url='mailto:'+emailAddr+'?subject='+encodeURIComponent(t.subject||'')+'&body='+encodeURIComponent(t.body);
+    window.open(url,'_blank');
+  }
+}
+
+// ─── PÓS-CHAMADA ─────────────────────────────────────────────────────────────
+function iniciarPostCallWatch(){
+  // When user returns from a phone call (visibilitychange to visible)
+  document.addEventListener('visibilitychange', function(){
+    if(document.visibilityState==='visible' && fichaId && postCallTimer){
+      clearTimeout(postCallTimer);
+      postCallTimer=null;
+      mostrarPostCall();
+    }
+  });
+}
+
+function prepararPostCall(){
+  // Called just before opening the phone dialer
+  postCallTimer = setTimeout(()=>{ postCallTimer=null; }, 60000);
+}
+
+function mostrarPostCall(){
+  document.getElementById('postcall-popup').classList.remove('hidden');
+}
+function fecharPostCall(){
+  document.getElementById('postcall-popup').classList.add('hidden');
+}
+
+// ─── SYNC ─────────────────────────────────────────────────────────────────────
 function setSyncStatus(s,msg){
   document.getElementById('sdot').className='sdot'+(s==='syncing'?' syncing':s==='error'?' error':'');
   document.getElementById('smsg').textContent=msg;
@@ -364,7 +584,7 @@ function bdg(e){return{contactar:'<span class="badge badge-hot">Contactar</span>
 function ordenar(arr){
   const v=(document.getElementById('sort-select')||{}).value||'recente';
   return[...arr].sort((a,b)=>{
-    if(v==='nome')return a.nome.localeCompare(b.nome);
+    if(v==='nome')return a.nome.localeCompare(b.nome,'pt');
     const da=new Date(a.criado||0),db=new Date(b.criado||0);
     return v==='antiga'?da-db:db-da;
   });
@@ -382,15 +602,16 @@ function cardHTML(l){
 
 function ativos(){return leads.filter(l=>l.estado!=='fechado'&&l.estado!=='sem_retorno');}
 
+// ─── PESQUISA (insensível a acentos) ─────────────────────────────────────────
 function pesquisar(){
-  const q=(document.getElementById('search-input').value||'').toLowerCase().trim();
+  const q=normalizar(document.getElementById('search-input').value||'').trim();
   if(!q){renderAtual();return;}
   const r=ordenar(ativos()).filter(l=>{
-    const txt=[l.nome,l.carro,l.tel,l.email,l.opp_id,l.kom,l.tipo,l.nif,l.negociacao_fora,l.relacao_interna,...(l.notas||[]).map(n=>n.texto)].join(' ').toLowerCase();
+    const txt=normalizar([l.nome,l.carro,l.tel,l.email,l.opp_id,l.kom,l.tipo,l.nif,l.negociacao_fora,l.relacao_interna,...(l.notas||[]).map(n=>n.texto)].join(' '));
     return txt.includes(q);
   });
   const dest=tabAtual==='hoje'?'lista-hoje':'lista-todas';
-  document.getElementById(dest).innerHTML=r.length?r.map(cardHTML).join(''):`<div class="empty">Sem resultados para "${q}"</div>`;
+  document.getElementById(dest).innerHTML=r.length?r.map(cardHTML).join(''):`<div class="empty">Sem resultados para "${document.getElementById('search-input').value}"</div>`;
 }
 
 function renderHoje(){document.getElementById('lista-hoje').innerHTML=ordenar(ativos().filter(isUrg)).map(cardHTML).join('')||'<div class="empty">Sem urgências hoje 🎉</div>';}
@@ -435,6 +656,12 @@ function renderAtual(){
 function mudaTab(btn,t){tabAtual=t;document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));btn.classList.add('active');['hoje','todas','stats','arquivo'].forEach(x=>{document.getElementById('tab-'+x).style.display=x===t?'':'none';});renderAtual();}
 
 function campo(label,val){return`<div class="campo"><div class="campo-label">${label}</div><div class="campo-val">${val||'—'}</div></div>`;}
+function campoTel(label,val){
+  // Display with spacing, value clean for copy
+  const clean=String(val||'').replace(/\D/g,'');
+  const display=formatTelDisplay(val);
+  return`<div class="campo"><div class="campo-label">${label}</div><div class="campo-val"><span class="tel-display" data-tel="${clean}">${display}</span></div></div>`;
+}
 
 function renderPrefs(l){
   if(!l.preferencias||!l.preferencias.length)return'<p style="font-size:13px;color:#888;">Sem preferências</p>';
@@ -502,16 +729,16 @@ function renderFicha(l){
       <div><div style="font-size:17px;font-weight:700;">${l.nome}</div><div style="font-size:12px;color:#888;margin-top:2px;">${l.opp_id} · Lead MBP</div></div>
     </div>
     <div class="action-grid">
-      <a href="tel:${l.tel}" class="action-link">📞 Ligar</a>
-      <a href="https://wa.me/351${String(l.tel).replace(/\D/g,'')}" class="action-link">💬 WhatsApp</a>
-      <a href="mailto:${l.email}" class="action-link">✉️ E-mail</a>
+      <a href="tel:${l.tel}" class="action-link" onclick="prepararPostCall()">📞 Ligar</a>
+      <button onclick="abrirTmplWA()" class="action-link">💬 WhatsApp</button>
+      <button onclick="abrirTmplEmail()" class="action-link">✉️ Email</button>
       <button onclick="ciclarEstado('${l.id}')" class="action-link">🔄 ${bdg(l.estado)}</button>
     </div>
     <button onclick="abrirEditar('${l.id}')" class="btn full" style="margin-bottom:1rem;font-size:13px;">✏️ Editar dados do cliente</button>
     ${sugsHtml}
     <div class="divider"></div><p class="stitle">Dados</p>
     <div class="campo-grid">
-      ${campo('Telemóvel',l.tel)}${campo('E-mail',l.email)}${campo('Viatura',l.carro)}${campo('KOM',l.kom)}${campo('Tipo',l.tipo)}${campo('Cliente exist.',l.cliente_existente?'Sim':'Não')}${l.nif?campo('NIF',l.nif):''}${l.frota?campo('Frota',l.frota):''}
+      ${campoTel('Telemóvel',l.tel)}${campo('E-mail',l.email)}${campo('Viatura',l.carro)}${campo('KOM',l.kom)}${campo('Tipo',l.tipo)}${campo('Cliente exist.',l.cliente_existente?'Sim':'Não')}${l.nif?campo('NIF',l.nif):''}${l.frota?campo('Frota',l.frota):''}
     </div>
     ${l.negociacao_fora||l.relacao_interna?`<div class="divider"></div><p class="stitle">Contexto</p><div style="margin-bottom:1rem;">${l.negociacao_fora?`<div class="nota-block"><div class="nota-meta">A negociar fora</div><div class="nota-text">${l.negociacao_fora}</div></div>`:''}${l.relacao_interna?`<div class="nota-block"><div class="nota-meta">Referência</div><div class="nota-text">${l.relacao_interna}</div></div>`:''}</div>`:''}
     ${l.td_pedido?`<div class="divider"></div><p class="stitle">Test Drive</p><div class="campo-grid">${campo('Data',l.td_agendado)}${campo('Stand',l.td_stand)}${campo('Especialista',l.td_esp)}</div>`:''}
@@ -886,6 +1113,7 @@ Responde APENAS com JSON válido, sem mais nada:
 }
 function descartarT(){['tbox-main','tbox-ficha'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});transcript='';}
 
+iniciarPostCallWatch();
 carregar();
 </script>
 </body>
