@@ -12,16 +12,20 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .app{max-width:480px;margin:0 auto;background:#fff;height:100vh;position:relative;overflow:hidden;}
 
 /* ── TOPBAR ── */
-.topbar{padding:.85rem 1rem .5rem;border-bottom:1px solid #e8e6e1;background:#fff;}
-.topbar-brand{font-size:10px;letter-spacing:.12em;color:#aaa;text-transform:uppercase;margin-bottom:2px;}
+.topbar{padding:.9rem 1rem .55rem;background:#1a1a1a;}
+.topbar-brand{font-size:10px;letter-spacing:.12em;color:rgba(255,255,255,0.4);text-transform:uppercase;margin-bottom:3px;}
 .topbar-row{display:flex;align-items:center;justify-content:space-between;gap:8px;}
-.topbar-name{font-size:15px;font-weight:600;color:#1a1a1a;}
+.topbar-name{font-size:16px;font-weight:700;color:#fff;}
 .topbar-btns{display:flex;gap:6px;}
+.topbar-btns .btn{background:rgba(255,255,255,0.1);border-color:rgba(255,255,255,0.18);color:#fff;font-size:12px;padding:6px 10px;}
+.topbar-btns .btn.primary{background:#fff;color:#1a1a1a;border-color:#fff;}
+.topbar-btns .btn:active{background:rgba(255,255,255,0.2);}
+.topbar-btns .btn.primary:active{background:#eee;}
 
 /* ── TABS ── */
-.tabs{display:flex;border-bottom:1px solid #e8e6e1;background:#fff;overflow-x:auto;}
-.tab{flex-shrink:0;font-size:13px;padding:.6rem .75rem;cursor:pointer;color:#999;border:none;background:none;border-bottom:2px solid transparent;font-family:inherit;white-space:nowrap;}
-.tab.active{color:#1a1a1a;border-bottom-color:#1a1a1a;font-weight:600;}
+.tabs{display:flex;background:#111;overflow-x:auto;border-bottom:1px solid rgba(255,255,255,0.08);}
+.tab{flex-shrink:0;font-size:13px;padding:.55rem .85rem;cursor:pointer;color:rgba(255,255,255,0.45);border:none;background:none;border-bottom:2px solid transparent;font-family:inherit;white-space:nowrap;}
+.tab.active{color:#fff;border-bottom-color:#fff;font-weight:600;}
 
 /* ── BADGES ── */
 .badge{display:inline-block;font-size:10px;padding:2px 8px;border-radius:20px;font-weight:600;letter-spacing:.02em;}
@@ -229,16 +233,16 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <div class="topbar-row">
       <span class="topbar-name">Mariana Magalhães</span>
       <div class="topbar-btns">
-        <button class="btn" onclick="abrirCampanhas()" style="font-size:12px;padding:6px 10px;" title="Campanhas">📢</button>
-        <button class="btn" onclick="abrirImport()" style="font-size:12px;padding:6px 10px;" title="Importar">⬇</button>
-        <button class="btn primary" onclick="abrirNova()" style="font-size:12px;padding:6px 12px;">+ Nova</button>
+        <button class="btn" onclick="abrirCampanhas()" title="Campanhas">📢</button>
+        <button class="btn" onclick="abrirImport()" title="Importar">⬇</button>
+        <button class="btn primary" onclick="abrirNova()">+ Nova</button>
       </div>
     </div>
   </div>
   <div class="sync-bar"><div class="sdot" id="sdot"></div><span id="smsg">A carregar...</span></div>
   <div class="search-bar">
-    <input class="finput" id="search-input" placeholder="🔍 Pesquisar nome, modelo, notas..." oninput="pesquisar()" style="margin-bottom:0;flex:1;padding:.5rem .75rem;font-size:13px;">
-    <select id="sort-select" class="finput" onchange="renderAtual()" style="margin-bottom:0;width:auto;font-size:12px;padding:.5rem .6rem;">
+    <input class="finput" id="search-input" placeholder="Pesquisar nome, modelo, notas..." oninput="pesquisar()" style="margin-bottom:0;flex:1;padding:.45rem .75rem;font-size:13px;border-color:#ddd;">
+    <select id="sort-select" class="finput" onchange="renderAtual()" style="margin-bottom:0;width:auto;font-size:12px;padding:.45rem .6rem;border-color:#ddd;">
       <option value="recente">↓ Recente</option>
       <option value="antiga">↑ Antiga</option>
       <option value="nome">A–Z</option>
