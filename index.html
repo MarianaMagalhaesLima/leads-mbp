@@ -837,6 +837,13 @@ function carregar(){
         }
         l.follow_data=normData(raw);
       }
+      // Normalizar follow_hora quando vem do Sheets como 1899-12-30T...
+      if(l.follow_hora){
+        const fh=String(l.follow_hora);
+        if(fh.includes('T')||fh.includes('1899')||fh.includes('GMT')){
+          l.follow_hora=normHora(fh);
+        }
+      }
       if(l.criado)l.criado=normData(String(l.criado));
       // Normalizar td_agendado — preservar hora (formato YYYY-MM-DDTHH:MM)
       if(l.td_agendado){
