@@ -1187,21 +1187,24 @@ function renderFicha(l){
   const nPropostas=(l.propostas||[]).length;
   const nPrefs=(l.preferencias||[]).length;
 
-  // Follow-up box
-  // follow_hora guardado separadamente para evitar conflito com follow_data
-  const fData=l.follow_data?l.follow_data.slice(0,10):'';
+  // Follow-up box — follow_data guarda YYYY-MM-DD, follow_hora guarda HH:MM separado
+  const fData=l.follow_data?String(l.follow_data).slice(0,10):'';
   const fHora=l.follow_hora||'';
   const fTemHora=!!fHora;
+  const fLabel=fData?('Agendado para '+new Date(fData+'T12:00:00').toLocaleDateString('pt-PT')+(fTemHora?' às '+fHora:'')):'Sem follow-up agendado';
   const followBox=`<div id="follow-box-${l.id}" style="background:${fData?'#e6f4ea':'#f5f4f2'};border-radius:10px;padding:.65rem;border:${fData?'1.5px solid #2e7d32':'1px solid #e8e6e1'};">
-    <div class="fu-hdr" style="font-size:12px;color:${fData?'#276b2f':'#999'};font-weight:600;margin-bottom:5px;">${fData?'Agendado para '+new Date(fData+'T12:00:00').toLocaleDateString('pt-PT')+(fTemHora?' às '+fHora:''):'Sem follow-up agendado'}</div>
-    <input class="finput" type="date" id="fdt-${l.id}" value="${fData}" onchange="setFollowDataNew('${l.id}')" style="margin-bottom:5px;">
+    <div style="font-size:12px;color:${fData?'#276b2f':'#999'};font-weight:600;margin-bottom:5px;">${fLabel}</div>
+    <input class="finput" type="date" id="fdt-${l.id}" value="${fData}" style="margin-bottom:5px;">
     <div style="display:flex;align-items:center;gap:6px;margin-bottom:5px;">
       <label style="font-size:12px;color:#888;flex-shrink:0;">Hora</label>
-      <input class="finput" type="time" id="fhora-${l.id}" value="${fHora}" onchange="setHoraNew('${l.id}')" style="width:auto;padding:.35rem .6rem;font-size:13px;margin-bottom:0;">
-      <button id="btn-hora-x-${l.id}" onclick="limparHora('${l.id}')" style="background:none;border:none;color:#ccc;cursor:pointer;font-size:16px;padding:0;display:${fTemHora?'inline':'none'};" title="Remover hora">✕</button>
+      <input class="finput" type="time" id="fhora-${l.id}" value="${fHora}" style="width:auto;padding:.35rem .6rem;font-size:13px;margin-bottom:0;">
+      <button onclick="limparHora('${l.id}')" style="background:none;border:none;color:#ccc;cursor:pointer;font-size:16px;padding:0;display:${fTemHora?'inline':'none'};" title="Remover hora">✕</button>
     </div>
-    <input class="finput" id="fn-${l.id}" placeholder="Nota do follow-up..." value="${l.follow_nota||''}" onblur="salvarFN('${l.id}')" style="margin-bottom:0;">
-    <button id="btn-ics-fu-${l.id}" onclick="outlookFollowUp('${l.id}')" class="btn full" style="margin-top:8px;font-size:12px;border-color:#185FA5;color:#185FA5;display:${fTemHora?'flex':'none'};">📅 Adicionar ao Outlook</button>
+    <input class="finput" id="fn-${l.id}" placeholder="Nota do follow-up..." value="${l.follow_nota||''}" style="margin-bottom:0;">
+    <div style="display:flex;gap:8px;margin-top:8px;">
+      <button onclick="guardarFollowUp('${l.id}')" class="btn primary full" style="font-size:13px;">Guardar</button>
+      ${fTemHora?`<button onclick="outlookFollowUp('${l.id}')" class="btn" style="font-size:12px;border-color:#185FA5;color:#185FA5;white-space:nowrap;">📅 Outlook</button>`:''}
+    </div>
   </div>`;
 
   // sub-title in header: viatura + tipo
@@ -1804,66 +1807,20 @@ Responde APENAS com JSON válido, sem mais nada:
 function descartarT(){['tbox-main','tbox-ficha'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});transcript='';}
 
 function limparHora(id){
-  const inp=document.getElementById('fhora-'+id);
-  if(inp)inp.value='';
   const l=leads.find(x=>String(x.id)===String(id));if(!l)return;
   l.follow_hora='';
-  const i=leads.findIndex(x=>String(x.id)===String(l.id));
-  if(i>=0)leads[i]=l;
-  localStorage.setItem('leads_mb',JSON.stringify(leads));
-  fetch(SCRIPT+'?action=save',{method:'POST',body:JSON.stringify({action:'save',lead:l})}).catch(()=>{});
-  const btnIcs=document.getElementById('btn-ics-fu-'+id);if(btnIcs)btnIcs.style.display='none';
-  const btnX=document.getElementById('btn-hora-x-'+id);if(btnX)btnX.style.display='none';
-  const box=document.getElementById('follow-box-'+id);
-  if(box&&l.follow_data){
-    const hdr=box.querySelector('.fu-hdr');
-    if(hdr)hdr.textContent='Agendado para '+new Date(l.follow_data+'T12:00:00').toLocaleDateString('pt-PT');
-  }
+  guardar(l);renderFicha(l);
 }
-function setFollowDataNew(id){
-  const l=leads.find(x=>String(x.id)===String(id));
+function guardarFollowUp(id){
+  const l=leads.find(x=>String(x.id)===String(id));if(!l)return;
   const dateEl=document.getElementById('fdt-'+id);
-  if(!l||!dateEl||!dateEl.value)return;
-  l.follow_data=dateEl.value; // formato YYYY-MM-DD, sempre
-  l.estado='follow_up';
-  const fn=document.getElementById('fn-'+id);if(fn&&fn.value)l.follow_nota=fn.value;
-  // Guardar sem renderFicha para não perder o foco no campo
-  const i=leads.findIndex(x=>String(x.id)===String(l.id));
-  if(i>=0)leads[i]=l;
-  localStorage.setItem('leads_mb',JSON.stringify(leads));
-  fetch(SCRIPT+'?action=save',{method:'POST',body:JSON.stringify({action:'save',lead:l})}).catch(()=>{});
-  // Só actualizar o cabeçalho do box sem re-renderizar tudo
-  const box=document.getElementById('follow-box-'+id);
-  if(box){
-    const hdr=box.querySelector('.fu-hdr');
-    if(hdr)hdr.textContent='Agendado para '+new Date(l.follow_data+'T12:00:00').toLocaleDateString('pt-PT')+(l.follow_hora?' às '+l.follow_hora:'');
-    box.style.background='#e6f4ea';box.style.border='1.5px solid #2e7d32';
-  }
-}
-function setHoraNew(id){
-  const l=leads.find(x=>String(x.id)===String(id));
   const horaEl=document.getElementById('fhora-'+id);
-  if(!l||!horaEl)return;
-  l.follow_hora=horaEl.value||'';
-  const i=leads.findIndex(x=>String(x.id)===String(l.id));
-  if(i>=0)leads[i]=l;
-  localStorage.setItem('leads_mb',JSON.stringify(leads));
-  fetch(SCRIPT+'?action=save',{method:'POST',body:JSON.stringify({action:'save',lead:l})}).catch(()=>{});
-  // Mostrar/esconder botão Outlook e X sem re-renderizar
-  const btnIcs=document.getElementById('btn-ics-fu-'+id);
-  const btnX=document.getElementById('btn-hora-x-'+id);
-  if(l.follow_hora){
-    if(btnIcs)btnIcs.style.display='';
-    if(btnX)btnX.style.display='';
-  } else {
-    if(btnIcs)btnIcs.style.display='none';
-    if(btnX)btnX.style.display='none';
-  }
-  const box=document.getElementById('follow-box-'+id);
-  if(box&&l.follow_data){
-    const hdr=box.querySelector('.fu-hdr');
-    if(hdr)hdr.textContent='Agendado para '+new Date(l.follow_data+'T12:00:00').toLocaleDateString('pt-PT')+(l.follow_hora?' às '+l.follow_hora:'');
-  }
+  const notaEl=document.getElementById('fn-'+id);
+  if(dateEl&&dateEl.value)l.follow_data=dateEl.value;
+  if(horaEl)l.follow_hora=horaEl.value||'';
+  if(notaEl&&notaEl.value)l.follow_nota=notaEl.value;
+  if(l.follow_data)l.estado='follow_up';
+  guardar(l);renderFicha(l);
 }
 function marcarBitrix(id,checked){
   const l=leads.find(x=>String(x.id)===String(id));if(!l)return;
