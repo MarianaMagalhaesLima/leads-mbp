@@ -1128,6 +1128,25 @@ async function outlookFollowUp(id){
 }
 
 // Test Drive → ICS
+function guardarTD(id){
+  const l=leads.find(x=>String(x.id)===String(id));if(!l)return;
+  const dtEl=document.getElementById('td-data-'+id);
+  const standEl=document.getElementById('td-stand-'+id);
+  const espEl=document.getElementById('td-esp-'+id);
+  const dt=dtEl?dtEl.value:'';
+  const stand=standEl?standEl.value:'';
+  const esp=espEl?espEl.value:'';
+  if(dt){l.td_agendado=dt;l.td_pedido=true;}
+  if(stand!==undefined)l.td_stand=stand;
+  if(esp!==undefined)l.td_esp=esp;
+  const btn=document.getElementById('btn-ics-td-'+id);
+  if(btn&&l.td_agendado){btn.style.opacity='1';btn.style.pointerEvents='auto';}
+  const agora=new Date();const ds=agora.toLocaleDateString('pt-PT')+' '+agora.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'});
+  if(!l.notas)l.notas=[];
+  l.notas.push({data:ds,texto:'🚗 TD agendado: '+l.td_agendado+(stand?' — '+stand:'')});
+  guardar(l);renderFicha(l);
+}
+
 function outlookTD(id){
   const l=leads.find(x=>String(x.id)===String(id));if(!l||!l.td_agendado)return;
   const dtStr=l.td_agendado.slice(0,10);
@@ -1308,11 +1327,31 @@ function renderFicha(l){
       ${l.relacao_interna?cr('Referência',l.relacao_interna):''}
     </div>
 
-    ${l.td_pedido?`<div class="ficha-section alt">
+    <div class="ficha-section alt">
       <p class="sec-title">Test Drive</p>
-      ${cr('Data',l.td_agendado)}${cr('Stand',l.td_stand)}${cr('Especialista',l.td_esp)}
-      ${l.td_agendado?`<button onclick="outlookTD('${l.id}')" class="btn" style="margin-top:6px;font-size:12px;border-color:#185FA5;color:#185FA5;">📅 Adicionar ao Outlook</button>`:''}
-    </div>`:''}
+      <div style="display:flex;flex-direction:column;gap:6px;">
+        <div style="display:flex;gap:6px;align-items:center;">
+          <label style="font-size:12px;color:#888;flex-shrink:0;width:52px;">Data</label>
+          <input class="finput" type="datetime-local" id="td-data-${l.id}" value="${l.td_agendado?l.td_agendado.slice(0,16):''}" style="flex:1;font-size:13px;padding:.4rem .6rem;margin-bottom:0;">
+        </div>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <label style="font-size:12px;color:#888;flex-shrink:0;width:52px;">Stand</label>
+          <select class="finput" id="td-stand-${l.id}" style="flex:1;font-size:13px;padding:.4rem .6rem;margin-bottom:0;">
+            <option value="">— selecionar —</option>
+            <option ${(l.td_stand||'')==='Boavista'?'selected':''}>Boavista</option>
+            <option ${(l.td_stand||'')==='Maia'?'selected':''}>Maia</option>
+          </select>
+        </div>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <label style="font-size:12px;color:#888;flex-shrink:0;width:52px;">Espec.</label>
+          <input class="finput" id="td-esp-${l.id}" value="${l.td_esp||''}" placeholder="Especialista (opcional)" style="flex:1;font-size:13px;padding:.4rem .6rem;margin-bottom:0;">
+        </div>
+        <div style="display:flex;gap:8px;margin-top:2px;">
+          <button onclick="guardarTD('${l.id}')" class="btn primary full" style="font-size:13px;">Guardar</button>
+          <button id="btn-ics-td-${l.id}" onclick="outlookTD('${l.id}')" class="btn" style="font-size:12px;border-color:#185FA5;color:#185FA5;white-space:nowrap;${l.td_agendado?'':'opacity:.35;pointer-events:none;'}">📅 Outlook</button>
+        </div>
+      </div>
+    </div>
 
     <!-- FOLLOW-UP -->
     <div class="ficha-section alt">
@@ -1392,14 +1431,17 @@ function setFollowData(id){
 async function addNota(id){
   const l=leads.find(x=>String(x.id)===String(id));const inp=document.getElementById('ni-'+id);
   const txt=inp.value.trim();if(!txt)return;
-  const agora=new Date();if(!l.notas)l.notas=[];
-  const ds=agora.toLocaleDateString('pt-PT')+' '+agora.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'});
-  l.notas.push({data:ds,texto:txt});
-  inp.value='';guardar(l);renderFicha(l);
-  // Se estava em modo lembrete, pedir sugestão de próximo passo à IA
-  if(isLembreteAgora(l)){
-    sugerirProximoPasso(l,txt);
-  }
+  inp.value='';
+  // Processar nota pela IA (igual à voz) para extrair dados estruturados
+  const fichaIdAntes=fichaId;
+  fichaId=String(id);
+  // Mostrar indicador IA
+  const ind=document.getElementById('ai-ind');if(ind)ind.style.display='block';
+  // Reutilizar o pipeline completo da voz — usarT() lê de ttext-ficha ou transcript
+  // mas aqui vamos chamar directamente o processador com o texto da nota
+  await processarTextoComIA(l, txt);
+  fichaId=fichaIdAntes;
+  if(ind)ind.style.display='none';
 }
 async function sugerirProximoPasso(l,notaAtual){
   try{
@@ -1757,66 +1799,12 @@ function mostrarT(txt){
   const box=document.getElementById(emF?'tbox-ficha':'tbox-main');box.style.display='block';
   document.getElementById(emF?'ttext-ficha':'ttext-main').value=txt;
 }
-async function usarT(){
-  const emF=!!fichaId;
-  const editado=(document.getElementById(emF?'ttext-ficha':'ttext-main').value||'').trim();
-  const txt=editado||transcript.trim();
-  ['tbox-main','tbox-ficha'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
-  transcript='';
-  if(!fichaId||!txt)return;
-  const l=leads.find(x=>String(x.id)===fichaId);if(!l)return;
-  const ind=document.getElementById('ai-ind');if(ind)ind.style.display='block';
+async function processarTextoComIA(l, txt){
+  const agora=new Date();const ds=agora.toLocaleDateString('pt-PT')+' '+agora.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'});
+  const hoje=agora.toLocaleDateString('pt-PT', {weekday:'long', year:'numeric', month:'long', day:'numeric'});
   try{
-    const resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:`És uma assistente especializada em leads de vendas da Mercedes-Benz Portugal. Analisa o texto falado por uma comercial e extrai informação estruturada.
-
-CONHECIMENTO DE MODELOS MERCEDES (corrige erros de transcrição de voz):
-- Modelos elétricos EQ: EQA, EQB, EQC, EQE, EQS, EQV, EQT
-- Modelos: Classe A, Classe B, Classe C, Classe E, Classe S, CLA, CLE, CLS, GLA, GLB, GLC, GLE, GLS, G-Class, AMG GT, SL, Sprinter, Vito, V-Class
-- Motorizações: 180, 200, 220, 250, 300, 350, 400, 450, 580 + sufixos d (diesel), e (híbrido), de (diesel híbrido)
-- "250+" ou "duzentos e cinquenta mais" → 250+
-- "450+" ou "quatrocentos e cinquenta mais" → 450+
-- "100% elétrico" ou "cem por cento elétrico" ou "totalmente elétrico" → 100% elétrico
-- "four mátique" ou "four matic" ou "4 matic" → 4MATIC
-- "IKEA" num contexto de carro → provavelmente EQA
-- Corrige outros erros óbvios de transcrição de modelos Mercedes
-
-EXTRACÇÃO DE DADOS FINANCEIROS (importante — extrai SEMPRE que mencionado):\n- "a pronto" / "pronto pagamento" / "paga a pronto" → financiamento: "Não"\n- "financiamento" / "crédito" / "prestações" → financiamento: "Sim"\n- "leasing" → financiamento: "Leasing"\n- "ALD" → financiamento: "ALD"\n- "renting" → financiamento: "Renting"\n- "retoma" / "tem carro para retomar" / "quer retomar" → retoma: "Sim"\n- "sem retoma" / "não tem retoma" → retoma: "Não"\n- "empresa" / "fatura empresa" → tipo: "Empresa"\n- "ENI" / "empresário em nome individual" → tipo: "ENI"\n\nEXTRACÇÃO DE PREFERÊNCIAS (muito importante — extrai SEMPRE que mencionado):
-- Cores (preto, branco, cinzento, azul, vermelho, etc.) → preferencias_gosta ou preferencias_nao_gosta
-- "prefere X" / "gosta de X" / "quer X" → preferencias_gosta
-- "não gosta de X" / "não quer X" / "detesta X" / "não gosta" → preferencias_nao_gosta
-- Características (teto de abrir, interiores claros, automático, diesel, elétrico, lugares, etc.) → preferencias
-
-Texto: "${txt}"
-
-Responde APENAS com JSON válido, sem mais nada:
-{
-  "nota": "texto da nota de contacto corrigido",
-  "follow_up_dias": null ou número (0=hoje,1=amanhã,3=3dias,7=semana),
-  "follow_nota": null ou texto,
-  "preferencias_gosta": [],
-  "preferencias_nao_gosta": [],
-  "td_pedido": false,
-  "td_data": null,
-  "td_stand": null,
-  "proposta_enviada": false,
-  "proposta_modelo": null,
-  "proposta_preco": null,
-  "financiamento": null,
-  "retoma": null,
-  "retoma_veiculo": null,
-  "retoma_aval_sccs": null,
-  "retoma_avaliador": null,
-  "retoma_aguiar": null,
-  "retoma_ptf": null,
-  "retoma_andre": null,
-  "retoma_marco": null,
-  "retoma_jbras": null,
-  "retoma_entrega": null,
-  "retoma_obs": null,
-  "tipo_novo": null
-}`}]})});
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:`És uma assistente especializada em leads de vendas da Mercedes-Benz Portugal. Analisa o texto escrito ou falado por uma comercial e extrai informação estruturada.\n\nCONHECIMENTO DE MODELOS MERCEDES (corrige erros de transcrição de voz):\n- Modelos elétricos EQ: EQA, EQB, EQC, EQE, EQS, EQV, EQT\n- Modelos: Classe A, Classe B, Classe C, Classe E, Classe S, CLA, CLE, CLS, GLA, GLB, GLC, GLE, GLS, G-Class, AMG GT, SL, Sprinter, Vito, V-Class\n- Motorizações: 180, 200, 220, 250, 300, 350, 400, 450, 580 + sufixos d (diesel), e (híbrido), de (diesel híbrido)\n- "250+" ou "duzentos e cinquenta mais" → 250+\n- "450+" ou "quatrocentos e cinquenta mais" → 450+\n- "100% elétrico" ou "cem por cento elétrico" ou "totalmente elétrico" → 100% elétrico\n- "four mátique" ou "four matic" ou "4 matic" → 4MATIC\n- "IKEA" num contexto de carro → provavelmente EQA\n- Corrige outros erros óbvios de transcrição de modelos Mercedes\n\nEXTRACÇÃO DE DADOS FINANCEIROS (importante — extrai SEMPRE que mencionado):\n- "a pronto" / "pronto pagamento" / "paga a pronto" → financiamento: "Não"\n- "financiamento" / "crédito" / "prestações" → financiamento: "Sim"\n- "leasing" → financiamento: "Leasing"\n- "ALD" → financiamento: "ALD"\n- "renting" → financiamento: "Renting"\n- "retoma" / "tem carro para retomar" / "quer retomar" → retoma: "Sim"\n- "sem retoma" / "não tem retoma" → retoma: "Não"\n- "empresa" / "fatura empresa" → tipo: "Empresa"\n- "ENI" / "empresário em nome individual" → tipo: "ENI"\n\nEXTRACÇÃO DE PREFERÊNCIAS (muito importante — extrai SEMPRE que mencionado):\n- Cores (preto, branco, cinzento, azul, vermelho, etc.) → preferencias_gosta ou preferencias_nao_gosta\n- "prefere X" / "gosta de X" / "quer X" → preferencias_gosta\n- "não gosta de X" / "não quer X" / "detesta X" / "não gosta" → preferencias_nao_gosta\n- Características (teto de abrir, interiores claros, automático, diesel, elétrico, lugares, etc.) → preferencias\n\nEXTRACÇÃO DE TEST DRIVE (muito importante):\n- "test drive agendado para X" / "TD marcado para X" / "agendei TD para X" → td_pedido: true, td_data: data YYYY-MM-DD HH:MM\n- "na Boavista" / "stand Boavista" → td_stand: "Boavista"\n- "na Maia" / "stand Maia" → td_stand: "Maia"\n- Se o texto refere uma data relativa (e.g. "terça feira dia 23"), converte para a data absoluta mais próxima no futuro\n- Se menciona hora (e.g. "11h30", "11:30", "às 11 e meia"), inclui no td_data como YYYY-MM-DD HH:MM\n\nHoje é ${hoje}.\n\nTexto: "${txt}"\n\nResponde APENAS com JSON válido, sem mais nada:\n{\n  "nota": "texto da nota de contacto corrigido",\n  "follow_up_dias": null ou número (0=hoje,1=amanhã,3=3dias,7=semana),\n  "follow_nota": null ou texto,\n  "preferencias_gosta": [],\n  "preferencias_nao_gosta": [],\n  "td_pedido": false,\n  "td_data": null,\n  "td_stand": null,\n  "proposta_enviada": false,\n  "proposta_modelo": null,\n  "proposta_preco": null,\n  "financiamento": null,\n  "retoma": null,\n  "retoma_veiculo": null,\n  "retoma_aval_sccs": null,\n  "retoma_avaliador": null,\n  "retoma_aguiar": null,\n  "retoma_ptf": null,\n  "retoma_andre": null,\n  "retoma_marco": null,\n  "retoma_jbras": null,\n  "retoma_entrega": null,\n  "retoma_obs": null,\n  "tipo_novo": null\n}`}]})});
     const data=await resp.json();const parsed=JSON.parse(data.content[0].text);
-    const agora=new Date();const ds=agora.toLocaleDateString('pt-PT')+' '+agora.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'});
     if(!l.notas)l.notas=[];if(!l.preferencias)l.preferencias=[];if(!l.propostas)l.propostas=[];
     if(parsed.nota)l.notas.push({data:ds,texto:parsed.nota});
     if(parsed.financiamento)l.financiamento=parsed.financiamento;
@@ -1843,12 +1831,25 @@ Responde APENAS com JSON válido, sem mais nada:
     if(parsed.td_pedido){l.td_pedido=true;if(parsed.td_data)l.td_agendado=parsed.td_data;if(parsed.td_stand)l.td_stand=parsed.td_stand;}
     if(parsed.proposta_enviada&&parsed.proposta_modelo){l.propostas.push({modelo:parsed.proposta_modelo,kom:'',preco:parsed.proposta_preco||'',validade:'',estado:'enviada',data:agora.toLocaleDateString('pt-PT')});}
     guardar(l);renderFicha(l);setSyncStatus('ok','✨ Processado · '+ds);
+    if(isLembreteAgora(l))sugerirProximoPasso(l,parsed.nota||txt);
   }catch(e){
-    const agora=new Date();const ds=agora.toLocaleDateString('pt-PT')+' '+agora.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'});
     if(!l.notas)l.notas=[];l.notas.push({data:ds,texto:txt});guardar(l);renderFicha(l);setSyncStatus('error','Guardado sem IA');
   }
+}
+
+async function usarT(){
+  const emF=!!fichaId;
+  const editado=(document.getElementById(emF?'ttext-ficha':'ttext-main').value||'').trim();
+  const txt=editado||transcript.trim();
+  ['tbox-main','tbox-ficha'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
+  transcript='';
+  if(!fichaId||!txt)return;
+  const l=leads.find(x=>String(x.id)===fichaId);if(!l)return;
+  const ind=document.getElementById('ai-ind');if(ind)ind.style.display='block';
+  await processarTextoComIA(l, txt);
   if(ind)ind.style.display='none';
 }
+
 function descartarT(){['tbox-main','tbox-ficha'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});transcript='';}
 
 function limparHora(id){
