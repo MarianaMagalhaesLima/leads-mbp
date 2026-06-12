@@ -1155,15 +1155,21 @@ function guardarTD(id){
   const dt=dtEl?dtEl.value:'';
   const stand=standEl?standEl.value:'';
   const esp=espEl?espEl.value:'';
-  if(dt){l.td_agendado=dt;l.td_pedido=true;}
-  if(stand!==undefined)l.td_stand=stand;
-  if(esp!==undefined)l.td_esp=esp;
+  if(!dt){alert('Define a data e hora do test drive.');return;}
+  l.td_agendado=dt;l.td_pedido=true;
+  l.td_stand=stand;
+  l.td_esp=esp;
   const btn=document.getElementById('btn-ics-td-'+id);
-  if(btn&&l.td_agendado){btn.style.opacity='1';btn.style.pointerEvents='auto';}
+  if(btn){btn.style.opacity='1';btn.style.pointerEvents='auto';}
   const agora=new Date();const ds=agora.toLocaleDateString('pt-PT')+' '+agora.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'});
   if(!l.notas)l.notas=[];
-  l.notas.push({data:ds,texto:'🚗 TD agendado: '+l.td_agendado+(stand?' — '+stand:'')});
-  guardar(l);renderFicha(l);
+  l.notas.push({data:ds,texto:'🚗 TD agendado: '+dt+(stand?' — '+stand:'')});
+  guardar(l);
+  // Actualizar label da persiana sem re-renderizar tudo (evita reset dos campos)
+  const arrow=document.getElementById('col-arrow-'+id+'-td');
+  const labelEl=document.querySelector('#col-'+id+'-td')?.previousElementSibling?.querySelector('.collapse-label');
+  if(labelEl){const d=dt.slice(8,10)+'/'+dt.slice(5,7);labelEl.textContent='🚗 TD · '+d+(stand?' — '+stand:'');}
+  setSyncStatus('ok','TD guardado · '+ds);
 }
 
 function outlookTD(id){
@@ -1177,7 +1183,7 @@ function outlookTD(id){
   const inicio=icsDateLocal(dtStr,horaStr);
   const local=l.td_stand||'';
   const localUpper=(local||'').toUpperCase();
-  const desc=localUpper.includes('BOAVISTA')?'⚠️ ATENÇÃO: TEST DRIVE NA BOAVISTA':'';
+  const desc=localUpper.includes('BOAVISTA')?'⚠️⚠️⚠️ TEST DRIVE NA BOAVISTA ⚠️⚠️⚠️':'';
   const ics=buildIcs({
     titulo:'Test Drive '+l.carro+' — '+l.nome,
     inicio,duracaoMin:60,local,
@@ -1374,8 +1380,8 @@ function renderFicha(l){
         +'<div style="display:flex;gap:6px;align-items:center;"><label style="font-size:12px;color:#888;flex-shrink:0;width:52px;">Espec.</label>'
         +'<input class="finput" id="td-esp-'+l.id+'" value="'+(l.td_esp||'')+'" placeholder="Especialista (opcional)" style="flex:1;font-size:13px;padding:.4rem .6rem;margin-bottom:0;"></div>'
         +'<div style="display:flex;gap:8px;margin-top:2px;">'
-        +'<button data-lid="'+l.id+'" onclick="guardarTD(this.dataset.lid)" class="btn primary full" style="font-size:13px;">Guardar</button>'
-        +'<button data-lid="'+l.id+'" id="btn-ics-td-'+l.id+'" onclick="outlookTD(this.dataset.lid)" class="btn" style="'+outlookStyle+'">📅 Outlook</button>'
+        +'<button onclick="guardarTD(&#39;'+l.id+'&#39;)" class="btn primary full" style="font-size:13px;">Guardar</button>'
+        +'<button id="btn-ics-td-'+l.id+'" onclick="outlookTD(&#39;'+l.id+'&#39;)" class="btn" style="'+outlookStyle+'">📅 Outlook</button>'
         +'</div></div>';
       return col(l.id+'-td', tdLabel, '', tdHtml, tdAberto);
     })()}
