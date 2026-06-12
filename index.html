@@ -757,7 +757,15 @@ function carregar(){
     const local=JSON.parse(localStorage.getItem('leads_mb')||'[]');
     if(local.length>0){
       leads=local;
-      leads.forEach(l=>{if(!l.preferencias)l.preferencias=[];if(!l.propostas)l.propostas=[];if(!l.notas)l.notas=[];});
+      leads.forEach(l=>{
+      if(!l.preferencias)l.preferencias=[];
+      if(!l.propostas)l.propostas=[];
+      if(!l.notas)l.notas=[];
+      if(l.follow_data&&l.follow_data.length>10&&!l.follow_hora){
+        const partes=l.follow_data.replace('Z','').split('T');
+        if(partes.length>1){l.follow_hora=partes[1].slice(0,5);l.follow_data=partes[0];}
+      }
+    });
       setSyncStatus('ok','Local · '+new Date().toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'}));
       renderAtual();
     }
@@ -789,7 +797,17 @@ function carregar(){
     });
     // Adicionar leads que estão só no local (criadas offline)
     locais.forEach(loc=>{if(!leads.find(r=>String(r.id)===String(loc.id)))leads.push(loc);});
-    leads.forEach(l=>{if(!l.preferencias)l.preferencias=[];if(!l.propostas)l.propostas=[];if(!l.notas)l.notas=[];});
+    leads.forEach(l=>{
+      if(!l.preferencias)l.preferencias=[];
+      if(!l.propostas)l.propostas=[];
+      if(!l.notas)l.notas=[];
+      // Migração: mover hora de follow_data para follow_hora
+      if(l.follow_data&&l.follow_data.length>10&&!l.follow_hora){
+        // formato "2026-06-15T16:00" ou "2026-06-15T16:00:00.000Z"
+        const partes=l.follow_data.replace('Z','').split('T');
+        if(partes.length>1){l.follow_hora=partes[1].slice(0,5);l.follow_data=partes[0];}
+      }
+    });
     runBackfill();
     localStorage.setItem('leads_mb',JSON.stringify(leads));
     setSyncStatus('ok','Sincronizado · '+new Date().toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'}));
@@ -1049,13 +1067,18 @@ function renderFicha(l){
   const nPrefs=(l.preferencias||[]).length;
 
   // Follow-up box
-  const followBox=`<div id="follow-box-${l.id}" style="background:${l.follow_data?'#e6f4ea':'#f5f4f2'};border-radius:10px;padding:.65rem;border:${l.follow_data?'1.5px solid #2e7d32':'1px solid #e8e6e1'};">
-    ${l.follow_data?`<div style="font-size:12px;color:#276b2f;font-weight:600;margin-bottom:5px;">Agendado para ${new Date(l.follow_data).toLocaleDateString('pt-PT')}${l.follow_data.length>10?' '+l.follow_data.slice(11,16):''}</div>`:'<div style="font-size:12px;color:#999;margin-bottom:5px;">Sem follow-up agendado</div>'}
-    <input class="finput" type="date" id="fdt-${l.id}" value="${l.follow_data?l.follow_data.slice(0,10):''}" onchange="setFollowDataNew('${l.id}')" style="margin-bottom:5px;">
+  // follow_hora guardado separadamente para evitar conflito com follow_data
+  const fData=l.follow_data?l.follow_data.slice(0,10):'';
+  const fHora=l.follow_hora||'';
+  const fTemHora=!!fHora;
+  const fDisplay=fData?(fTemHora?fData+' '+fHora:fData):'';
+  const followBox=`<div id="follow-box-${l.id}" style="background:${fData?'#e6f4ea':'#f5f4f2'};border-radius:10px;padding:.65rem;border:${fData?'1.5px solid #2e7d32':'1px solid #e8e6e1'};">
+    ${fData?`<div style="font-size:12px;color:#276b2f;font-weight:600;margin-bottom:5px;">Agendado para ${new Date(fData+'T12:00:00').toLocaleDateString('pt-PT')}${fTemHora?' às '+fHora:''}</div>`:'<div style="font-size:12px;color:#999;margin-bottom:5px;">Sem follow-up agendado</div>'}
+    <input class="finput" type="date" id="fdt-${l.id}" value="${fData}" onchange="setFollowDataNew('${l.id}')" style="margin-bottom:5px;">
     <div style="display:flex;align-items:center;gap:6px;margin-bottom:5px;">
-      <input type="checkbox" id="hora-chk-${l.id}" ${l.follow_data&&l.follow_data.length>10?'checked':''} onchange="toggleHora('${l.id}')" style="width:15px;height:15px;cursor:pointer;">
+      <input type="checkbox" id="hora-chk-${l.id}" ${fTemHora?'checked':''} onchange="toggleHora('${l.id}')" style="width:15px;height:15px;cursor:pointer;">
       <label for="hora-chk-${l.id}" style="font-size:12px;color:#888;cursor:pointer;">Hora</label>
-      <input class="finput" type="time" id="fhora-${l.id}" value="${l.follow_data&&l.follow_data.length>10?l.follow_data.slice(11,16):''}" onchange="setFollowDataNew('${l.id}')" style="display:${l.follow_data&&l.follow_data.length>10?'inline-block':'none'};width:auto;padding:.35rem .6rem;font-size:13px;margin-bottom:0;">
+      <input class="finput" type="time" id="fhora-${l.id}" value="${fHora}" onchange="setHoraNew('${l.id}')" style="display:${fTemHora?'inline-block':'none'};width:auto;padding:.35rem .6rem;font-size:13px;margin-bottom:0;">
     </div>
     <input class="finput" id="fn-${l.id}" placeholder="Nota do follow-up..." value="${l.follow_nota||''}" onblur="salvarFN('${l.id}')" style="margin-bottom:0;">
   </div>`;
@@ -1632,40 +1655,39 @@ function toggleHora(id){
   if(!inp)return;
   const mostrar=chk&&chk.checked;
   inp.style.display=mostrar?'inline-block':'none';
-  // Guardar sempre que o checkbox muda
   const l=leads.find(x=>String(x.id)===String(id));if(!l)return;
-  const dateEl=document.getElementById('fdt-'+id);
-  if(!dateEl||!dateEl.value)return;
-  if(mostrar){
-    // Checkbox ligado — guarda com hora se já tiver valor no campo hora
-    const hora=inp.value?'T'+inp.value:'';
-    l.follow_data=dateEl.value+hora;
-  } else {
-    // Checkbox desligado — remove hora E limpa o valor do campo
+  if(!mostrar){
+    // Desmarcar: limpa follow_hora completamente
     inp.value='';
-    l.follow_data=dateEl.value;
+    l.follow_hora='';
+    l._localTs=Date.now();
+    const i=leads.findIndex(x=>String(x.id)===String(l.id));
+    if(i>=0)leads[i]=l;
+    localStorage.setItem('leads_mb',JSON.stringify(leads));
+    fetch(SCRIPT+'?action=save',{method:'POST',body:JSON.stringify({action:'save',lead:l})}).catch(()=>{});
   }
-  // Actualiza localStorage IMEDIATAMENTE (síncrono) antes de qualquer render
-  l._localTs=Date.now();
-  const i=leads.findIndex(x=>String(x.id)===String(l.id));
-  if(i>=0)leads[i]=l;
-  localStorage.setItem('leads_mb',JSON.stringify(leads));
-  // Sync servidor em background
-  fetch(SCRIPT+'?action=save',{method:'POST',body:JSON.stringify({action:'save',lead:l})}).catch(()=>{});
 }
 function setFollowDataNew(id){
   const l=leads.find(x=>String(x.id)===String(id));
   const dateEl=document.getElementById('fdt-'+id);
-  const horaEl=document.getElementById('fhora-'+id);
-  const chkEl=document.getElementById('hora-chk-'+id);
   if(!l||!dateEl||!dateEl.value)return;
-  // Só usa a hora se o checkbox estiver marcado — nunca usa horaEl.value directamente
-  const horaActiva=chkEl&&chkEl.checked&&horaEl&&horaEl.value;
-  const hora=horaActiva?'T'+horaEl.value:'';
-  l.follow_data=dateEl.value+hora;
+  // Só guarda a data — a hora é tratada por setHoraNew e toggleHora
+  l.follow_data=dateEl.value;
   l.estado='follow_up';
   const fn=document.getElementById('fn-'+id);if(fn&&fn.value)l.follow_nota=fn.value;
   guardar(l);renderFicha(l);
+}
+function setHoraNew(id){
+  const l=leads.find(x=>String(x.id)===String(id));
+  const horaEl=document.getElementById('fhora-'+id);
+  const chkEl=document.getElementById('hora-chk-'+id);
+  if(!l)return;
+  if(chkEl&&chkEl.checked&&horaEl&&horaEl.value){
+    l.follow_hora=horaEl.value;
+  } else {
+    l.follow_hora='';
+  }
+  guardar(l);
 }
 function marcarBitrix(id,checked){
   const l=leads.find(x=>String(x.id)===String(id));if(!l)return;
