@@ -801,11 +801,17 @@ function carregar(){
       if(!l.preferencias)l.preferencias=[];
       if(!l.propostas)l.propostas=[];
       if(!l.notas)l.notas=[];
-      // Migração: mover hora de follow_data para follow_hora
-      if(l.follow_data&&l.follow_data.length>10&&!l.follow_hora){
-        // formato "2026-06-15T16:00" ou "2026-06-15T16:00:00.000Z"
+      // Migração SEMPRE: extrair hora de follow_data independentemente de follow_hora existir
+      if(l.follow_data&&l.follow_data.length>10){
         const partes=l.follow_data.replace('Z','').split('T');
-        if(partes.length>1){l.follow_hora=partes[1].slice(0,5);l.follow_data=partes[0];}
+        if(partes.length>1){
+          // Só guarda a hora se for uma hora válida (não 00:00 que vem de UTC offset)
+          const horaExtraida=partes[1].slice(0,5);
+          if(horaExtraida!=='00:00'&&horaExtraida!=='23:00'||l.follow_hora){
+            if(!l.follow_hora)l.follow_hora=horaExtraida;
+          }
+          l.follow_data=partes[0];
+        }
       }
     });
     runBackfill();
@@ -1201,14 +1207,13 @@ function renderFicha(l){
   const fData=l.follow_data?l.follow_data.slice(0,10):'';
   const fHora=l.follow_hora||'';
   const fTemHora=!!fHora;
-  const fDisplay=fData?(fTemHora?fData+' '+fHora:fData):'';
   const followBox=`<div id="follow-box-${l.id}" style="background:${fData?'#e6f4ea':'#f5f4f2'};border-radius:10px;padding:.65rem;border:${fData?'1.5px solid #2e7d32':'1px solid #e8e6e1'};">
     ${fData?`<div style="font-size:12px;color:#276b2f;font-weight:600;margin-bottom:5px;">Agendado para ${new Date(fData+'T12:00:00').toLocaleDateString('pt-PT')}${fTemHora?' às '+fHora:''}</div>`:'<div style="font-size:12px;color:#999;margin-bottom:5px;">Sem follow-up agendado</div>'}
     <input class="finput" type="date" id="fdt-${l.id}" value="${fData}" onchange="setFollowDataNew('${l.id}')" style="margin-bottom:5px;">
     <div style="display:flex;align-items:center;gap:6px;margin-bottom:5px;">
-      <input type="checkbox" id="hora-chk-${l.id}" ${fTemHora?'checked':''} onchange="toggleHora('${l.id}')" style="width:15px;height:15px;cursor:pointer;">
-      <label for="hora-chk-${l.id}" style="font-size:12px;color:#888;cursor:pointer;">Hora</label>
-      <input class="finput" type="time" id="fhora-${l.id}" value="${fHora}" onchange="setHoraNew('${l.id}')" style="display:${fTemHora?'inline-block':'none'};width:auto;padding:.35rem .6rem;font-size:13px;margin-bottom:0;">
+      <label style="font-size:12px;color:#888;">Hora (opcional)</label>
+      <input class="finput" type="time" id="fhora-${l.id}" value="${fHora}" onchange="setHoraNew('${l.id}')" style="width:auto;padding:.35rem .6rem;font-size:13px;margin-bottom:0;">
+      ${fTemHora?`<button onclick="limparHora('${l.id}')" style="background:none;border:none;color:#ccc;cursor:pointer;font-size:16px;padding:0;" title="Remover hora">✕</button>`:''}
     </div>
     <input class="finput" id="fn-${l.id}" placeholder="Nota do follow-up..." value="${l.follow_nota||''}" onblur="salvarFN('${l.id}')" style="margin-bottom:0;">
     ${fTemHora?`<button id="btn-ics-fu-${l.id}" onclick="outlookFollowUp('${l.id}')" class="btn full" style="margin-top:8px;font-size:12px;border-color:#185FA5;color:#185FA5;">📅 Adicionar ao Outlook</button>`:''}
@@ -1812,23 +1817,17 @@ Responde APENAS com JSON válido, sem mais nada:
 }
 function descartarT(){['tbox-main','tbox-ficha'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});transcript='';}
 
-function toggleHora(id){
-  const chk=document.getElementById('hora-chk-'+id);
+function limparHora(id){
   const inp=document.getElementById('fhora-'+id);
-  if(!inp)return;
-  const mostrar=chk&&chk.checked;
-  inp.style.display=mostrar?'inline-block':'none';
+  if(inp)inp.value='';
   const l=leads.find(x=>String(x.id)===String(id));if(!l)return;
-  if(!mostrar){
-    // Desmarcar: limpa follow_hora completamente
-    inp.value='';
-    l.follow_hora='';
-    l._localTs=Date.now();
-    const i=leads.findIndex(x=>String(x.id)===String(l.id));
-    if(i>=0)leads[i]=l;
-    localStorage.setItem('leads_mb',JSON.stringify(leads));
-    fetch(SCRIPT+'?action=save',{method:'POST',body:JSON.stringify({action:'save',lead:l})}).catch(()=>{});
-  }
+  l.follow_hora='';
+  l._localTs=Date.now();
+  const i=leads.findIndex(x=>String(x.id)===String(l.id));
+  if(i>=0)leads[i]=l;
+  localStorage.setItem('leads_mb',JSON.stringify(leads));
+  fetch(SCRIPT+'?action=save',{method:'POST',body:JSON.stringify({action:'save',lead:l})}).catch(()=>{});
+  renderFicha(l);
 }
 function setFollowDataNew(id){
   const l=leads.find(x=>String(x.id)===String(id));
