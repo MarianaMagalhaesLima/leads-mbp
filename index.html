@@ -798,20 +798,38 @@ function carregar(){
       if(!l.preferencias)l.preferencias=[];
       if(!l.propostas)l.propostas=[];
       if(!l.notas)l.notas=[];
-      // Normalizar follow_data: sempre YYYY-MM-DD, corrigindo timezone UTC→Portugal
+      // Normalizar datas — aceita YYYY-MM-DD, ISO e formato longo do Sheets
+      function normData(raw){
+        if(!raw)return'';
+        const s=String(raw);
+        // Já está no formato correcto
+        if(/^\d{4}-\d{2}-\d{2}$/.test(s))return s;
+        // Qualquer outro formato — usar Date e corrigir timezone
+        const d=new Date(s);
+        if(isNaN(d))return'';
+        const offset=d.getTimezoneOffset();
+        const c=new Date(d.getTime()-offset*60000);
+        return c.toISOString().slice(0,10);
+      }
+      function normHora(raw){
+        if(!raw)return'';
+        const s=String(raw);
+        const d=new Date(s);
+        if(isNaN(d))return'';
+        const offset=d.getTimezoneOffset();
+        const c=new Date(d.getTime()-offset*60000);
+        const h=c.toISOString().slice(11,16);
+        return(h==='00:00'||h==='23:00')?'':h;
+      }
       if(l.follow_data){
         const raw=String(l.follow_data);
-        if(raw.includes('T')){
-          // Usar Date com meio-dia UTC para evitar cruzar meia-noite
-          const d=new Date(raw);
-          // Corrigir: adicionar offset de Portugal (UTC+1 inverno, UTC+2 verão)
-          const offset=d.getTimezoneOffset(); // minutos (negativo em Portugal)
-          const corrigido=new Date(d.getTime()-offset*60000);
-          const horaLocal=corrigido.toISOString().slice(11,16);
-          if(!l.follow_hora&&horaLocal&&horaLocal!=='00:00'&&horaLocal!=='23:00')l.follow_hora=horaLocal;
-          l.follow_data=corrigido.toISOString().slice(0,10);
+        // Extrair hora do follow_data se ainda não tiver follow_hora
+        if(!l.follow_hora&&(raw.includes('T')||raw.includes('GMT'))){
+          l.follow_hora=normHora(raw);
         }
+        l.follow_data=normData(raw);
       }
+      if(l.criado)l.criado=normData(String(l.criado));
     });
     runBackfill();
     localStorage.setItem('leads_mb',JSON.stringify(leads));
@@ -1847,6 +1865,7 @@ function guardarFollowUp(id){
 function marcarBitrix(id,checked){
   const l=leads.find(x=>String(x.id)===String(id));if(!l)return;
   l.bitrix_ok=checked;
+  l._savedAt=Date.now();
   const agora=new Date();const ds=agora.toLocaleDateString('pt-PT')+' '+agora.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'});
   if(checked){if(!l.notas)l.notas=[];l.notas.push({data:ds,texto:'✅ Inserida no Bitrix'});}
   guardar(l);renderFicha(l);
