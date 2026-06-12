@@ -1134,9 +1134,9 @@ async function extrairDadosDeNotas(l){
     const raw=data.content[0].text.replace(/```json|```/g,'').trim();
     const p=JSON.parse(raw);
     let changed=false;
-    if(p.financiamento&&!l.financiamento){l.financiamento=p.financiamento;changed=true;}
-    if(p.retoma&&!l.retoma){l.retoma=p.retoma;changed=true;}
-    if(p.tipo&&!l.tipo){l.tipo=p.tipo;changed=true;}
+    if(p.financiamento&&(l.financiamento===''||l.financiamento===null||l.financiamento===undefined)){l.financiamento=p.financiamento;changed=true;}
+    if(p.retoma&&(l.retoma===''||l.retoma===null||l.retoma===undefined)){l.retoma=p.retoma;changed=true;}
+    if(p.tipo&&(l.tipo===''||l.tipo===null||l.tipo===undefined)){l.tipo=p.tipo;changed=true;}
     if(!l.preferencias)l.preferencias=[];
     (p.preferencias_gosta||[]).forEach(function(pref){if(!l.preferencias.some(function(x){return x.texto===pref;})){l.preferencias.push({tipo:'gosta',texto:pref});changed=true;}});
     (p.preferencias_nao_gosta||[]).forEach(function(pref){if(!l.preferencias.some(function(x){return x.texto===pref;})){l.preferencias.push({tipo:'nao_gosta',texto:pref});changed=true;}});
@@ -1578,10 +1578,10 @@ function restaurarTab(){
 iniciarPostCallWatch();
 
 async function backfillLeads(){
-  const key='backfill_v1_done';
+  const key='backfill_v2_done';
   if(localStorage.getItem(key))return;
   const toProcess=leads.filter(function(l){
-    return !l.financiamento&&!l.retoma&&l.notas&&l.notas.length>0;
+    return (!l.financiamento||l.financiamento==='')&&l.notas&&l.notas.length>0;
   });
   if(!toProcess.length){localStorage.setItem(key,'1');return;}
   setSyncStatus('syncing','A analisar leads existentes...');
