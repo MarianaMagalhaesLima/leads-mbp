@@ -1497,7 +1497,7 @@ function apagarCampanha(idx){if(!confirm('Apagar?'))return;campanhas.splice(idx,
 
 function atualizarVoz(){
   const l=fichaId?leads.find(x=>String(x.id)===fichaId):null;
-  document.getElementById('vh-ficha').innerHTML=l?`<b>${l.nome.split(' ')[0]}</b><br>Fala — processo e guardo`:'<b>Fala</b><br>Processo e guardo';
+  document.getElementById('vh-ficha').innerHTML=l?`<b>${l.nome}</b><br>Fala — processo e guardo`:'<b>Fala</b><br>Processo e guardo';
 }
 function toggleVoz(){if(recording)pararVoz();else iniciarVoz();}
 function iniciarVoz(){
@@ -1644,8 +1644,11 @@ function setFollowDataNew(id){
   const l=leads.find(x=>String(x.id)===String(id));
   const dateEl=document.getElementById('fdt-'+id);
   const horaEl=document.getElementById('fhora-'+id);
+  const chkEl=document.getElementById('hora-chk-'+id);
   if(!l||!dateEl||!dateEl.value)return;
-  const hora=horaEl&&horaEl.value?'T'+horaEl.value:'';
+  // Só usa a hora se o checkbox estiver marcado — nunca usa horaEl.value directamente
+  const horaActiva=chkEl&&chkEl.checked&&horaEl&&horaEl.value;
+  const hora=horaActiva?'T'+horaEl.value:'';
   l.follow_data=dateEl.value+hora;
   l.estado='follow_up';
   const fn=document.getElementById('fn-'+id);if(fn&&fn.value)l.follow_nota=fn.value;
