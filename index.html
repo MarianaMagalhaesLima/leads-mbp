@@ -838,6 +838,25 @@ function carregar(){
         l.follow_data=normData(raw);
       }
       if(l.criado)l.criado=normData(String(l.criado));
+      // Normalizar td_agendado — preservar hora (formato YYYY-MM-DDTHH:MM)
+      if(l.td_agendado){
+        const rawTD=String(l.td_agendado);
+        if(rawTD.length>=16&&rawTD.includes('T')){
+          // já está no formato correcto — garantir apenas YYYY-MM-DDTHH:MM
+          l.td_agendado=rawTD.slice(0,16);
+        } else if(rawTD.length===10){
+          // só data, sem hora — manter como está
+          l.td_agendado=rawTD;
+        } else {
+          // outro formato — tentar parsear preservando hora local
+          const d=new Date(rawTD);
+          if(!isNaN(d)){
+            const off=d.getTimezoneOffset();
+            const c=new Date(d.getTime()-off*60000);
+            l.td_agendado=c.toISOString().slice(0,16);
+          }
+        }
+      }
     });
     runBackfill();
     localStorage.setItem('leads_mb',JSON.stringify(leads));
@@ -1355,8 +1374,8 @@ function renderFicha(l){
         +'<div style="display:flex;gap:6px;align-items:center;"><label style="font-size:12px;color:#888;flex-shrink:0;width:52px;">Espec.</label>'
         +'<input class="finput" id="td-esp-'+l.id+'" value="'+(l.td_esp||'')+'" placeholder="Especialista (opcional)" style="flex:1;font-size:13px;padding:.4rem .6rem;margin-bottom:0;"></div>'
         +'<div style="display:flex;gap:8px;margin-top:2px;">'
-        +'<button onclick="guardarTD('+JSON.stringify(String(l.id))+')" class="btn primary full" style="font-size:13px;">Guardar</button>'
-        +'<button id="btn-ics-td-'+l.id+'" onclick="outlookTD('+JSON.stringify(String(l.id))+')" class="btn" style="'+outlookStyle+'">📅 Outlook</button>'
+        +'<button data-lid="'+l.id+'" onclick="guardarTD(this.dataset.lid)" class="btn primary full" style="font-size:13px;">Guardar</button>'
+        +'<button data-lid="'+l.id+'" id="btn-ics-td-'+l.id+'" onclick="outlookTD(this.dataset.lid)" class="btn" style="'+outlookStyle+'">📅 Outlook</button>'
         +'</div></div>';
       return col(l.id+'-td', tdLabel, '', tdHtml, tdAberto);
     })()}
