@@ -788,15 +788,17 @@ function carregar(){
       if(!l.preferencias)l.preferencias=[];
       if(!l.propostas)l.propostas=[];
       if(!l.notas)l.notas=[];
-      // Normalizar follow_data: garantir sempre formato YYYY-MM-DD
+      // Normalizar follow_data: sempre YYYY-MM-DD, nunca ISO completo
       if(l.follow_data){
-        const d=String(l.follow_data).replace('Z','').split('T')[0];
-        if(/^\d{4}-\d{2}-\d{2}$/.test(d))l.follow_data=d;
-      }
-      // Normalizar follow_hora: extrair de follow_data ISO se follow_hora não existir
-      if(!l.follow_hora&&l.follow_data&&String(l.follow_data).includes('T')){
-        const h=String(l.follow_data).replace('Z','').split('T')[1];
-        if(h&&h.slice(0,5)!=='00:00'&&h.slice(0,5)!=='23:00')l.follow_hora=h.slice(0,5);
+        const raw=String(l.follow_data);
+        if(raw.includes('T')){
+          // Extrair hora se existir e não for artefacto de UTC
+          const partes=raw.replace('Z','').split('T');
+          const horaUTC=partes[1]?partes[1].slice(0,5):'';
+          // Guardar hora só se não for 00:00 ou 23:00 (artefactos de timezone)
+          if(!l.follow_hora&&horaUTC&&horaUTC!=='00:00'&&horaUTC!=='23:00')l.follow_hora=horaUTC;
+          l.follow_data=partes[0];
+        }
       }
     });
     runBackfill();
@@ -1188,7 +1190,7 @@ function renderFicha(l){
   const nPrefs=(l.preferencias||[]).length;
 
   // Follow-up box — follow_data guarda YYYY-MM-DD, follow_hora guarda HH:MM separado
-  const fData=l.follow_data?String(l.follow_data).slice(0,10):'';
+  const fDataRaw=String(l.follow_data||'');const fData=fDataRaw.length>=10?fDataRaw.slice(0,10):'';
   const fHora=l.follow_hora||'';
   const fTemHora=!!fHora;
   const fLabel=fData?('Agendado para '+new Date(fData+'T12:00:00').toLocaleDateString('pt-PT')+(fTemHora?' às '+fHora:'')):'Sem follow-up agendado';
@@ -1258,7 +1260,7 @@ function renderFicha(l){
       ${cr('Tipo',l.tipo)}
       ${cr('Financiamento',l.financiamento)}
       ${renderRetomaDados(l)}
-      ${cr('Criado',l.criado?new Date(l.criado+'T12:00:00').toLocaleDateString('pt-PT'):'')}
+      ${cr('Criado',l.criado?new Date(String(l.criado).slice(0,10)+'T12:00:00').toLocaleDateString('pt-PT'):'')}
       ${cr('Cliente exist.',l.cliente_existente?'Sim':'Não')}
       ${l.nif?cr('NIF',l.nif):''}
       ${l.frota?cr('Frota',l.frota):''}
