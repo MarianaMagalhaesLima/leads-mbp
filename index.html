@@ -714,8 +714,30 @@ function setSyncStatus(s,msg){
 
 function carregar(){
   setSyncStatus('syncing','A carregar...');
+  // Try localStorage first immediately
+  try{
+    const local=JSON.parse(localStorage.getItem('leads_mb')||'[]');
+    if(local.length>0){
+      leads=local;
+      leads.forEach(l=>{if(!l.preferencias)l.preferencias=[];if(!l.propostas)l.propostas=[];if(!l.notas)l.notas=[];});
+      setSyncStatus('ok','Local · '+new Date().toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'}));
+      renderAtual();
+    }
+  }catch(e){}
+  // Then sync from server
   const cb='cb'+Date.now();
+  const timer=setTimeout(()=>{
+    delete window[cb];
+    const s=document.getElementById('jsonp-script');if(s)s.remove();
+    setSyncStatus('error','Sem ligação — dados locais');
+    if(!leads.length){
+      try{leads=JSON.parse(localStorage.getItem('leads_mb')||'[]');}catch(e){leads=[];}
+      leads.forEach(l=>{if(!l.preferencias)l.preferencias=[];if(!l.propostas)l.propostas=[];if(!l.notas)l.notas=[];});
+      renderAtual();
+    }
+  },8000);
   window[cb]=function(data){
+    clearTimeout(timer);
     delete window[cb];
     const s=document.getElementById('jsonp-script');if(s)s.remove();
     leads=Array.isArray(data)?data:[];
@@ -727,6 +749,7 @@ function carregar(){
   const sc=document.createElement('script');sc.id='jsonp-script';
   sc.src=SCRIPT+'?action=load&callback='+cb;
   sc.onerror=function(){
+    clearTimeout(timer);
     delete window[cb];sc.remove();
     setSyncStatus('error','Sem ligação — dados locais');
     try{leads=JSON.parse(localStorage.getItem('leads_mb')||'[]');}catch(e){leads=[];}
