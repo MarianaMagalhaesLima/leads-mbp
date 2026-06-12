@@ -761,10 +761,7 @@ function carregar(){
       if(!l.preferencias)l.preferencias=[];
       if(!l.propostas)l.propostas=[];
       if(!l.notas)l.notas=[];
-      if(l.follow_data&&l.follow_data.length>10&&!l.follow_hora){
-        const partes=l.follow_data.replace('Z','').split('T');
-        if(partes.length>1){l.follow_hora=partes[1].slice(0,5);l.follow_data=partes[0];}
-      }
+
     });
       setSyncStatus('ok','Local · '+new Date().toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'}));
       renderAtual();
@@ -786,32 +783,20 @@ function carregar(){
     clearTimeout(timer);
     delete window[cb];
     const s=document.getElementById('jsonp-script');if(s)s.remove();
-    const remotas=Array.isArray(data)?data:[];
-    // Preservar alterações locais que ainda não chegaram ao servidor
-    const locais=JSON.parse(localStorage.getItem('leads_mb')||'[]');
-    leads=remotas.map(r=>{
-      const loc=locais.find(l=>String(l.id)===String(r.id));
-      // Se a versão local tem _localTs mais recente, usa a local
-      if(loc&&loc._localTs&&(!r._localTs||loc._localTs>r._localTs))return loc;
-      return r;
-    });
-    // Adicionar leads que estão só no local (criadas offline)
-    locais.forEach(loc=>{if(!leads.find(r=>String(r.id)===String(loc.id)))leads.push(loc);});
+    leads=Array.isArray(data)?data:[];
     leads.forEach(l=>{
       if(!l.preferencias)l.preferencias=[];
       if(!l.propostas)l.propostas=[];
       if(!l.notas)l.notas=[];
-      // Migração SEMPRE: extrair hora de follow_data independentemente de follow_hora existir
-      if(l.follow_data&&l.follow_data.length>10){
-        const partes=l.follow_data.replace('Z','').split('T');
-        if(partes.length>1){
-          // Só guarda a hora se for uma hora válida (não 00:00 que vem de UTC offset)
-          const horaExtraida=partes[1].slice(0,5);
-          if(horaExtraida!=='00:00'&&horaExtraida!=='23:00'||l.follow_hora){
-            if(!l.follow_hora)l.follow_hora=horaExtraida;
-          }
-          l.follow_data=partes[0];
-        }
+      // Normalizar follow_data: garantir sempre formato YYYY-MM-DD
+      if(l.follow_data){
+        const d=String(l.follow_data).replace('Z','').split('T')[0];
+        if(/^\d{4}-\d{2}-\d{2}$/.test(d))l.follow_data=d;
+      }
+      // Normalizar follow_hora: extrair de follow_data ISO se follow_hora não existir
+      if(!l.follow_hora&&l.follow_data&&String(l.follow_data).includes('T')){
+        const h=String(l.follow_data).replace('Z','').split('T')[1];
+        if(h&&h.slice(0,5)!=='00:00'&&h.slice(0,5)!=='23:00')l.follow_hora=h.slice(0,5);
       }
     });
     runBackfill();
@@ -1208,15 +1193,15 @@ function renderFicha(l){
   const fHora=l.follow_hora||'';
   const fTemHora=!!fHora;
   const followBox=`<div id="follow-box-${l.id}" style="background:${fData?'#e6f4ea':'#f5f4f2'};border-radius:10px;padding:.65rem;border:${fData?'1.5px solid #2e7d32':'1px solid #e8e6e1'};">
-    ${fData?`<div style="font-size:12px;color:#276b2f;font-weight:600;margin-bottom:5px;">Agendado para ${new Date(fData+'T12:00:00').toLocaleDateString('pt-PT')}${fTemHora?' às '+fHora:''}</div>`:'<div style="font-size:12px;color:#999;margin-bottom:5px;">Sem follow-up agendado</div>'}
+    <div class="fu-hdr" style="font-size:12px;color:${fData?'#276b2f':'#999'};font-weight:600;margin-bottom:5px;">${fData?'Agendado para '+new Date(fData+'T12:00:00').toLocaleDateString('pt-PT')+(fTemHora?' às '+fHora:''):'Sem follow-up agendado'}</div>
     <input class="finput" type="date" id="fdt-${l.id}" value="${fData}" onchange="setFollowDataNew('${l.id}')" style="margin-bottom:5px;">
     <div style="display:flex;align-items:center;gap:6px;margin-bottom:5px;">
-      <label style="font-size:12px;color:#888;">Hora (opcional)</label>
+      <label style="font-size:12px;color:#888;flex-shrink:0;">Hora</label>
       <input class="finput" type="time" id="fhora-${l.id}" value="${fHora}" onchange="setHoraNew('${l.id}')" style="width:auto;padding:.35rem .6rem;font-size:13px;margin-bottom:0;">
-      ${fTemHora?`<button onclick="limparHora('${l.id}')" style="background:none;border:none;color:#ccc;cursor:pointer;font-size:16px;padding:0;" title="Remover hora">✕</button>`:''}
+      <button id="btn-hora-x-${l.id}" onclick="limparHora('${l.id}')" style="background:none;border:none;color:#ccc;cursor:pointer;font-size:16px;padding:0;display:${fTemHora?'inline':'none'};" title="Remover hora">✕</button>
     </div>
     <input class="finput" id="fn-${l.id}" placeholder="Nota do follow-up..." value="${l.follow_nota||''}" onblur="salvarFN('${l.id}')" style="margin-bottom:0;">
-    ${fTemHora?`<button id="btn-ics-fu-${l.id}" onclick="outlookFollowUp('${l.id}')" class="btn full" style="margin-top:8px;font-size:12px;border-color:#185FA5;color:#185FA5;">📅 Adicionar ao Outlook</button>`:''}
+    <button id="btn-ics-fu-${l.id}" onclick="outlookFollowUp('${l.id}')" class="btn full" style="margin-top:8px;font-size:12px;border-color:#185FA5;color:#185FA5;display:${fTemHora?'flex':'none'};">📅 Adicionar ao Outlook</button>
   </div>`;
 
   // sub-title in header: viatura + tipo
@@ -1823,29 +1808,62 @@ function limparHora(id){
   if(inp)inp.value='';
   const l=leads.find(x=>String(x.id)===String(id));if(!l)return;
   l.follow_hora='';
-  l._localTs=Date.now();
   const i=leads.findIndex(x=>String(x.id)===String(l.id));
   if(i>=0)leads[i]=l;
   localStorage.setItem('leads_mb',JSON.stringify(leads));
   fetch(SCRIPT+'?action=save',{method:'POST',body:JSON.stringify({action:'save',lead:l})}).catch(()=>{});
-  renderFicha(l);
+  const btnIcs=document.getElementById('btn-ics-fu-'+id);if(btnIcs)btnIcs.style.display='none';
+  const btnX=document.getElementById('btn-hora-x-'+id);if(btnX)btnX.style.display='none';
+  const box=document.getElementById('follow-box-'+id);
+  if(box&&l.follow_data){
+    const hdr=box.querySelector('.fu-hdr');
+    if(hdr)hdr.textContent='Agendado para '+new Date(l.follow_data+'T12:00:00').toLocaleDateString('pt-PT');
+  }
 }
 function setFollowDataNew(id){
   const l=leads.find(x=>String(x.id)===String(id));
   const dateEl=document.getElementById('fdt-'+id);
   if(!l||!dateEl||!dateEl.value)return;
-  // Só guarda a data — a hora é tratada por setHoraNew e toggleHora
-  l.follow_data=dateEl.value;
+  l.follow_data=dateEl.value; // formato YYYY-MM-DD, sempre
   l.estado='follow_up';
   const fn=document.getElementById('fn-'+id);if(fn&&fn.value)l.follow_nota=fn.value;
-  guardar(l);renderFicha(l);
+  // Guardar sem renderFicha para não perder o foco no campo
+  const i=leads.findIndex(x=>String(x.id)===String(l.id));
+  if(i>=0)leads[i]=l;
+  localStorage.setItem('leads_mb',JSON.stringify(leads));
+  fetch(SCRIPT+'?action=save',{method:'POST',body:JSON.stringify({action:'save',lead:l})}).catch(()=>{});
+  // Só actualizar o cabeçalho do box sem re-renderizar tudo
+  const box=document.getElementById('follow-box-'+id);
+  if(box){
+    const hdr=box.querySelector('.fu-hdr');
+    if(hdr)hdr.textContent='Agendado para '+new Date(l.follow_data+'T12:00:00').toLocaleDateString('pt-PT')+(l.follow_hora?' às '+l.follow_hora:'');
+    box.style.background='#e6f4ea';box.style.border='1.5px solid #2e7d32';
+  }
 }
 function setHoraNew(id){
   const l=leads.find(x=>String(x.id)===String(id));
   const horaEl=document.getElementById('fhora-'+id);
   if(!l||!horaEl)return;
   l.follow_hora=horaEl.value||'';
-  guardar(l);
+  const i=leads.findIndex(x=>String(x.id)===String(l.id));
+  if(i>=0)leads[i]=l;
+  localStorage.setItem('leads_mb',JSON.stringify(leads));
+  fetch(SCRIPT+'?action=save',{method:'POST',body:JSON.stringify({action:'save',lead:l})}).catch(()=>{});
+  // Mostrar/esconder botão Outlook e X sem re-renderizar
+  const btnIcs=document.getElementById('btn-ics-fu-'+id);
+  const btnX=document.getElementById('btn-hora-x-'+id);
+  if(l.follow_hora){
+    if(btnIcs)btnIcs.style.display='';
+    if(btnX)btnX.style.display='';
+  } else {
+    if(btnIcs)btnIcs.style.display='none';
+    if(btnX)btnX.style.display='none';
+  }
+  const box=document.getElementById('follow-box-'+id);
+  if(box&&l.follow_data){
+    const hdr=box.querySelector('.fu-hdr');
+    if(hdr)hdr.textContent='Agendado para '+new Date(l.follow_data+'T12:00:00').toLocaleDateString('pt-PT')+(l.follow_hora?' às '+l.follow_hora:'');
+  }
 }
 function marcarBitrix(id,checked){
   const l=leads.find(x=>String(x.id)===String(id));if(!l)return;
@@ -2037,11 +2055,8 @@ function runBackfill(){
     if(backfillLead(l))count++;
   });
   if(count>0){
+    // Só actualiza localStorage — NÃO envia para servidor para não sobrescrever dados
     localStorage.setItem('leads_mb',JSON.stringify(leads));
-    // Sincroniza silenciosamente (sem bloquear UI)
-    leads.forEach(l=>{
-      fetch(SCRIPT+'?action=save',{method:'POST',body:JSON.stringify({action:'save',lead:l})}).catch(()=>{});
-    });
   }
 }
 
