@@ -884,10 +884,22 @@ function pesquisar(){
   document.getElementById(dest).innerHTML=r.length?r.map(cardHTML).join(''):`<div class="empty">Sem resultados para "${document.getElementById('search-input').value}"</div>`;
 }
 
+function isLembreteAgora(l){
+  if(!l.follow_data||!l.follow_hora)return false;
+  const agora=new Date();
+  const dtStr=l.follow_data.slice(0,10);
+  const [hh,mm]=l.follow_hora.split(':').map(Number);
+  const [y,mo,d]=dtStr.split('-').map(Number);
+  const horaFU=new Date(y,mo-1,d,hh,mm,0);
+  const diff=(agora-horaFU)/60000; // minutos desde a hora do FU
+  return diff>=-5; // -5min antes ou depois
+}
 function renderHoje(){
-  const contactar=ordenar(ativos().filter(l=>l.estado==='contactar'));
-  const followup=ordenar(ativos().filter(l=>l.estado!=='contactar'&&isUrg(l)));
+  const agora=ativos().filter(isLembreteAgora);
+  const contactar=ordenar(ativos().filter(l=>!isLembreteAgora(l)&&l.estado==='contactar'));
+  const followup=ordenar(ativos().filter(l=>!isLembreteAgora(l)&&l.estado!=='contactar'&&isUrg(l)));
   let html='';
+  if(agora.length){html+=`<div class="hoje-sep" style="background:#e8e4f8;color:#4a2d7a;margin-bottom:0;">⏰ Agora</div>`+agora.map(cardHTML).join('');}
   if(contactar.length){html+=`<div class="hoje-sep contactar-sep">Contactar hoje</div>`+contactar.map(cardHTML).join('');}
   if(followup.length){html+=`<div class="hoje-sep followup-sep" style="margin-top:.2rem;">Follow-up</div>`+followup.map(cardHTML).join('');}
   document.getElementById('lista-hoje').innerHTML=html||'<div class="empty">Sem urgências hoje</div>';
@@ -993,10 +1005,7 @@ function renderPropostas(l){
 function renderReuniao(l){
   if(l.reuniao_data){
     const dt=new Date(l.reuniao_data);const dtStr=dt.toLocaleDateString('pt-PT')+' '+dt.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'});
-    const fim=new Date(dt.getTime()+60*60*1000);const fmt=x=>x.toISOString().replace(/[-:]/g,'').split('.')[0]+'Z';
-    const title=encodeURIComponent('Reunião Mercedes — '+l.nome);const loc=encodeURIComponent(l.reuniao_local||'');
-    const calUrl='https://outlook.office.com/calendar/action/compose?subject='+title+'&startdt='+fmt(dt)+'&enddt='+fmt(fim)+'&location='+loc;
-    return`<div class="nota-block"><div class="nota-meta">📅 ${dtStr}${l.reuniao_local?' · '+l.reuniao_local:''}</div><div class="nota-text">${l.reuniao_notas||''}</div><div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;"><a href="${calUrl}" target="_blank" class="btn" style="font-size:12px;padding:5px 10px;">📅 Outlook</a><button onclick="confirmarReuniao('${l.id}')" class="btn" style="font-size:12px;padding:5px 10px;border-color:#2e7d32;color:#2e7d32;">✅ Realizada</button><button onclick="abrirModalReuniao('${l.id}')" class="btn" style="font-size:12px;padding:5px 10px;">✏️ Editar</button></div></div>`;
+    return`<div class="nota-block"><div class="nota-meta">📅 ${dtStr}${l.reuniao_local?' · '+l.reuniao_local:''}</div><div class="nota-text">${l.reuniao_notas||''}</div><div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;"><button id="btn-ics-reun-${l.id}" onclick="outlookReuniao('${l.id}')" class="btn" style="font-size:12px;padding:5px 10px;border-color:#185FA5;color:#185FA5;">📅 Outlook</button><button onclick="confirmarReuniao('${l.id}')" class="btn" style="font-size:12px;padding:5px 10px;border-color:#2e7d32;color:#2e7d32;">✅ Realizada</button><button onclick="abrirModalReuniao('${l.id}')" class="btn" style="font-size:12px;padding:5px 10px;">✏️ Editar</button></div></div>`;
   }
   if(l.reuniao_realizada)return`<div class="nota-block"><div class="nota-meta">✅ Reunião realizada</div><div class="nota-text">${l.reuniao_notas||''}</div></div>`;
   return`<p style="font-size:13px;color:#888;margin-bottom:.75rem;">Sem reunião agendada</p>`;
@@ -1015,6 +1024,127 @@ function resumo(l){
 
 function abrirFicha(id){fichaId=String(id);document.getElementById('ov-ficha').classList.add('open');const l=leads.find(x=>String(x.id)===fichaId);if(l)renderFicha(l);atualizarVoz();}
 function fecharFicha(){fichaId=null;document.getElementById('ov-ficha').classList.remove('open');atualizarVoz();renderAtual();}
+
+// ─── ICS / OUTLOOK ───────────────────────────────────────────────────────────
+function pad2(n){return String(n).padStart(2,'0');}
+function icsDate(dt){
+  return dt.getUTCFullYear()+pad2(dt.getUTCMonth()+1)+pad2(dt.getUTCDate())+'T'+pad2(dt.getUTCHours())+pad2(dt.getUTCMinutes())+'00Z';
+}
+function icsDateLocal(dateStr,horaStr){
+  // dateStr: "2026-06-20", horaStr: "16:00"
+  const [y,m,d]=dateStr.split('-').map(Number);
+  const [hh,mm]=(horaStr||'09:00').split(':').map(Number);
+  return new Date(y,m-1,d,hh,mm,0);
+}
+function escapaIcs(s){var r=String(s||'');r=r.split('\\').join('\\\\');r=r.split(';').join('\\;');r=r.split(',').join('\\,');r=r.split('\n').join('\\n');return r;}
+function downloadIcs(filename,icsContent){
+  const blob=new Blob([icsContent],{type:'text/calendar;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download=filename;
+  document.body.appendChild(a);a.click();
+  setTimeout(()=>{URL.revokeObjectURL(url);a.remove();},1000);
+}
+function gerarUID(){return Date.now()+'-'+Math.random().toString(36).slice(2)+'@leads-mbp';}
+
+function buildIcs({titulo,inicio,duracaoMin,local,descricao,lembretes}){
+  const fim=new Date(inicio.getTime()+duracaoMin*60000);
+  const linhas=[
+    'BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Leads MBP//PT',
+    'BEGIN:VEVENT',
+    'UID:'+gerarUID(),
+    'DTSTAMP:'+icsDate(new Date()),
+    'DTSTART:'+icsDate(inicio),
+    'DTEND:'+icsDate(fim),
+    'SUMMARY:'+escapaIcs(titulo),
+  ];
+  if(local)linhas.push('LOCATION:'+escapaIcs(local));
+  if(descricao)linhas.push('DESCRIPTION:'+escapaIcs(descricao));
+  (lembretes||[]).forEach(min=>{
+    linhas.push('BEGIN:VALARM','TRIGGER:-PT'+min+'M','ACTION:DISPLAY','DESCRIPTION:Lembrete','END:VALARM');
+  });
+  linhas.push('END:VEVENT','END:VCALENDAR');
+  return linhas.join('\r\n');
+}
+
+// Follow-up → ICS (com resumo IA)
+async function outlookFollowUp(id){
+  const l=leads.find(x=>String(x.id)===String(id));if(!l||!l.follow_hora)return;
+  const btn=document.getElementById('btn-ics-fu-'+id);
+  if(btn){btn.textContent='⏳ A gerar...';btn.disabled=true;}
+  // Gerar resumo IA
+  let resumoIA='';
+  try{
+    const hist=(l.notas||[]).map(n=>'['+n.data+'] '+n.texto).join('\n');
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:300,messages:[{role:'user',content:'Resume em 3-4 frases o historial desta lead Mercedes-Benz para colocar na descricao de um compromisso do Outlook. Portugues europeu, direto e factual.\n\n'+hist}]})});
+    const data=await resp.json();resumoIA=data.content[0].text;
+  }catch(e){resumoIA=(l.notas||[]).slice(-3).map(n=>n.texto).join(' | ');}
+  const inicio=icsDateLocal(l.follow_data.slice(0,10),l.follow_hora);
+  const desc=[
+    l.nome+' ('+( l.tipo_lead||'Lead MBP')+')',
+    'Tel: '+l.tel,
+    l.email?'Email: '+l.email:'',
+    '',
+    resumoIA
+  ].filter(x=>x!==null).join('\n');
+  const ics=buildIcs({
+    titulo:'Follow-up — '+l.nome+' ('+( l.tipo_lead||'Lead MBP')+')',
+    inicio,duracaoMin:15,
+    descricao:desc,
+    lembretes:[5]
+  });
+  downloadIcs('followup-'+l.nome.replace(/\s/g,'-')+'.ics',ics);
+  if(btn){btn.textContent='📅 Outlook';btn.disabled=false;}
+}
+
+// Test Drive → ICS
+function outlookTD(id){
+  const l=leads.find(x=>String(x.id)===String(id));if(!l||!l.td_agendado)return;
+  const dtStr=l.td_agendado.slice(0,10);
+  const horaStr=l.td_agendado.length>10?l.td_agendado.slice(11,16):'09:00';
+  const inicio=icsDateLocal(dtStr,horaStr);
+  const local=l.td_stand||'';
+  const localUpper=(local||'').toUpperCase();
+  const desc=localUpper.includes('BOAVISTA')?'⚠️ ATENÇÃO: TEST DRIVE NA BOAVISTA':'';
+  const ics=buildIcs({
+    titulo:'Test Drive '+l.carro+' — '+l.nome,
+    inicio,duracaoMin:60,local,
+    descricao:desc,
+    lembretes:[1440,60]
+  });
+  downloadIcs('testdrive-'+l.nome.replace(/\s/g,'-')+'.ics',ics);
+}
+
+// Reunião → ICS (com resumo IA)
+async function outlookReuniao(id){
+  const l=leads.find(x=>String(x.id)===String(id));if(!l||!l.reuniao_data)return;
+  const btn=document.getElementById('btn-ics-reun-'+id);
+  if(btn){btn.textContent='⏳ A gerar...';btn.disabled=true;}
+  let resumoIA='';
+  try{
+    const hist=(l.notas||[]).map(n=>'['+n.data+'] '+n.texto).join('\n');
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:300,messages:[{role:'user',content:'Resume em 3-4 frases o historial desta lead Mercedes-Benz para colocar na descricao de um compromisso do Outlook. Portugues europeu, direto e factual.\n\n'+hist}]})});
+    const data=await resp.json();resumoIA=data.content[0].text;
+  }catch(e){resumoIA=(l.notas||[]).slice(-3).map(n=>n.texto).join(' | ');}
+  const dtStr=l.reuniao_data.slice(0,10);
+  const horaStr=l.reuniao_data.length>10?l.reuniao_data.slice(11,16):'09:00';
+  const inicio=icsDateLocal(dtStr,horaStr);
+  const desc=[
+    l.nome+' ('+(l.tipo_lead||'Lead MBP')+')',
+    'Tel: '+l.tel,
+    l.email?'Email: '+l.email:'',
+    '',
+    resumoIA
+  ].filter(x=>x!==null).join('\n');
+  const ics=buildIcs({
+    titulo:'Reunião — '+l.nome+' ('+(l.tipo_lead||'Lead MBP')+')',
+    inicio,duracaoMin:90,
+    local:l.reuniao_local||'',
+    descricao:desc,
+    lembretes:[1440,60]
+  });
+  downloadIcs('reuniao-'+l.nome.replace(/\s/g,'-')+'.ics',ics);
+  if(btn){btn.textContent='📅 Outlook';btn.disabled=false;}
+}
 
 function corTipoLead(l){
   const t=l.tipo_lead||'';
@@ -1081,6 +1211,7 @@ function renderFicha(l){
       <input class="finput" type="time" id="fhora-${l.id}" value="${fHora}" onchange="setHoraNew('${l.id}')" style="display:${fTemHora?'inline-block':'none'};width:auto;padding:.35rem .6rem;font-size:13px;margin-bottom:0;">
     </div>
     <input class="finput" id="fn-${l.id}" placeholder="Nota do follow-up..." value="${l.follow_nota||''}" onblur="salvarFN('${l.id}')" style="margin-bottom:0;">
+    ${fTemHora?`<button id="btn-ics-fu-${l.id}" onclick="outlookFollowUp('${l.id}')" class="btn full" style="margin-top:8px;font-size:12px;border-color:#185FA5;color:#185FA5;">📅 Adicionar ao Outlook</button>`:''}
   </div>`;
 
   // sub-title in header: viatura + tipo
@@ -1119,6 +1250,7 @@ function renderFicha(l){
         <button class="btn primary full" onclick="addNota('${l.id}')" style="font-size:13px;">Guardar nota</button>
         <button class="btn sm" onclick="resumirNotas('${l.id}')" style="white-space:nowrap;font-size:12px;">✨ Resumir</button>
       </div>
+      <div id="sugestao-cont-${l.id}" style="display:none;"></div>
     </div>
 
     ${sugsHtml}
@@ -1143,6 +1275,7 @@ function renderFicha(l){
     ${l.td_pedido?`<div class="ficha-section alt">
       <p class="sec-title">Test Drive</p>
       ${cr('Data',l.td_agendado)}${cr('Stand',l.td_stand)}${cr('Especialista',l.td_esp)}
+      ${l.td_agendado?`<button onclick="outlookTD('${l.id}')" class="btn" style="margin-top:6px;font-size:12px;border-color:#185FA5;color:#185FA5;">📅 Adicionar ao Outlook</button>`:''}
     </div>`:''}
 
     <!-- FOLLOW-UP -->
@@ -1220,13 +1353,43 @@ function setFollowData(id){
     guardar(l);
   }
 }
-function addNota(id){
+async function addNota(id){
   const l=leads.find(x=>String(x.id)===String(id));const inp=document.getElementById('ni-'+id);
   const txt=inp.value.trim();if(!txt)return;
   const agora=new Date();if(!l.notas)l.notas=[];
-  l.notas.push({data:agora.toLocaleDateString('pt-PT')+' '+agora.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'}),texto:txt});
+  const ds=agora.toLocaleDateString('pt-PT')+' '+agora.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'});
+  l.notas.push({data:ds,texto:txt});
   inp.value='';guardar(l);renderFicha(l);
+  // Se estava em modo lembrete, pedir sugestão de próximo passo à IA
+  if(isLembreteAgora(l)){
+    sugerirProximoPasso(l,txt);
+  }
 }
+async function sugerirProximoPasso(l,notaAtual){
+  try{
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:200,messages:[{role:'user',content:'És assistente de uma consultora comercial Mercedes-Benz. Com base na nota que acabou de adicionar ao follow-up, sugere o próximo passo mais adequado. Responde APENAS em JSON:\n{"sugestao":"frase curta (máx 12 palavras)","acao":"wa"|"sms"|"email"|"followup"|"proposta"|"nenhuma","followup_dias":null_ou_numero}\n\nNota: "'+notaAtual+'"'}]})});
+    const data=await resp.json();
+    const p=JSON.parse(data.content[0].text.replace(/```json|```/g,'').trim());
+    mostrarSugestao(l,p);
+  }catch(e){}
+}
+function mostrarSugestao(l,p){
+  const cont=document.getElementById('sugestao-cont-'+l.id);if(!cont)return;
+  const acoes={
+    wa:`<button onclick="abrirTmplWA();fecharSugestao('${l.id}')" class="btn sm" style="border-color:#1e7a4a;color:#1e7a4a;">💬 WhatsApp</button>`,
+    sms:`<button onclick="abrirTmplSMS();fecharSugestao('${l.id}')" class="btn sm" style="border-color:#1e7a4a;color:#1e7a4a;">📱 SMS</button>`,
+    email:`<button onclick="abrirTmplEmail();fecharSugestao('${l.id}')" class="btn sm" style="border-color:#1e7a4a;color:#1e7a4a;">✉️ Email</button>`,
+    proposta:`<button onclick="abrirModalProposta('${l.id}');fecharSugestao('${l.id}')" class="btn sm" style="border-color:#1e7a4a;color:#1e7a4a;">📄 Proposta</button>`,
+    followup:'',nenhuma:''
+  };
+  const btnFU=p.followup_dias!=null?`<button onclick="setFollow('${l.id}',${p.followup_dias},'Sugerido por IA');fecharSugestao('${l.id}')" class="btn sm" style="border-color:#b7770d;color:#b7770d;">📅 Follow-up +${p.followup_dias}d</button>`:'';
+  cont.innerHTML=`<div style="background:#f0edf8;border:1px solid #c4b0e8;border-radius:10px;padding:.6rem .8rem;margin-top:8px;">
+    <div style="font-size:12px;color:#4a2d7a;font-weight:600;margin-bottom:6px;">✨ ${p.sugestao}</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;">${acoes[p.acao]||''}${btnFU}<button onclick="fecharSugestao('${l.id}')" class="btn sm" style="color:#aaa;">Ignorar</button></div>
+  </div>`;
+  cont.style.display='block';
+}
+function fecharSugestao(id){const el=document.getElementById('sugestao-cont-'+id);if(el)el.style.display='none';}
 function setFollow(id,dias,label){
   const l=leads.find(x=>String(x.id)===String(id));const d=new Date();d.setDate(d.getDate()+dias);d.setHours(9,0,0,0);
   l.follow_data=d.toISOString().split('T')[0];
@@ -1895,6 +2058,8 @@ function restaurarTab(){
 }
 
 iniciarPostCallWatch();
+// Atualizar aba Hoje ao minuto (para mover leads com lembrete)
+setInterval(()=>{if(tabAtual==='hoje'&&!fichaId)renderHoje();},60000);
 
   // Seed data if localStorage is empty
   (function(){
