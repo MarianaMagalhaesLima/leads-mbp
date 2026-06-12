@@ -778,7 +778,17 @@ function carregar(){
     clearTimeout(timer);
     delete window[cb];
     const s=document.getElementById('jsonp-script');if(s)s.remove();
-    leads=Array.isArray(data)?data:[];
+    const remotas=Array.isArray(data)?data:[];
+    // Preservar alterações locais que ainda não chegaram ao servidor
+    const locais=JSON.parse(localStorage.getItem('leads_mb')||'[]');
+    leads=remotas.map(r=>{
+      const loc=locais.find(l=>String(l.id)===String(r.id));
+      // Se a versão local tem _localTs mais recente, usa a local
+      if(loc&&loc._localTs&&(!r._localTs||loc._localTs>r._localTs))return loc;
+      return r;
+    });
+    // Adicionar leads que estão só no local (criadas offline)
+    locais.forEach(loc=>{if(!leads.find(r=>String(r.id)===String(loc.id)))leads.push(loc);});
     leads.forEach(l=>{if(!l.preferencias)l.preferencias=[];if(!l.propostas)l.propostas=[];if(!l.notas)l.notas=[];});
     runBackfill();
     localStorage.setItem('leads_mb',JSON.stringify(leads));
@@ -799,6 +809,7 @@ function carregar(){
 }
 
 async function guardar(lead){
+  lead._localTs=Date.now();
   const i=leads.findIndex(x=>String(x.id)===String(lead.id));
   if(i>=0)leads[i]=lead;else leads.unshift(lead);
   localStorage.setItem('leads_mb',JSON.stringify(leads));
@@ -1630,10 +1641,12 @@ function toggleHora(id){
     const hora=inp.value?'T'+inp.value:'';
     l.follow_data=dateEl.value+hora;
   } else {
-    // Checkbox desligado — remove hora
+    // Checkbox desligado — remove hora E limpa o valor do campo
+    inp.value='';
     l.follow_data=dateEl.value;
   }
   // Actualiza localStorage IMEDIATAMENTE (síncrono) antes de qualquer render
+  l._localTs=Date.now();
   const i=leads.findIndex(x=>String(x.id)===String(l.id));
   if(i>=0)leads[i]=l;
   localStorage.setItem('leads_mb',JSON.stringify(leads));
