@@ -1,0 +1,1541 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Leads MBP">
+<title>Leads MBP</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f4f2;color:#1a1a1a;min-height:100vh;}
+.app{max-width:480px;margin:0 auto;background:#fff;height:100vh;position:relative;overflow:hidden;}
+
+/* ── TOPBAR ── */
+.topbar{padding:.9rem 1rem .55rem;background:#0a2e1e;}
+.topbar-brand{font-size:10px;letter-spacing:.12em;color:rgba(255,255,255,0.4);text-transform:uppercase;margin-bottom:3px;}
+.topbar-row{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.topbar-name{font-size:16px;font-weight:700;color:#fff;}
+.topbar-btns{display:flex;gap:6px;}
+.topbar-btns .btn{background:rgba(255,255,255,0.1);border-color:rgba(255,255,255,0.18);color:#fff;font-size:12px;padding:6px 10px;}
+.topbar-btns .btn.primary{background:#fff;color:#1a1a1a;border-color:#fff;}
+.topbar-btns .btn:active{background:rgba(255,255,255,0.2);}
+.topbar-btns .btn.primary:active{background:#eee;}
+
+/* ── TABS ── */
+.tabs{display:flex;background:#081f15;overflow-x:auto;border-bottom:1px solid rgba(255,255,255,0.08);}
+.tab{flex-shrink:0;font-size:13px;padding:.55rem .85rem;cursor:pointer;color:rgba(255,255,255,0.45);border:none;background:none;border-bottom:2px solid transparent;font-family:inherit;white-space:nowrap;}
+.tab.active{color:#fff;border-bottom-color:#fff;font-weight:600;}
+
+/* ── BADGES ── */
+.badge{display:inline-block;font-size:10px;padding:2px 8px;border-radius:20px;font-weight:600;letter-spacing:.02em;}
+.badge-hot{background:#fce9e9;color:#a93226;}
+.badge-warm{background:#fef3e2;color:#9a6510;}
+.badge-cold{background:#efefed;color:#666;}
+.badge-done{background:#e6f4ea;color:#276b2f;}
+
+/* ── LEAD CARDS ── */
+.section{padding:.65rem .85rem;background:#f5f4f2;}
+.lead-card{background:#fff;border:1px solid #e8e6e1;border-radius:12px;padding:.65rem .9rem;margin-bottom:.5rem;cursor:pointer;user-select:none;transition:border-color .15s;}
+.lead-card:active{border-color:#bbb;background:#fafaf9;}
+/* Estado left-border nas cards */
+.lead-card.estado-contactar{border-left:3px solid #c0392b;}
+.lead-card.estado-follow_up{border-left:3px solid #b7770d;}
+.lead-card.estado-td_agendado{border-left:3px solid #2e7d32;}
+.lead-card.campanha-ativa:not(.estado-contactar):not(.estado-follow_up):not(.estado-td_agendado){border-left:3px solid #b7770d;}
+.lead-header{display:flex;align-items:center;gap:9px;margin-bottom:5px;}
+.avatar{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0;letter-spacing:.03em;}
+.avatar-opp{background:#0e4430;}
+.avatar-lead{background:#1a1a1a;}
+.lead-name{font-size:15px;font-weight:600;color:#1a1a1a;line-height:1.2;}
+.lead-car{font-size:11px;color:#999;margin-top:1px;}
+.lead-follow{font-size:11px;color:#999;display:flex;align-items:center;gap:4px;margin-top:2px;}
+.urgent{color:#a93226;font-weight:500;}
+.lead-meta{font-size:11px;color:#999;margin-top:1px;}
+.inativo-badge{font-size:10px;color:#9a6510;font-weight:500;margin-top:2px;}
+.campanha-dot{display:inline-block;width:5px;height:5px;border-radius:50%;background:#b7770d;margin-right:3px;vertical-align:middle;}
+
+/* ── SEPARADOR HOJE ── */
+.hoje-sep{font-size:10px;text-transform:uppercase;letter-spacing:.09em;font-weight:700;padding:4px 10px;margin:.2rem 0 0;display:flex;align-items:center;gap:5px;}
+.hoje-sep::before{content:'';width:5px;height:5px;border-radius:50%;flex-shrink:0;}
+.contactar-sep{background:#fce9e9;color:#a93226;}
+.contactar-sep::before{background:#c0392b;}
+.followup-sep{background:#fef3e2;color:#9a6510;}
+.followup-sep::before{background:#b7770d;}
+
+/* ── BUTTONS ── */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;font-size:13px;padding:7px 14px;border:1px solid #ccc;border-radius:22px;cursor:pointer;background:#fff;color:#1a1a1a;font-family:inherit;}
+.btn:active{background:#f0efed;}
+.btn.primary{background:#1a1a1a;color:#fff;border-color:#1a1a1a;}
+.btn.primary:active{background:#333;}
+.btn.full{width:100%;}
+.btn.danger{border-color:#c0392b;color:#c0392b;}
+.btn.success{border-color:#2e7d32;color:#2e7d32;}
+.btn.warning{border-color:#b7770d;color:#b7770d;}
+.btn.sm{font-size:12px;padding:5px 10px;}
+
+/* ── MISC LAYOUT ── */
+.divider{height:1px;background:#e8e6e1;margin:.75rem 0;}
+.stat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:1rem;}
+.stat-card{background:#f5f4f2;border-radius:10px;padding:.75rem 1rem;}
+.stat-label{font-size:11px;color:#888;margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em;}
+.stat-value{font-size:24px;font-weight:700;color:#1a1a1a;}
+
+/* ── OVERLAY / FICHA ── */
+.overlay{position:absolute;top:0;left:0;right:0;bottom:0;background:#f5f4f2;z-index:100;overflow-y:auto;transform:translateX(100%);transition:transform .25s ease;}
+.overlay.open{transform:translateX(0);}
+.back-btn{display:flex;align-items:center;gap:8px;font-size:14px;color:#888;cursor:pointer;padding:.85rem 1rem;border:none;background:none;font-family:inherit;position:sticky;top:0;background:#fff;z-index:10;border-bottom:1px solid #e8e6e1;}
+.ficha-pad{padding:0 0 2rem;}
+
+/* ── FICHA HEADER (colored) ── */
+.ficha-hero{padding:1.1rem 1rem 1rem;display:flex;align-items:center;gap:12px;}
+.ficha-hero.opp{background:#0e4430;}
+.ficha-hero.lead{background:#1a1a1a;}
+.ficha-av{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;flex-shrink:0;border:1.5px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.15);}
+.ficha-name{font-size:17px;font-weight:700;color:#fff;line-height:1.2;}
+.ficha-sub{font-size:11px;color:rgba(255,255,255,0.55);margin-top:3px;}
+.ficha-badge{display:inline-block;font-size:10px;padding:2px 8px;border-radius:20px;background:rgba(255,255,255,0.15);color:#fff;border:.5px solid rgba(255,255,255,0.25);font-weight:500;margin-top:5px;}
+
+/* ── BOTÕES DE AÇÃO 4 em grelha ── */
+.action-grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:.75rem 1rem;background:#fff;border-bottom:1px solid #e8e6e1;}
+.action-btn{display:flex;flex-direction:column;align-items:center;gap:3px;padding:9px 4px;border:1px solid #e8e6e1;border-radius:10px;cursor:pointer;background:#fff;font-family:inherit;font-size:10px;color:#1a1a1a;text-decoration:none;}
+.action-btn:active{background:#f5f4f2;}
+.action-btn span{font-size:19px;line-height:1;}
+
+/* ── SECÇÕES ZEBRADAS ── */
+.sec-z{background:#fff;padding:.6rem 1rem;border-bottom:1px solid #eeede9;}
+.sec-z:nth-child(even){background:#f8f8f6;}
+.sec-title{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#aaa;font-weight:600;margin-bottom:.3rem;}
+
+/* ── DROW: label esquerda, valor direita ── */
+.drow{display:flex;justify-content:space-between;align-items:center;padding:2px 0;}
+.dlbl{font-size:12px;color:#999;}
+.dval{font-size:12px;font-weight:600;color:#1a1a1a;text-align:right;max-width:65%;word-break:break-word;}
+
+/* ── CAMPO na ficha (zebrado, sem grid) ── */
+.campo-section{background:#fff;padding:.5rem 1rem;border-bottom:1px solid #eeede9;}
+.campo-section:nth-of-type(even){background:#f8f8f6;}
+.campo-row{display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid #f0efed;}
+.campo-row:last-child{border-bottom:none;}
+.campo-lbl{font-size:12px;color:#999;flex-shrink:0;padding-right:8px;}
+.campo-val{font-size:12px;font-weight:600;color:#1a1a1a;text-align:right;word-break:break-word;}
+
+/* Manter compatibilidade com .campo antigo */
+.campo-grid{display:flex;flex-direction:column;margin-bottom:.5rem;}
+.campo{padding:5px 0;border-bottom:1px solid #f0efed;}
+.campo:last-child{border-bottom:none;}
+.campo-label{font-size:12px;color:#999;}
+.campo-val{font-size:12px;font-weight:600;color:#1a1a1a;word-break:break-all;}
+
+/* ── COLAPSO ── */
+.collapse-row{display:flex;justify-content:space-between;align-items:center;padding:.55rem 1rem;border-bottom:1px solid #e8e6e1;cursor:pointer;background:#fff;}
+.collapse-label{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:#888;font-weight:600;}
+.collapse-content{background:#f8f8f6;padding:.65rem 1rem;border-bottom:1px solid #e8e6e1;}
+
+/* ── NOTAS / RESUMO ── */
+.nota-block{background:#f5f4f2;border-radius:8px;padding:.65rem .85rem;margin-bottom:6px;}
+.nota-meta{font-size:11px;color:#999;margin-bottom:3px;}
+.nota-text{font-size:13px;color:#1a1a1a;line-height:1.5;}
+.resumo-box{background:#f5f4f2;border-radius:10px;padding:.85rem;font-size:12px;color:#1a1a1a;line-height:1.6;font-family:'Courier New',monospace;white-space:pre-wrap;word-break:break-word;}
+
+/* ── INPUTS ── */
+.finput{width:100%;border:1px solid #ddd;border-radius:10px;padding:.6rem .8rem;font-size:14px;background:#fff;color:#1a1a1a;font-family:inherit;resize:none;outline:none;}
+.finput:focus{border-color:#1a1a1a;}
+.flabel{font-size:12px;color:#888;margin-bottom:4px;display:block;}
+.ffield{margin-bottom:.7rem;}
+.trow{display:flex;align-items:center;justify-content:space-between;padding:.5rem 0;border-bottom:1px solid #e8e6e1;}
+.stitle{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#888;margin-bottom:.6rem;font-weight:600;}
+
+/* ── SYNC BAR ── */
+.sync-bar{font-size:11px;color:#888;display:flex;align-items:center;gap:6px;padding:.3rem 1rem;border-bottom:1px solid #e0ddd6;background:#eeecea;}
+.sdot{width:6px;height:6px;border-radius:50%;background:#2e7d32;flex-shrink:0;}
+.sdot.syncing{background:#b7770d;animation:blink 1s infinite;}
+.sdot.error{background:#c0392b;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* ── VOZ BAR ── */
+.voz-bar{background:#f5f4f2;border-top:1px solid #e0ddd6;padding:.75rem 1rem;display:flex;align-items:center;gap:12px;position:sticky;bottom:0;}
+.voz-hint{font-size:12px;color:#888;flex:1;line-height:1.4;}
+.voz-hint b{color:#1a1a1a;}
+.mic-btn{width:46px;height:46px;border-radius:50%;background:#1a1a1a;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:21px;color:#fff;transition:transform .15s;}
+.mic-btn.rec{background:#c0392b;animation:pulse 1s infinite;}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}
+
+/* ── TBOX ── */
+.tbox{background:#fef3e2;border-radius:10px;padding:.8rem;margin:.5rem 1rem;border:1px solid #f0d090;}
+.tbox-hint{font-size:11px;color:#b7770d;margin-bottom:4px;}
+.tbox-actions{display:flex;gap:8px;margin-top:8px;}
+
+/* ── ACTION LINK (old, compatibilidade) ── */
+.action-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-bottom:1rem;}
+.action-link{display:flex;align-items:center;gap:8px;padding:10px 12px;border:1px solid #e8e6e1;border-radius:10px;text-decoration:none;color:#1a1a1a;font-size:13px;cursor:pointer;background:#fff;font-family:inherit;}
+.action-link:active{background:#f0efed;}
+
+/* ── MISC ── */
+.empty{text-align:center;padding:3rem 1rem;color:#aaa;font-size:14px;}
+.pref-item{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #e8e6e1;}
+.proposta-card{background:#f5f4f2;border-radius:10px;padding:.65rem .85rem;margin-bottom:6px;}
+.proposta-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;}
+.proposta-modelo{font-size:13px;font-weight:600;}
+.proposta-preco{font-size:13px;font-weight:600;}
+.proposta-meta{font-size:11px;color:#888;}
+.modal-bg{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:200;align-items:center;justify-content:center;padding:1rem;}
+.modal-bg.open{display:flex;}
+.modal{background:#fff;border-radius:16px;padding:1.5rem;width:100%;max-width:440px;max-height:90vh;overflow-y:auto;}
+.modal-title{font-size:15px;font-weight:700;margin-bottom:.5rem;}
+.modal-sub{font-size:13px;color:#888;margin-bottom:1rem;}
+.opcao-btn{width:100%;text-align:left;justify-content:flex-start;margin-bottom:6px;border-radius:10px;font-size:13px;}
+.opcao-btn.selected{background:#1a1a1a;color:#fff;border-color:#1a1a1a;}
+#main-view{height:100vh;overflow-y:auto;}
+.search-bar{padding:.45rem .85rem;border-bottom:1px solid #e0ddd6;background:#f5f4f2;display:flex;gap:8px;align-items:center;}
+.tel-display{letter-spacing:.08em;}
+
+/* Template menu modal */
+.tmpl-list{display:flex;flex-direction:column;gap:6px;margin-bottom:.75rem;}
+.tmpl-btn{width:100%;text-align:left;justify-content:flex-start;padding:10px 14px;border:1px solid #e8e6e1;border-radius:10px;font-size:13px;cursor:pointer;background:#fff;color:#1a1a1a;font-family:inherit;}
+.tmpl-btn:active{background:#f0efed;}
+.tmpl-btn.en-toggle{border-color:#1a1a1a;font-weight:600;margin-top:4px;}
+.tmpl-section-title{font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:#aaa;margin:8px 0 4px;font-weight:600;}
+
+/* Post-call popup */
+.postcall-popup{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:#fff;border-top:2px solid #1a1a1a;padding:1rem;z-index:300;box-shadow:0 -4px 20px rgba(0,0,0,0.15);}
+.postcall-popup.hidden{display:none;}
+.postcall-title{font-size:13px;font-weight:700;margin-bottom:.75rem;color:#1a1a1a;}
+.postcall-btns{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.postcall-close{position:absolute;top:.75rem;right:1rem;background:none;border:none;color:#aaa;cursor:pointer;font-size:18px;}
+
+/* Quick menu */
+.quick-menu{display:none;position:fixed;top:0;left:0;right:0;bottom:0;z-index:400;background:rgba(0,0,0,0.4);}
+.quick-menu.open{display:flex;align-items:flex-end;justify-content:center;}
+.quick-menu-inner{background:#fff;border-radius:16px 16px 0 0;padding:1rem;width:100%;max-width:480px;}
+.quick-menu-name{font-size:13px;font-weight:600;margin-bottom:.75rem;color:#1a1a1a;}
+.quick-menu-btns{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:.75rem;}
+.quick-menu-btn{padding:10px 6px;border:1px solid #e8e6e1;border-radius:10px;text-align:center;font-size:12px;cursor:pointer;background:#fff;}
+.quick-menu-cancel{width:100%;padding:10px;border:none;background:#f5f4f2;border-radius:10px;font-size:13px;cursor:pointer;font-family:inherit;}
+
+/* Chart */
+.chart-bar-wrap{display:flex;align-items:flex-end;gap:4px;height:56px;margin-top:8px;}
+.chart-bar{flex:1;background:#e8e6e1;border-radius:3px 3px 0 0;min-height:3px;}
+.chart-bar.today-bar{background:#1a1a1a;}
+.chart-label{display:flex;gap:4px;margin-top:4px;}
+.chart-lbl{flex:1;font-size:9px;color:#888;text-align:center;}
+
+/* Bitrix */
+.bitrix-pending{margin:.5rem 1rem;display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid #EF9F27;border-radius:10px;background:#FAEEDA;}
+.bitrix-done{margin:.5rem 1rem;display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid #2e7d32;border-radius:10px;background:#e8f5e9;}
+
+/* Ficha section wrapper */
+.ficha-section{background:#fff;padding:.5rem 1rem;border-bottom:1px solid #eeede9;}
+.ficha-section.alt{background:#f8f8f6;padding:.5rem 1rem;border-bottom:1px solid #eeede9;}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+
+<div id="main-view">
+  <div class="topbar">
+    <div class="topbar-brand">Mercedes-Benz · Sociedade Comercial C. Santos</div>
+    <div class="topbar-row">
+      <span class="topbar-name">Mariana Magalhães</span>
+      <div class="topbar-btns">
+        <button class="btn" onclick="abrirCampanhas()" title="Campanhas">📢</button>
+        <button class="btn" onclick="abrirImport()" title="Importar">⬇</button>
+        <button class="btn primary" onclick="abrirNova()">+ Nova</button>
+      </div>
+    </div>
+  </div>
+  <div class="sync-bar"><div class="sdot" id="sdot"></div><span id="smsg">A carregar...</span></div>
+  <div class="search-bar">
+    <input class="finput" id="search-input" placeholder="Pesquisar nome, modelo, notas..." oninput="pesquisar()" style="margin-bottom:0;flex:1;padding:.45rem .75rem;font-size:13px;border-color:#ddd;">
+    <select id="sort-select" class="finput" onchange="renderAtual()" style="margin-bottom:0;width:auto;font-size:12px;padding:.45rem .6rem;border-color:#ddd;">
+      <option value="recente">↓ Recente</option>
+      <option value="antiga">↑ Antiga</option>
+      <option value="nome">A–Z</option>
+    </select>
+  </div>
+  <div class="tabs">
+    <button class="tab active" id="tab-btn-hoje" onclick="mudaTab(this,'hoje')">Hoje</button>
+    <button class="tab" id="tab-btn-todas" onclick="mudaTab(this,'todas')">Todas</button>
+    <button class="tab" id="tab-btn-stats" onclick="mudaTab(this,'stats')">Resumo</button>
+    <button class="tab" id="tab-btn-arquivo" onclick="mudaTab(this,'arquivo')">Arquivo</button>
+  </div>
+  <div id="tab-hoje" class="section"><div id="lista-hoje"></div></div>
+  <div id="tab-todas" class="section" style="display:none"><div id="lista-todas"></div></div>
+  <div id="tab-stats" class="section" style="display:none">
+    <div class="stat-grid" id="stat-cards"></div>
+    <div class="divider"></div>
+    <p class="stitle" style="margin-bottom:.5rem;">Actividade esta semana</p>
+    <div class="chart-bar-wrap" id="chart-bars"></div>
+    <div class="chart-label" id="chart-labels"></div>
+    <div class="divider"></div>
+    <p class="stitle">Por estado</p>
+    <div id="stat-estados"></div>
+  </div>
+  <div id="tab-arquivo" class="section" style="display:none">
+    <div style="display:flex;gap:6px;margin-bottom:.75rem;flex-wrap:wrap;">
+      <button class="btn" id="filtro-todas" onclick="filtroArquivo('todas')" style="font-size:12px;padding:5px 12px;background:#1a1a1a;color:#fff;border-color:#1a1a1a;">Todas</button>
+      <button class="btn" id="filtro-sucesso" onclick="filtroArquivo('sucesso')" style="font-size:12px;padding:5px 12px;">✅ Sucesso</button>
+      <button class="btn" id="filtro-insucesso" onclick="filtroArquivo('insucesso')" style="font-size:12px;padding:5px 12px;">❌ Sem sucesso</button>
+      <button class="btn" id="filtro-apagadas" onclick="filtroArquivo('apagadas')" style="font-size:12px;padding:5px 12px;">🗑 Apagadas</button>
+    </div>
+    <div id="lista-arquivo"></div>
+  </div>
+  <div class="tbox" id="tbox-main" style="display:none;">
+    <p class="tbox-hint">✏️ Podes editar antes de guardar</p>
+    <textarea id="ttext-main" class="finput" style="height:80px;font-size:13px;"></textarea>
+    <div class="tbox-actions">
+      <button class="btn primary" onclick="usarT()" style="font-size:13px;">✓ Guardar</button>
+      <button class="btn" onclick="descartarT()" style="font-size:13px;">✕ Descartar</button>
+    </div>
+  </div>
+  <div class="voz-bar">
+    <div class="voz-hint" id="vh-main"><b>Assistente</b><br>Toca no microfone e fala</div>
+    <button class="mic-btn" id="mb-main" onclick="toggleVoz()" aria-label="Microfone">🎤</button>
+  </div>
+</div>
+
+<!-- FICHA -->
+<div class="overlay" id="ov-ficha">
+  <button class="back-btn" onclick="fecharFicha()">← Voltar</button>
+  <div class="ficha-pad" id="ficha-content"></div>
+  <div style="padding:0 1rem;">
+    <div class="tbox" id="tbox-ficha" style="display:none;">
+      <p class="tbox-hint">✏️ Podes editar antes de guardar</p>
+      <textarea id="ttext-ficha" class="finput" style="height:80px;font-size:13px;"></textarea>
+      <div id="ai-ind" style="font-size:11px;color:#b7770d;display:none;margin-top:4px;">✨ A processar com IA...</div>
+      <div class="tbox-actions">
+        <button class="btn primary" onclick="usarT()" style="font-size:13px;">✓ Guardar</button>
+        <button class="btn" onclick="descartarT()" style="font-size:13px;">✕ Descartar</button>
+      </div>
+    </div>
+  </div>
+  <div class="voz-bar">
+    <div class="voz-hint" id="vh-ficha"><b>Fala</b><br>Processo e guardo</div>
+    <button class="mic-btn" id="mb-ficha" onclick="toggleVoz()" aria-label="Microfone">🎤</button>
+  </div>
+</div>
+
+<!-- NOVA LEAD -->
+<div class="overlay" id="ov-nova">
+  <button class="back-btn" onclick="fecharNova()">← Cancelar</button>
+  <div style="padding:0 1rem 6rem;">
+    <p class="stitle" style="margin-bottom:1rem;">Nova lead</p>
+    <div id="nova-form"></div>
+  </div>
+</div>
+
+<!-- IMPORTAR -->
+<div class="overlay" id="ov-import">
+  <button class="back-btn" onclick="fecharImport()">← Cancelar</button>
+  <div style="padding:0 1rem 6rem;">
+    <p class="stitle" style="margin-bottom:.5rem;">Importar lead</p>
+    <p style="font-size:13px;color:#888;margin-bottom:1rem;">Cola aqui o código que o Claude te deu.</p>
+    <textarea class="finput" id="import-input" style="height:200px;margin-bottom:8px;" placeholder="Cola o código aqui..."></textarea>
+    <button class="btn primary full" onclick="importarLead()">⬇ Importar lead</button>
+  </div>
+</div>
+
+<!-- CAMPANHAS -->
+<div class="overlay" id="ov-campanhas">
+  <button class="back-btn" onclick="fecharCampanhas()">← Voltar</button>
+  <div style="padding:0 1rem 6rem;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+      <p class="stitle" style="margin-bottom:0;">Circulares & Campanhas</p>
+      <button class="btn primary" style="font-size:12px;padding:6px 12px;" onclick="abrirFormCampanha()">+ Nova</button>
+    </div>
+    <div id="lista-campanhas"></div>
+    <div id="form-campanha" style="display:none;margin-top:1rem;">
+      <div class="divider"></div>
+      <p class="stitle">Nova campanha</p>
+      <div class="ffield"><label class="flabel">Título *</label><input class="finput" id="camp-titulo" placeholder="Ex: GLC EQ — Campanha Primavera"></div>
+      <div class="ffield"><label class="flabel">Modelo(s)</label><input class="finput" id="camp-modelos" placeholder="Ex: GLC EQ, GLC 300de"></div>
+      <div class="ffield"><label class="flabel">Condições / descrição</label><textarea class="finput" id="camp-desc" style="height:80px;" placeholder="Juros, descontos, condições especiais..."></textarea></div>
+      <div class="ffield"><label class="flabel">Validade</label><input class="finput" type="date" id="camp-validade"></div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn primary full" onclick="guardarCampanha()">Guardar</button>
+        <button class="btn full" onclick="fecharFormCampanha()">Cancelar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- EDITAR LEAD -->
+<div class="overlay" id="ov-editar">
+  <button class="back-btn" onclick="fecharEditar()">← Cancelar</button>
+  <div style="padding:0 1rem 6rem;">
+    <p class="stitle" style="margin-bottom:1rem;">Editar dados</p>
+    <div id="editar-form"></div>
+  </div>
+</div>
+
+<!-- MODAL SUCESSO -->
+<div class="modal-bg" id="modal-sucesso">
+  <div class="modal">
+    <div class="modal-title">✅ Fechar com sucesso</div>
+    <div class="modal-sub">O que comprou o cliente?</div>
+    <textarea class="finput" id="sucesso-texto" style="height:100px;margin-bottom:1rem;" placeholder="Ex: GLC EQ 300e, financiamento 48 meses..."></textarea>
+    <div style="display:flex;gap:8px;">
+      <button class="btn primary full" onclick="fecharComSucesso()">Confirmar</button>
+      <button class="btn full" onclick="fecharModalSucesso()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL INSUCESSO -->
+<div class="modal-bg" id="modal-insucesso">
+  <div class="modal">
+    <div class="modal-title">❌ Fechar sem sucesso</div>
+    <div class="modal-sub">Motivo:</div>
+    <div id="insucesso-opcoes" style="margin-bottom:.75rem;">
+      <button class="btn full opcao-btn" onclick="selInsucesso(this,'Sem resposta')">Sem resposta</button>
+      <button class="btn full opcao-btn" onclick="selInsucesso(this,'Deixou de atender/responder')">Deixou de atender/responder</button>
+      <button class="btn full opcao-btn" onclick="selInsucesso(this,'Comprou Mercedes-Benz noutro concessionário')">Comprou MB noutro concessionário</button>
+      <button class="btn full opcao-btn" onclick="selInsucesso(this,'Comprou outra marca')">Comprou outra marca</button>
+      <button class="btn full opcao-btn" onclick="selInsucesso(this,'Decidiu não avançar')">Decidiu não avançar</button>
+      <button class="btn full opcao-btn" onclick="selInsucesso(this,'Sem capacidade financeira')">Sem capacidade financeira</button>
+      <button class="btn full opcao-btn" onclick="selInsucesso(this,'Passei a colega')">Passei a colega</button>
+      <button class="btn full opcao-btn" onclick="selInsucesso(this,'Outro')">Outro</button>
+    </div>
+    <textarea class="finput" id="insucesso-texto" style="height:70px;margin-bottom:.75rem;" placeholder="Notas adicionais (opcional)..."></textarea>
+    <div style="display:flex;gap:8px;">
+      <button class="btn primary full" id="btn-conf-insucesso" onclick="fecharComInsucesso()" disabled style="opacity:.4;">Confirmar</button>
+      <button class="btn full" onclick="fecharModalInsucesso()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL REUNIÃO -->
+<div class="modal-bg" id="modal-reuniao">
+  <div class="modal">
+    <div class="modal-title">📅 Agendar reunião</div>
+    <div class="ffield" style="margin-top:.75rem;"><label class="flabel">Data e hora</label><input class="finput" type="datetime-local" id="reuniao-dt"></div>
+    <div class="ffield"><label class="flabel">Local</label><input class="finput" id="reuniao-local" placeholder="Ex: Stand Maia, Stand Porto..."></div>
+    <div class="ffield"><label class="flabel">Notas</label><textarea class="finput" id="reuniao-notas" style="height:70px;" placeholder="Assunto, observações..."></textarea></div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn primary full" onclick="guardarReuniao()">Confirmar</button>
+      <button class="btn full" onclick="fecharModalReuniao()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL PROPOSTA -->
+<div class="modal-bg" id="modal-proposta">
+  <div class="modal">
+    <div class="modal-title">📄 Registar proposta</div>
+    <div class="ffield" style="margin-top:.75rem;"><label class="flabel">Modelo</label><input class="finput" id="prop-modelo" placeholder="Ex: GLC 300de 4MATIC"></div>
+    <div class="ffield"><label class="flabel">KOM</label><input class="finput" id="prop-kom" inputmode="text"></div>
+    <div class="ffield"><label class="flabel">Preço de venda (€)</label><input class="finput" id="prop-preco" type="number"></div>
+    <div class="ffield"><label class="flabel">Validade</label><input class="finput" id="prop-validade" type="date"></div>
+    <div class="ffield"><label class="flabel">Estado</label>
+      <select class="finput" id="prop-estado">
+        <option value="enviada">Enviada</option>
+        <option value="em_negociacao">Em negociação</option>
+        <option value="aceite">Aceite</option>
+        <option value="recusada">Recusada</option>
+      </select>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn primary full" onclick="guardarProposta()">Guardar</button>
+      <button class="btn full" onclick="fecharModalProposta()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL TEMPLATES WHATSAPP/SMS -->
+<div class="modal-bg" id="modal-tmpl-wa">
+  <div class="modal">
+    <div class="modal-title" id="tmpl-wa-title">💬 WhatsApp</div>
+    <div class="tmpl-list" id="tmpl-wa-list"></div>
+    <button class="btn full" onclick="fecharModalTmpl('wa')" style="margin-top:.5rem;">Cancelar</button>
+  </div>
+</div>
+
+
+<!-- MODAL TEMPLATES SMS -->
+<div class="modal-bg" id="modal-tmpl-sms">
+  <div class="modal">
+    <div class="modal-title" id="tmpl-sms-title">📱 SMS</div>
+    <div id="tmpl-sms-list"></div>
+    <button class="btn full" onclick="fecharModalTmpl('sms')" style="margin-top:.5rem;">Cancelar</button>
+  </div>
+</div>
+
+<!-- MODAL TEMPLATES EMAIL -->
+<div class="modal-bg" id="modal-tmpl-email">
+  <div class="modal">
+    <div class="modal-title">✉️ Email</div>
+    <div class="tmpl-list" id="tmpl-email-list"></div>
+    <button class="btn full" onclick="fecharModalTmpl('email')" style="margin-top:.5rem;">Cancelar</button>
+  </div>
+</div>
+
+<!-- MODAL TEMPLATES SMS -->
+<div class="modal-bg" id="modal-tmpl-sms">
+  <div class="modal">
+    <div class="modal-title" id="tmpl-sms-title">📱 SMS</div>
+    <div class="tmpl-list" id="tmpl-sms-list"></div>
+    <button class="btn full" onclick="fecharModalTmpl('sms')" style="margin-top:.5rem;">Cancelar</button>
+  </div>
+</div>
+
+
+<!-- QUICK MENU (long press) -->
+<div class="quick-menu" id="quick-menu" onclick="fecharQuickMenu()">
+  <div class="quick-menu-inner" onclick="event.stopPropagation()">
+    <div class="quick-menu-name" id="quick-menu-name"></div>
+    <div class="quick-menu-btns">
+      <div class="quick-menu-btn" id="qm-ligar">📞<br>Ligar</div>
+      <div class="quick-menu-btn" onclick="quickWA()">💬<br>WhatsApp</div>
+      <div class="quick-menu-btn" onclick="quickSMS()">📱<br>SMS</div>
+    </div>
+    <button class="quick-menu-cancel" onclick="fecharQuickMenu()">Cancelar</button>
+  </div>
+</div>
+
+<!-- POP-UP PÓS-CHAMADA -->
+<div class="postcall-popup hidden" id="postcall-popup">
+  <button class="postcall-close" onclick="fecharPostCall()">✕</button>
+  <div class="postcall-title">Enviar mensagem?</div>
+  <div class="postcall-btns">
+    <button class="btn full" onclick="abrirTmplWA();fecharPostCall();" style="font-size:12px;">💬 WhatsApp</button>
+    <button class="btn full" onclick="abrirTmplSMS();fecharPostCall();" style="font-size:12px;">📱 SMS</button>
+    <button class="btn full" onclick="abrirTmplEmail();fecharPostCall();" style="font-size:12px;">✉️ Email</button>
+  </div>
+</div>
+
+</div>
+
+<script>
+const SCRIPT='https://script.google.com/macros/s/AKfycbx8sQIbum1sOBfoglUk9pTfKm9id17Mn0wLjqYpzhTds6tm-twqqlOrbCoCLKL4XWkT/exec';
+const HOJE=new Date();
+let leads=[],fichaId=null,SRec=null,recording=false,transcript='',tabAtual='hoje';
+let modalLeadId=null,insucessoSel=null,filtroArquivoAtual='todas';
+let campanhas=JSON.parse(localStorage.getItem('campanhas')||'[]');
+let postCallTimer=null;
+let tmplLang='pt'; // 'pt' or 'en'
+
+// ─── PESQUISA INSENSÍVEL A ACENTOS ───────────────────────────────────────────
+function normalizar(str){
+  return String(str||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+}
+
+// ─── FORMATAÇÃO VISUAL DE TELEFONES ──────────────────────────────────────────
+// Visual only — the actual value in href/wa.me stays clean
+function formatTelDisplay(tel){
+  const d=String(tel||'').replace(/\D/g,'');
+  if(d.length===9) return d.replace(/(\d{3})(\d{3})(\d{3})/,'$1 $2 $3');
+  if(d.length>9) return d; // international — display as-is
+  return tel;
+}
+
+// ─── TEMPLATES ───────────────────────────────────────────────────────────────
+const TMPLS_WA_PT=[
+  {label:'1.º Contacto — Bom dia', body:`Bom dia,\n\nO meu nome é Mariana Magalhães e sou consultora comercial Mercedes-Benz na Sociedade Comercial C. Santos.\nEntrei em contacto porque recebi o seu interesse num dos nossos modelos e gostaria de me colocar à sua disposição para ajudar no que precisar — seja esclarecer dúvidas, apresentar opções ou agendar uma visita ao stand.\nCom os melhores cumprimentos,\nMariana Magalhães | Mercedes-Benz - Sociedade Comercial C. Santos`},
+  {label:'1.º Contacto — Boa tarde', body:`Boa tarde,\n\nO meu nome é Mariana Magalhães e sou consultora comercial Mercedes-Benz na Sociedade Comercial C. Santos.\nEntrei em contacto porque recebi o seu interesse num dos nossos modelos e gostaria de me colocar à sua disposição para ajudar no que precisar — seja esclarecer dúvidas, apresentar opções ou agendar uma visita ao stand.\nCom os melhores cumprimentos,\nMariana Magalhães | Mercedes-Benz - Sociedade Comercial C. Santos`},
+  {label:'Não atendeu — Bom dia', body:`Bom dia. Tentei telefonar-lhe mas não consegui. Encontro-me disponível para falar quando for mais conveniente.\nMariana Magalhães | Mercedes-Benz - Sociedade Comercial C. Santos`},
+  {label:'Não atendeu — Boa tarde', body:`Boa tarde. Tentei telefonar-lhe mas não consegui. Encontro-me disponível para falar quando for mais conveniente.\nMariana Magalhães | Mercedes-Benz - Sociedade Comercial C. Santos`},
+  {label:'Follow-up proposta — Bom dia', body:`Bom dia. Venho verificar se teve oportunidade de analisar a proposta que lhe enviei e se tem alguma questão em que possa ajudar. Fico à disposição.\nMariana Magalhães | Mercedes-Benz - Sociedade Comercial C. Santos`},
+  {label:'Follow-up proposta — Boa tarde', body:`Boa tarde. Venho verificar se teve oportunidade de analisar a proposta que lhe enviei e se tem alguma questão em que possa ajudar. Fico à disposição.\nMariana Magalhães | Mercedes-Benz - Sociedade Comercial C. Santos`},
+  {label:'Test drive amanhã — Bom dia', body:`Bom dia. Venho apenas confirmar o test drive agendado para amanhã. Qualquer questão, estou disponível. Obrigada. 😊\nMariana Magalhães | Mercedes-Benz - Sociedade Comercial C. Santos`},
+  {label:'Test drive amanhã — Boa tarde', body:`Boa tarde. Venho apenas confirmar o test drive agendado para amanhã. Qualquer questão, estou disponível. Obrigada. 😊\nMariana Magalhães | Mercedes-Benz - Sociedade Comercial C. Santos`},
+  {label:'Lead inativo — Bom dia', body:`Bom dia. Há algum tempo que não nos falamos e queria saber se o seu interesse num Mercedes-Benz se mantém ou se posso ajudar de alguma forma. Estou à disposição, por favor não hesite em contactar-me.\nMariana Magalhães | Mercedes-Benz - Sociedade Comercial C. Santos`},
+  {label:'Lead inativo — Boa tarde', body:`Boa tarde. Há algum tempo que não nos falamos e queria saber se o seu interesse num Mercedes-Benz se mantém ou se posso ajudar de alguma forma. Estou à disposição, por favor não hesite em contactar-me.\nMariana Magalhães | Mercedes-Benz - Sociedade Comercial C. Santos`},
+  {label:'Pós-visita — Bom dia', body:`Bom dia. Agradeço a visita de hoje ao nosso showroom. Fico à disposição para qualquer questão que surja e espero poder ajudar em breve. 😊\nMariana Magalhães | Mercedes-Benz - Sociedade Comercial C. Santos`},
+  {label:'Pós-visita — Boa tarde', body:`Boa tarde. Agradeço a visita de hoje ao nosso showroom. Fico à disposição para qualquer questão que surja e espero poder ajudar em breve. 😊\nMariana Magalhães | Mercedes-Benz - Sociedade Comercial C. Santos`},
+];
+
+// EN templates — placeholders (to be filled in later)
+const TMPLS_WA_EN=[
+  {label:'1st Contact — Good morning', body:`Good morning,\nMy name is Mariana Magalhães and I am a Mercedes-Benz sales consultant at Sociedade Comercial C. Santos.\nI am reaching out because I received your interest in one of our models and would be happy to assist you — whether that is answering questions, presenting options, or scheduling a visit to our showroom.\nBest regards,\nMariana Magalhães | Mercedes-Benz - Sociedade Comercial C. Santos`},
+  {label:'1st Contact — Good afternoon', body:`Good afternoon,\nMy name is Mariana Magalhães and I am a Mercedes-Benz sales consultant at Sociedade Comercial C. Santos.\nI am reaching out because I received your interest in one of our models and would be happy to assist you — whether that is answering questions, presenting options, or scheduling a visit to our showroom.\nBest regards,\nMariana Magalhães | Mercedes-Benz - Sociedade Comercial C. Santos`},
+  {label:'No answer — Good morning', body:`Good morning. I tried to reach you by phone but was unable to connect. I am available to speak at your convenience.\nMariana Magalhães | Mercedes-Benz - Sociedade Comercial C. Santos`},
+  {label:'No answer — Good afternoon', body:`Good afternoon. I tried to reach you by phone but was unable to connect. I am available to speak at your convenience.\nMariana Magalhães | Mercedes-Benz - Sociedade Comercial C. Santos`},
+  {label:'Proposal follow-up — Good morning', body:`Good morning. I would like to check whether you have had a chance to review the proposal I sent and whether there is anything I can help with. I remain at your disposal.\nMariana Magalhães | Mercedes-Benz - Sociedade Comercial C. Santos`},
+  {label:'Proposal follow-up — Good afternoon', body:`Good afternoon. I would like to check whether you have had a chance to review the proposal I sent and whether there is anything I can help with. I remain at your disposal.\nMariana Magalhães | Mercedes-Benz - Sociedade Comercial C. Santos`},
+  {label:'Test drive tomorrow — Good morning', body:`Good morning. I am writing to confirm the test drive scheduled for tomorrow. Please do not hesitate to reach out if you have any questions. Thank you. 😊\nMariana Magalhães | Mercedes-Benz - Sociedade Comercial C. Santos`},
+  {label:'Test drive tomorrow — Good afternoon', body:`Good afternoon. I am writing to confirm the test drive scheduled for tomorrow. Please do not hesitate to reach out if you have any questions. Thank you. 😊\nMariana Magalhães | Mercedes-Benz - Sociedade Comercial C. Santos`},
+  {label:'Inactive lead — Good morning', body:`Good morning. It has been a while since we last spoke and I wanted to check whether your interest in a Mercedes-Benz is still active or whether there is anything I can help with. I remain available — please feel free to contact me at any time.\nMariana Magalhães | Mercedes-Benz - Sociedade Comercial C. Santos`},
+  {label:'Inactive lead — Good afternoon', body:`Good afternoon. It has been a while since we last spoke and I wanted to check whether your interest in a Mercedes-Benz is still active or whether there is anything I can help with. I remain available — please feel free to contact me at any time.\nMariana Magalhães | Mercedes-Benz - Sociedade Comercial C. Santos`},
+  {label:'Post-visit — Good morning', body:`Good morning. Thank you for visiting our showroom today. I remain available for any questions that may arise and look forward to being of assistance. 😊\nMariana Magalhães | Mercedes-Benz - Sociedade Comercial C. Santos`},
+  {label:'Post-visit — Good afternoon', body:`Good afternoon. Thank you for visiting our showroom today. I remain available for any questions that may arise and look forward to being of assistance. 😊\nMariana Magalhães | Mercedes-Benz - Sociedade Comercial C. Santos`},
+];
+
+const TMPLS_EMAIL_PT=[
+  {label:'Apresentação — Bom dia', subject:'Mercedes-Benz | Sociedade Comercial C. Santos – Mariana Magalhães', body:`Bom dia,\n\nTentei entrar em contacto por telefone mas não consegui estabelecer ligação, pelo que aproveito para me apresentar por esta via.\nO meu nome é Mariana Magalhães e sou consultora comercial Mercedes-Benz na Sociedade Comercial C. Santos. Recebi o seu interesse num dos nossos modelos e gostaria de me colocar à sua disposição para ajudar no que precisar — seja esclarecer dúvidas, apresentar opções ou agendar uma visita ao stand.\nPode contactar-me a qualquer momento por resposta a este email ou diretamente pelo 918 080 238.\nObrigada.`},
+  {label:'Apresentação — Boa tarde', subject:'Mercedes-Benz | Sociedade Comercial C. Santos – Mariana Magalhães', body:`Boa tarde,\n\nTentei entrar em contacto por telefone mas não consegui estabelecer ligação, pelo que aproveito para me apresentar por esta via.\nO meu nome é Mariana Magalhães e sou consultora comercial Mercedes-Benz na Sociedade Comercial C. Santos. Recebi o seu interesse num dos nossos modelos e gostaria de me colocar à sua disposição para ajudar no que precisar — seja esclarecer dúvidas, apresentar opções ou agendar uma visita ao stand.\nPode contactar-me a qualquer momento por resposta a este email ou diretamente pelo 918 080 238.\nObrigada.`},
+  {label:'N.º incorreto — Bom dia', subject:'Mercedes-Benz | Sociedade Comercial C. Santos – Mariana Magalhães', body:`Bom dia,\n\nO meu nome é Mariana Magalhães e sou consultora comercial Mercedes-Benz na Sociedade Comercial C. Santos. Tentei entrar em contacto por telefone a propósito do seu interesse num dos nossos modelos, mas o número que temos em sistema não está correto.\nCaso pretenda, pode responder a este email ou contactar-me diretamente através do 918 080 238 — terei todo o gosto em ajudar e dar seguimento ao seu pedido.\nObrigada.`},
+  {label:'N.º incorreto — Boa tarde', subject:'Mercedes-Benz | Sociedade Comercial C. Santos – Mariana Magalhães', body:`Boa tarde,\n\nO meu nome é Mariana Magalhães e sou consultora comercial Mercedes-Benz na Sociedade Comercial C. Santos. Tentei entrar em contacto por telefone a propósito do seu interesse num dos nossos modelos, mas o número que temos em sistema não está correto.\nCaso pretenda, pode responder a este email ou contactar-me diretamente através do 918 080 238 — terei todo o gosto em ajudar e dar seguimento ao seu pedido.\nObrigada.`},
+  {label:'Envio de proposta — Bom dia', subject:'Proposta Mercedes-Benz | Sociedade Comercial C. Santos', body:`Bom dia,\n\nAntes de mais, permita-me agradecer-lhe o contacto, bem como o interesse demonstrado na Sociedade Comercial C. Santos e na Mercedes-Benz.\nConforme acordado, remeto, em anexo, a proposta referente ao modelo do seu interesse. Estou à sua inteira disposição para esclarecer qualquer dúvida ou ajustar a proposta de acordo com as suas necessidades.\nMuito obrigada.`},
+  {label:'Envio de proposta — Boa tarde', subject:'Proposta Mercedes-Benz | Sociedade Comercial C. Santos', body:`Boa tarde,\n\nAntes de mais, permita-me agradecer-lhe o contacto, bem como o interesse demonstrado na Sociedade Comercial C. Santos e na Mercedes-Benz.\nConforme acordado, remeto, em anexo, a proposta referente ao modelo do seu interesse. Estou à sua inteira disposição para esclarecer qualquer dúvida ou ajustar a proposta de acordo com as suas necessidades.\nMuito obrigada.`},
+  {label:'Follow-up proposta — Bom dia', subject:'Proposta Mercedes-Benz | Sociedade Comercial C. Santos', body:`Bom dia,\n\nGostaria de saber se teve oportunidade de analisar a proposta que lhe enviei e se existe alguma questão em que eu possa ajudar.\nMuito obrigada.`},
+  {label:'Follow-up proposta — Boa tarde', subject:'Proposta Mercedes-Benz | Sociedade Comercial C. Santos', body:`Boa tarde,\n\nGostaria de saber se teve oportunidade de analisar a proposta que lhe enviei e se existe alguma questão em que eu possa ajudar.\nMuito obrigada.`},
+  {label:'Lembrete test drive — Bom dia', subject:'Test Drive Mercedes-Benz | Sociedade Comercial C. Santos', body:`Bom dia,\n\nGostaria de relembrar que tem o test drive agendado para amanhã e que estou à sua disposição para qualquer questão que surja até lá.\nObrigada.`},
+  {label:'Lembrete test drive — Boa tarde', subject:'Test Drive Mercedes-Benz | Sociedade Comercial C. Santos', body:`Boa tarde,\n\nGostaria de relembrar que tem o test drive agendado para amanhã e que estou à sua disposição para qualquer questão que surja até lá.\nObrigada.`},
+  {label:'{label:'Agradecimento de visita — Bom dia', subject:'Mercedes-Benz | Sociedade Comercial C. Santos – Mariana Magalhães', body:`Bom dia,
+
+Foi um prazer recebê-lo(a) hoje no nosso stand e espero que tenha gostado de conhecer o modelo de perto.
+
+Fico à sua inteira disposição para qualquer questão que surja — seja sobre especificações, financiamento ou para avançarmos com uma proposta. Espero poder ajudar em breve.
+
+Obrigada.`},
+  {label:'{label:'Agradecimento de visita — Boa tarde', subject:'Mercedes-Benz | Sociedade Comercial C. Santos – Mariana Magalhães', body:`Boa tarde,
+
+Foi um prazer recebê-lo(a) hoje no nosso stand e espero que tenha gostado de conhecer o modelo de perto.
+
+Fico à sua inteira disposição para qualquer questão que surja — seja sobre especificações, financiamento ou para avançarmos com uma proposta. Espero poder ajudar em breve.
+
+Obrigada.`},
+];
+
+const TMPLS_EMAIL_EN=[
+  {label:'Introduction — Good morning', subject:'Mercedes-Benz | Sociedade Comercial C. Santos – Mariana Magalhães', body:`Good morning,\nI tried to reach you by phone but was unable to connect, so I am taking this opportunity to introduce myself.\nMy name is Mariana Magalhães and I am a Mercedes-Benz sales consultant at Sociedade Comercial C. Santos. I received your interest in one of our models and would be delighted to assist you — whether that is answering questions, presenting options, or scheduling a visit to our showroom.\nYou can reach me at any time by replying to this email or directly on 918 080 238.`},
+  {label:'Introduction — Good afternoon', subject:'Mercedes-Benz | Sociedade Comercial C. Santos – Mariana Magalhães', body:`Good afternoon,\nI tried to reach you by phone but was unable to connect, so I am taking this opportunity to introduce myself.\nMy name is Mariana Magalhães and I am a Mercedes-Benz sales consultant at Sociedade Comercial C. Santos. I received your interest in one of our models and would be delighted to assist you — whether that is answering questions, presenting options, or scheduling a visit to our showroom.\nYou can reach me at any time by replying to this email or directly on 918 080 238.`},
+  {label:'Incorrect number — Good morning', subject:'Mercedes-Benz | Sociedade Comercial C. Santos – Mariana Magalhães', body:`Good morning,\nMy name is Mariana Magalhães and I am a Mercedes-Benz sales consultant at Sociedade Comercial C. Santos. I tried to reach you by phone regarding your interest in one of our models, however the number we have on record does not appear to be correct.\nShould you wish, you are welcome to reply to this email or contact me directly on 918 080 238 — I would be very happy to assist and follow up on your request.`},
+  {label:'Incorrect number — Good afternoon', subject:'Mercedes-Benz | Sociedade Comercial C. Santos – Mariana Magalhães', body:`Good afternoon,\nMy name is Mariana Magalhães and I am a Mercedes-Benz sales consultant at Sociedade Comercial C. Santos. I tried to reach you by phone regarding your interest in one of our models, however the number we have on record does not appear to be correct.\nShould you wish, you are welcome to reply to this email or contact me directly on 918 080 238 — I would be very happy to assist and follow up on your request.`},
+  {label:'Sending proposal — Good morning', subject:'Mercedes-Benz Proposal | Sociedade Comercial C. Santos', body:`Good morning,\nAs agreed, please find attached the proposal for the model you are interested in.\nI remain at your full disposal to answer any questions or adjust the proposal according to your needs.`},
+  {label:'Sending proposal — Good afternoon', subject:'Mercedes-Benz Proposal | Sociedade Comercial C. Santos', body:`Good afternoon,\nAs agreed, please find attached the proposal for the model you are interested in.\nI remain at your full disposal to answer any questions or adjust the proposal according to your needs.`},
+  {label:'Proposal follow-up — Good morning', subject:'Mercedes-Benz Proposal | Sociedade Comercial C. Santos', body:`Good morning,\nI would like to check whether you have had a chance to review the proposal I sent and whether there is anything I can help with.\nThank you very much.`},
+  {label:'Proposal follow-up — Good afternoon', subject:'Mercedes-Benz Proposal | Sociedade Comercial C. Santos', body:`Good afternoon,\nI would like to check whether you have had a chance to review the proposal I sent and whether there is anything I can help with.\nThank you very much.`},
+  {label:'Test drive reminder — Good morning', subject:'Test Drive Mercedes-Benz | Sociedade Comercial C. Santos', body:`Good morning,\nI would like to remind you that your test drive is scheduled for tomorrow and that I am available for any questions in the meantime.\nThank you.`},
+  {label:'Test drive reminder — Good afternoon', subject:'Test Drive Mercedes-Benz | Sociedade Comercial C. Santos', body:`Good afternoon,\nI would like to remind you that your test drive is scheduled for tomorrow and that I am available for any questions in the meantime.\nThank you.`},
+  {label:'{label:'Thank you for your visit — Good morning', subject:'Mercedes-Benz | Sociedade Comercial C. Santos – Mariana Magalhães', body:`Good morning,
+
+It was a pleasure to have you with us today and I hope you enjoyed getting to know the model in person.
+
+I am at your full disposal for any questions — whether about specifications, financing, or moving forward with a proposal. I hope to be of help soon.`},
+  {label:'{label:'Thank you for your visit — Good afternoon', subject:'Mercedes-Benz | Sociedade Comercial C. Santos – Mariana Magalhães', body:`Good afternoon,
+
+It was a pleasure to have you with us today and I hope you enjoyed getting to know the model in person.
+
+I am at your full disposal for any questions — whether about specifications, financing, or moving forward with a proposal. I hope to be of help soon.`},
+];
+
+// ─── TEMPLATE MODAL BUILDERS ─────────────────────────────────────────────────
+function buildTmplList(container, tmpls, tipo, lang){
+  const isPT = lang==='pt';
+  const items = tmpls.map(t=>`<button class="tmpl-btn" onclick="enviarTemplate('${tipo}','${encodeURIComponent(JSON.stringify(t))}')">${t.label}</button>`).join('');
+  const enBtn = `<button class="tmpl-btn en-toggle" onclick="toggleTmplLang('${tipo}')">${isPT?'🌐 EN':'🌐 PT'}</button>`;
+  container.innerHTML = items + enBtn;
+}
+
+function toggleTmplLang(tipo){
+  const newLang = tmplLang==='pt'?'en':'pt';
+  tmplLang = newLang;
+  if(tipo==='wa'||tipo==='sms'){
+    const tmpls = newLang==='pt'?TMPLS_WA_PT:TMPLS_WA_EN;
+    buildTmplList(document.getElementById('tmpl-wa-list'), tmpls, 'wa', newLang);
+    buildTmplList(document.getElementById('tmpl-sms-list'), tmpls, 'sms', newLang);
+  } else {
+    const tmpls = newLang==='pt'?TMPLS_EMAIL_PT:TMPLS_EMAIL_EN;
+    buildTmplList(document.getElementById('tmpl-email-list'), tmpls, 'email', newLang);
+  }
+}
+
+function abrirTmplWA(){
+  const l=fichaId?leads.find(x=>String(x.id)===fichaId):null;
+  tmplLang='pt';
+  buildTmplList(document.getElementById('tmpl-wa-list'), TMPLS_WA_PT, 'wa', 'pt');
+  document.getElementById('tmpl-wa-title').textContent = l?`💬 WhatsApp — ${l.nome.split(' ')[0]}`:'💬 WhatsApp';
+  document.getElementById('modal-tmpl-wa').classList.add('open');
+}
+function abrirTmplSMS(){
+  const l=fichaId?leads.find(x=>String(x.id)===fichaId):null;
+  tmplLang='pt';
+  buildTmplList(document.getElementById('tmpl-sms-list'), TMPLS_WA_PT, 'sms', 'pt');
+  document.getElementById('tmpl-sms-title').textContent = l?`📱 SMS — ${l.nome.split(' ')[0]}`:'📱 SMS';
+  document.getElementById('modal-tmpl-sms').classList.add('open');
+}
+function abrirTmplEmail(){
+  tmplLang='pt';
+  buildTmplList(document.getElementById('tmpl-email-list'), TMPLS_EMAIL_PT, 'email', 'pt');
+  document.getElementById('modal-tmpl-email').classList.add('open');
+}
+function fecharModalTmpl(tipo){
+  document.getElementById('modal-tmpl-'+tipo).classList.remove('open');
+}
+
+function enviarTemplate(tipo, encodedTmpl){
+  const t = JSON.parse(decodeURIComponent(encodedTmpl));
+  const l=fichaId?leads.find(x=>String(x.id)===fichaId):null;
+  const telRaw = l?String(l.tel||'').replace(/\D/g,''):'';
+  const emailAddr = l?l.email||'':'';
+
+  if(tipo==='wa'){
+    fecharModalTmpl('wa');
+    const telWA=(()=>{
+      const raw=String(l?l.tel||'':'').trim();
+      if(raw.startsWith('+'))return raw.replace('+','');
+      if(raw.startsWith('00'))return raw.slice(2);
+      // 9-digit PT number
+      return '351'+raw.replace(/\D/g,'');
+    })();
+    const url='https://wa.me/'+telWA+'?text='+encodeURIComponent(t.body);
+    window.open(url,'_blank');
+  } else if(tipo==='sms'){
+    fecharModalTmpl('sms');
+    const url='sms:'+telRaw+'?&body='+encodeURIComponent(t.body);
+    window.open(url,'_blank');
+  } else if(tipo==='email'){
+    fecharModalTmpl('email');
+    const url='mailto:'+emailAddr+'?subject='+encodeURIComponent(t.subject||'')+'&body='+encodeURIComponent(t.body);
+    window.open(url,'_blank');
+  }
+}
+
+// ─── PÓS-CHAMADA ─────────────────────────────────────────────────────────────
+function iniciarPostCallWatch(){
+  // When user returns from a phone call (visibilitychange to visible)
+  document.addEventListener('visibilitychange', function(){
+    if(document.visibilityState==='visible' && fichaId && postCallTimer){
+      clearTimeout(postCallTimer);
+      postCallTimer=null;
+      mostrarPostCall();
+    }
+  });
+}
+
+function prepararPostCall(){
+  // Called just before opening the phone dialer
+  postCallTimer = setTimeout(()=>{ postCallTimer=null; }, 60000);
+}
+
+function mostrarPostCall(){
+  document.getElementById('postcall-popup').classList.remove('hidden');
+}
+function fecharPostCall(){
+  document.getElementById('postcall-popup').classList.add('hidden');
+}
+
+// ─── SYNC ─────────────────────────────────────────────────────────────────────
+function setSyncStatus(s,msg){
+  document.getElementById('sdot').className='sdot'+(s==='syncing'?' syncing':s==='error'?' error':'');
+  document.getElementById('smsg').textContent=msg;
+}
+
+function carregar(){
+  setSyncStatus('syncing','A carregar...');
+  const cb='cb'+Date.now();
+  window[cb]=function(data){
+    delete window[cb];
+    const s=document.getElementById('jsonp-script');if(s)s.remove();
+    leads=Array.isArray(data)?data:[];
+    leads.forEach(l=>{if(!l.preferencias)l.preferencias=[];if(!l.propostas)l.propostas=[];if(!l.notas)l.notas=[];});
+    localStorage.setItem('leads_mb',JSON.stringify(leads));
+    setSyncStatus('ok','Sincronizado · '+new Date().toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'}));
+    renderAtual();
+  };
+  const sc=document.createElement('script');sc.id='jsonp-script';
+  sc.src=SCRIPT+'?action=load&callback='+cb;
+  sc.onerror=function(){
+    delete window[cb];sc.remove();
+    setSyncStatus('error','Sem ligação — dados locais');
+    try{leads=JSON.parse(localStorage.getItem('leads_mb')||'[]');}catch(e){leads=[];}
+    leads.forEach(l=>{if(!l.preferencias)l.preferencias=[];if(!l.propostas)l.propostas=[];if(!l.notas)l.notas=[];});
+    renderAtual();
+  };
+  document.head.appendChild(sc);
+}
+
+async function guardar(lead){
+  const i=leads.findIndex(x=>String(x.id)===String(lead.id));
+  if(i>=0)leads[i]=lead;else leads.unshift(lead);
+  localStorage.setItem('leads_mb',JSON.stringify(leads));
+  setSyncStatus('syncing','A guardar...');
+  try{
+    await fetch(SCRIPT+'?action=save',{method:'POST',body:JSON.stringify({action:'save',lead})});
+    setSyncStatus('ok','Guardado · '+new Date().toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'}));
+  }catch(e){setSyncStatus('error','Guardado localmente');}
+}
+
+async function eliminarNoSheets(id){
+  try{await fetch(SCRIPT+'?action=delete',{method:'POST',body:JSON.stringify({action:'delete',id:String(id)})});}catch(e){}
+}
+
+function ini(n){return n.split(' ').slice(0,2).map(x=>x[0]).join('').toUpperCase();}
+function isUrg(l){return l.estado==='contactar'||(l.follow_data&&new Date(l.follow_data)<=HOJE);}
+function bdg(e){return{contactar:'<span class="badge badge-hot">Contactar</span>',follow_up:'<span class="badge badge-warm">Follow-up</span>',td_agendado:'<span class="badge badge-done">TD Agendado</span>',fechado:'<span class="badge badge-cold">Fechado ✅</span>',sem_retorno:'<span class="badge badge-cold">Sem sucesso ❌</span>'}[e]||e;}
+
+function ordenar(arr){
+  const v=(document.getElementById('sort-select')||{}).value||'recente';
+  return[...arr].sort((a,b)=>{
+    if(v==='nome')return a.nome.localeCompare(b.nome,'pt');
+    const da=new Date(a.criado||0),db=new Date(b.criado||0);
+    return v==='antiga'?da-db:db-da;
+  });
+}
+
+function isAtraso(l){
+  if(!l.follow_data)return false;
+  const fd=new Date(l.follow_data);fd.setHours(0,0,0,0);
+  const hj=new Date();hj.setHours(0,0,0,0);
+  return fd<hj;
+}
+function cardHTML(l){
+  const opp=isOpp(l);const atraso=isAtraso(l);
+  const diasSemNota=diasUteisDesde(ultimaNota(l));const inativo=diasSemNota>=5;
+  const temCampanha=campanhasParaModelo(l.carro).length>0;
+  const temProposta=l.propostas&&l.propostas.some(p=>p.estado==='enviada'||p.estado==='em_negociacao');
+  const metaStr=[l.tipo,temProposta?'Proposta pendente':''].filter(Boolean).join(' · ');
+  const estadoClass=l.estado==='contactar'?'estado-contactar':l.estado==='follow_up'?'estado-follow_up':l.estado==='td_agendado'?'estado-td_agendado':'';
+  return`<div class="lead-card${estadoClass?' '+estadoClass:''}${temCampanha&&!estadoClass?' campanha-ativa':''}" id="card-${l.id}" onclick="abrirFicha('${l.id}')"><div class="lead-header"><div class="avatar ${opp?'avatar-opp':'avatar-lead'}">${ini(l.nome)}</div><div style="flex:1;min-width:0;"><div class="lead-name">${l.nome}</div><div class="lead-car">${l.carro}${l.kom?' · '+l.kom:''}</div>${metaStr?`<div class="lead-meta">${metaStr}</div>`:''}</div>${bdg(l.estado)}</div>${atraso?`<div class="lead-follow urgent">Em atraso desde ${new Date(l.follow_data).toLocaleDateString('pt-PT')} — ${l.follow_nota||''}</div>`:`<div class="lead-follow ${isUrg(l)?'urgent':''}">${l.follow_nota||'Sem follow-up'}</div>`}${inativo&&!atraso?`<div class="inativo-badge">Sem actividade há ${diasSemNota} dias úteis</div>`:''}${temCampanha?`<div style="font-size:10px;color:#9a6510;margin-top:2px;"><span class="campanha-dot"></span>Campanha ativa</div>`:''}</div>`;}
+
+function ativos(){return leads.filter(l=>l.estado!=='fechado'&&l.estado!=='sem_retorno');}
+
+// ─── PESQUISA (insensível a acentos) ─────────────────────────────────────────
+function pesquisar(){
+  const q=normalizar(document.getElementById('search-input').value||'').trim();
+  if(!q){renderAtual();return;}
+  const r=ordenar(ativos()).filter(l=>{
+    const txt=normalizar([l.nome,l.carro,l.tel,l.email,l.opp_id,l.kom,l.tipo,l.nif,l.negociacao_fora,l.relacao_interna,...(l.notas||[]).map(n=>n.texto)].join(' '));
+    return txt.includes(q);
+  });
+  const dest=tabAtual==='hoje'?'lista-hoje':'lista-todas';
+  document.getElementById(dest).innerHTML=r.length?r.map(cardHTML).join(''):`<div class="empty">Sem resultados para "${document.getElementById('search-input').value}"</div>`;
+}
+
+function renderHoje(){
+  const contactar=ordenar(ativos().filter(l=>l.estado==='contactar'));
+  const followup=ordenar(ativos().filter(l=>l.estado!=='contactar'&&isUrg(l)));
+  let html='';
+  if(contactar.length){html+=`<div class="hoje-sep contactar-sep">Contactar hoje</div>`+contactar.map(cardHTML).join('');}
+  if(followup.length){html+=`<div class="hoje-sep followup-sep" style="margin-top:.2rem;">Follow-up</div>`+followup.map(cardHTML).join('');}
+  document.getElementById('lista-hoje').innerHTML=html||'<div class="empty">Sem urgências hoje</div>';
+  bindAllLongPress();
+}
+function renderTodas(){const a=ativos();document.getElementById('lista-todas').innerHTML=a.length?ordenar(a).map(cardHTML).join(''):'<div class="empty">Sem leads activas</div>';bindAllLongPress();}
+function renderStats(){
+  const t=leads.length,h=ativos().filter(isUrg).length,td=leads.filter(x=>x.td_agendado).length,f=leads.filter(x=>x.estado==='fechado').length;
+  document.getElementById('stat-cards').innerHTML=`<div class="stat-card"><div class="stat-label">Total</div><div class="stat-value">${t}</div></div><div class="stat-card"><div class="stat-label">Para hoje</div><div class="stat-value" style="color:#c0392b">${h}</div></div><div class="stat-card"><div class="stat-label">Fechadas ✅</div><div class="stat-value" style="color:#2e7d32">${f}</div></div><div class="stat-card"><div class="stat-label">TD agendados</div><div class="stat-value">${td}</div></div>`;
+  const es={};leads.forEach(l=>{es[l.estado]=(es[l.estado]||0)+1;});
+  document.getElementById('stat-estados').innerHTML=Object.entries(es).map(([e,n])=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #e8e6e1">${bdg(e)}<span style="font-size:14px;font-weight:600">${n}</span></div>`).join('');
+  // Chart
+  const dias=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];const hoje2=new Date();const dow=hoje2.getDay();
+  const semana=Array.from({length:7},(_,i)=>{const d=new Date(hoje2);d.setDate(d.getDate()-dow+i);return d;});
+  const counts=semana.map(d=>{const ds=d.toLocaleDateString('pt-PT');return leads.reduce((acc,l)=>acc+((l.notas||[]).filter(n=>n.data&&n.data.startsWith(ds)).length?1:0),0);});
+  const maxC=Math.max(...counts,1);
+  const barsEl=document.getElementById('chart-bars');const lblsEl=document.getElementById('chart-labels');
+  if(barsEl){barsEl.innerHTML=counts.map((cnt,i)=>`<div class="chart-bar${i===dow?' today-bar':''}" style="height:${Math.max(3,Math.round(cnt/maxC*52))}px;" title="${cnt}"></div>`).join('');}
+  if(lblsEl){lblsEl.innerHTML=semana.map((d,i)=>`<div class="chart-lbl" style="${i===dow?'font-weight:600;color:#1a1a1a':''}">${dias[d.getDay()]}</div>`).join('');}
+}
+function filtroArquivo(tipo){
+  filtroArquivoAtual=tipo;
+  document.querySelectorAll('[id^="filtro-"]').forEach(b=>{b.style.background='';b.style.color='#1a1a1a';b.style.borderColor='#ccc';});
+  const btn=document.getElementById('filtro-'+tipo);if(btn){btn.style.background='#1a1a1a';btn.style.color='#fff';btn.style.borderColor='#1a1a1a';}
+  renderArquivo();
+}
+function renderArquivo(){
+  const apagadas=JSON.parse(localStorage.getItem('leads_apagadas')||'[]');
+  const fechadas=leads.filter(l=>l.estado==='fechado'||l.estado==='sem_retorno');
+  let lista=[];
+  if(filtroArquivoAtual==='todas')lista=[...ordenar(fechadas),...apagadas];
+  else if(filtroArquivoAtual==='sucesso')lista=ordenar(fechadas.filter(l=>l.estado==='fechado'));
+  else if(filtroArquivoAtual==='insucesso')lista=ordenar(fechadas.filter(l=>l.estado==='sem_retorno'));
+  else lista=apagadas;
+  document.getElementById('lista-arquivo').innerHTML=lista.length?lista.map(l=>{
+    const isAp=!!apagadas.find(x=>String(x.id)===String(l.id));
+    return`<div class="lead-card" ${!isAp?`onclick="abrirFicha('${l.id}')"`:''}> 
+      <div class="lead-header">
+        <div class="avatar">${ini(l.nome)}</div>
+        <div style="flex:1;min-width:0;"><div class="lead-name">${l.nome}</div><div class="lead-car">${l.carro||'—'}${l.data_apagada?' · Apagada '+l.data_apagada:''}</div></div>
+        ${bdg(l.estado)}
+      </div>
+      <div class="lead-follow">${((l.notas&&l.notas.length?l.notas[l.notas.length-1].texto:'')||'').substring(0,60)}</div>
+      ${!isAp&&!l.bitrix_ok?'<div style="margin-top:6px;font-size:11px;font-weight:600;color:#b7770d;">⚠️ Bitrix pendente</div>':''}
+      ${isAp?`<div style="margin-top:8px;"><button onclick="restaurarLead('${l.id}')" class="btn" style="font-size:12px;padding:5px 10px;">↩ Restaurar</button></div>`:''}
+    </div>`;}).join(''):'<div class="empty">Sem leads nesta categoria</div>';
+}
+function renderAtual(){
+  const q=(document.getElementById('search-input')?.value||'').trim();
+  if(q){pesquisar();return;}
+  if(tabAtual==='hoje')renderHoje();else if(tabAtual==='todas')renderTodas();else if(tabAtual==='arquivo')renderArquivo();else renderStats();
+}
+function mudaTab(btn,t){tabAtual=t;localStorage.setItem('lastTab',t);document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));btn.classList.add('active');['hoje','todas','stats','arquivo'].forEach(x=>{document.getElementById('tab-'+x).style.display=x===t?'':'none';});renderAtual();}
+
+function campo(label,val){return`<div class="campo"><div class="campo-label">${label}</div><div class="campo-val">${val||'—'}</div></div>`;}
+function campoTel(label,val){
+  const clean=String(val||'').replace(/[^\d+]/g,'');
+  const display=formatTelDisplay(val);
+  // Rendered as two spans: visual (with spacing) + hidden clean value for copy
+  return`<div class="campo"><div class="campo-label">${label}</div><div class="campo-val" style="display:flex;align-items:center;gap:6px;">
+    <span aria-hidden="true" style="pointer-events:none;">${display}</span>
+    <input type="text" value="${clean}" readonly style="position:absolute;opacity:0;pointer-events:none;width:1px;" tabindex="-1">
+    <button onclick="event.stopPropagation();navigator.clipboard&&navigator.clipboard.writeText('${clean}')" style="background:none;border:none;color:#aaa;cursor:pointer;font-size:11px;padding:0;flex-shrink:0;" title="Copiar">📋</button>
+  </div></div>`;
+}
+
+function renderPrefs(l){
+  if(!l.preferencias||!l.preferencias.length)return'<p style="font-size:13px;color:#888;">Sem preferências</p>';
+  return l.preferencias.map((p,i)=>`<div class="pref-item"><span style="font-size:18px;">${p.tipo==='gosta'?'✅':'❌'}</span><span style="font-size:13px;flex:1;">${p.texto}</span><button onclick="apagarPref('${l.id}',${i})" style="background:none;border:none;color:#ccc;cursor:pointer;font-size:16px;">✕</button></div>`).join('');
+}
+
+function renderPropostas(l){
+  if(!l.propostas||!l.propostas.length)return'<p style="font-size:13px;color:#888;">Sem propostas</p>';
+  const el={enviada:'📤 Enviada',em_negociacao:'🔄 Em negociação',aceite:'✅ Aceite',recusada:'❌ Recusada'};
+  return l.propostas.map((p,i)=>`<div class="proposta-card"><div class="proposta-header"><span class="proposta-modelo">${p.modelo}</span><span class="proposta-preco">${p.preco?Number(p.preco).toLocaleString('pt-PT')+'€':''}</span></div><div class="proposta-meta">${el[p.estado]||p.estado} · KOM: ${p.kom||'—'} · Val: ${p.validade||'—'} · ${p.data}</div><button onclick="apagarProposta('${l.id}',${i})" style="background:none;border:none;color:#ccc;cursor:pointer;font-size:11px;margin-top:4px;">Apagar</button></div>`).join('');
+}
+
+function renderReuniao(l){
+  if(l.reuniao_data){
+    const dt=new Date(l.reuniao_data);const dtStr=dt.toLocaleDateString('pt-PT')+' '+dt.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'});
+    const fim=new Date(dt.getTime()+60*60*1000);const fmt=x=>x.toISOString().replace(/[-:]/g,'').split('.')[0]+'Z';
+    const title=encodeURIComponent('Reunião Mercedes — '+l.nome);const loc=encodeURIComponent(l.reuniao_local||'');
+    const calUrl='https://outlook.office.com/calendar/action/compose?subject='+title+'&startdt='+fmt(dt)+'&enddt='+fmt(fim)+'&location='+loc;
+    return`<div class="nota-block"><div class="nota-meta">📅 ${dtStr}${l.reuniao_local?' · '+l.reuniao_local:''}</div><div class="nota-text">${l.reuniao_notas||''}</div><div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;"><a href="${calUrl}" target="_blank" class="btn" style="font-size:12px;padding:5px 10px;">📅 Outlook</a><button onclick="confirmarReuniao('${l.id}')" class="btn" style="font-size:12px;padding:5px 10px;border-color:#2e7d32;color:#2e7d32;">✅ Realizada</button><button onclick="abrirModalReuniao('${l.id}')" class="btn" style="font-size:12px;padding:5px 10px;">✏️ Editar</button></div></div>`;
+  }
+  if(l.reuniao_realizada)return`<div class="nota-block"><div class="nota-meta">✅ Reunião realizada</div><div class="nota-text">${l.reuniao_notas||''}</div></div>`;
+  return`<p style="font-size:13px;color:#888;margin-bottom:.75rem;">Sem reunião agendada</p>`;
+}
+
+function campanhasParaModelo(carro){
+  if(!carro)return[];const hoje=new Date();
+  return campanhas.filter(c=>!c.validade||new Date(c.validade)>=hoje).filter(c=>!c.modelos||c.modelos.toLowerCase().split(',').some(m=>carro.toLowerCase().includes(m.trim().toLowerCase())));
+}
+
+function resumo(l){
+  const prefs=l.preferencias&&l.preferencias.length?['',...l.preferencias.map(p=>`${p.tipo==='gosta'?'✅':'❌'} ${p.texto}`)]:[]; 
+  const props=l.propostas&&l.propostas.length?['','PROPOSTAS:',...l.propostas.map(p=>`${p.data} | ${p.modelo} | ${p.preco?Number(p.preco).toLocaleString('pt-PT')+'€':''} | ${p.estado}`)]:[]; 
+  return[`LEAD MBP: ${l.opp_id}`,`Nome: ${l.nome}`,`Tel: ${l.tel} | Email: ${l.email}`,`Viatura: ${l.carro}${l.kom?' | KOM: '+l.kom:''}`,`Tipo: ${l.tipo}${l.nif?' | NIF: '+l.nif:''}`,`Cliente existente: ${l.cliente_existente?'Sim':'Não'}`,l.negociacao_fora?`A negociar: ${l.negociacao_fora}`:'',l.relacao_interna?`Referência: ${l.relacao_interna}`:'',l.td_pedido?`TD: ${l.td_agendado||'por agendar'}${l.td_stand?' — '+l.td_stand:''}${l.td_esp?' c/ '+l.td_esp:''}`:'',l.reuniao_data?`Reunião: ${l.reuniao_data}${l.reuniao_local?' em '+l.reuniao_local:''}`:'', ...prefs,...props,'','HISTÓRICO:',...(l.notas||[]).map(n=>`[${n.data}] ${n.texto}`),'',`Estado: ${l.estado.replace('_',' ').toUpperCase()}`,l.follow_nota?`Próximo passo: ${l.follow_nota}`:''].filter(x=>x!=null&&x!=='').join('\n');
+}
+
+function abrirFicha(id){fichaId=String(id);document.getElementById('ov-ficha').classList.add('open');const l=leads.find(x=>String(x.id)===fichaId);if(l)renderFicha(l);atualizarVoz();}
+function fecharFicha(){fichaId=null;document.getElementById('ov-ficha').classList.remove('open');atualizarVoz();renderAtual();}
+
+function renderFicha(l){
+  const opp=isOpp(l);
+  const sugs=campanhasParaModelo(l.carro);
+  const sugsHtml=sugs.length?`<div class="ficha-section alt" style="border-left:3px solid #b7770d;"><p class="sec-title" style="color:#9a6510;">Campanhas sugeridas</p>${sugs.map(c=>`<div style="font-size:12px;margin-bottom:4px;"><span style="font-weight:600;">${c.titulo}</span>${c.validade?' · até '+c.validade:''}<br><span style="color:#888;">${c.desc||''}</span></div>`).join('')}</div>`:'';
+  const notas=(l.notas||[]).slice().reverse().map((n,ri)=>{
+    const i=(l.notas.length-1-ri);
+    return`<div class="nota-block" id="nb-${l.id}-${i}">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+        <div style="flex:1;">
+          <div class="nota-meta">${n.data}</div>
+          <div class="nota-text" id="nt-${l.id}-${i}">${n.texto}</div>
+          <textarea id="ne-${l.id}-${i}" class="finput" style="display:none;height:70px;margin-top:5px;font-size:13px;">${n.texto}</textarea>
+          <div id="neb-${l.id}-${i}" style="display:none;margin-top:5px;">
+            <button onclick="guardarEdicaoNota('${l.id}',${i})" class="btn primary" style="font-size:12px;padding:4px 10px;margin-right:6px;">✓ Guardar</button>
+            <button onclick="cancelarEdicaoNota('${l.id}',${i})" class="btn" style="font-size:12px;padding:4px 10px;">✕</button>
+          </div>
+        </div>
+        <div style="display:flex;gap:4px;padding-left:8px;">
+          <button onclick="editarNota('${l.id}',${i})" style="background:none;border:none;color:#ccc;cursor:pointer;font-size:12px;">✏️</button>
+          <button onclick="apagarNota('${l.id}',${i})" style="background:none;border:none;color:#ccc;cursor:pointer;font-size:12px;">✕</button>
+        </div>
+      </div>
+    </div>`;}).join('');
+
+  const cr=(lbl,val)=>val&&val!=='—'&&val!==''&&val!==null&&val!==undefined?`<div class="drow"><span class="dlbl">${lbl}</span><span class="dval">${val}</span></div>`:'';
+  const crTel=(lbl,val)=>{
+    const clean=String(val||'').replace(/[^\d+]/g,'');
+    const display=formatTelDisplay(val);
+    return`<div class="drow"><span class="dlbl">${lbl}</span><span class="dval" style="display:flex;align-items:center;gap:5px;"><span>${display}</span><button onclick="event.stopPropagation();navigator.clipboard&&navigator.clipboard.writeText('${clean}')" style="background:none;border:none;color:#bbb;cursor:pointer;font-size:11px;padding:0;" title="Copiar">📋</button></span></div>`;
+  };
+  // collapse helper
+  const col=(id,label,badge,content,defaultOpen=false)=>`
+    <div class="collapse-row" onclick="toggleCol('col-${id}',this)" style="background:#fff;">
+      <span class="collapse-label">${label}${badge?` <span style="background:#e8e6e1;color:#555;font-size:10px;padding:1px 6px;border-radius:10px;font-weight:600;margin-left:4px;">${badge}</span>`:''}</span>
+      <span style="color:#bbb;font-size:13px;transition:transform .2s;" id="col-arrow-${id}">${defaultOpen?'▲':'▼'}</span>
+    </div>
+    <div id="col-${id}" class="collapse-content" style="display:${defaultOpen?'block':'none'};">${content}</div>`;
+
+  const nPropostas=(l.propostas||[]).length;
+  const nPrefs=(l.preferencias||[]).length;
+
+  // Follow-up box
+  const followBox=`<div id="follow-box-${l.id}" style="background:${l.follow_data?'#e6f4ea':'#f5f4f2'};border-radius:10px;padding:.65rem;border:${l.follow_data?'1.5px solid #2e7d32':'1px solid #e8e6e1'};">
+    ${l.follow_data?`<div style="font-size:12px;color:#276b2f;font-weight:600;margin-bottom:5px;">Agendado para ${new Date(l.follow_data).toLocaleDateString('pt-PT')}${l.follow_data.length>10?' '+l.follow_data.slice(11,16):''}</div>`:'<div style="font-size:12px;color:#999;margin-bottom:5px;">Sem follow-up agendado</div>'}
+    <input class="finput" type="date" id="fdt-${l.id}" value="${l.follow_data?l.follow_data.slice(0,10):''}" onchange="setFollowDataNew('${l.id}')" style="margin-bottom:5px;">
+    <div style="display:flex;align-items:center;gap:6px;margin-bottom:5px;">
+      <input type="checkbox" id="hora-chk-${l.id}" ${l.follow_data&&l.follow_data.length>10?'checked':''} onchange="toggleHora('${l.id}')" style="width:15px;height:15px;cursor:pointer;">
+      <label for="hora-chk-${l.id}" style="font-size:12px;color:#888;cursor:pointer;">Hora</label>
+      <input class="finput" type="time" id="fhora-${l.id}" value="${l.follow_data&&l.follow_data.length>10?l.follow_data.slice(11,16):''}" onchange="setFollowDataNew('${l.id}')" style="display:${l.follow_data&&l.follow_data.length>10?'inline-block':'none'};width:auto;padding:.35rem .6rem;font-size:13px;margin-bottom:0;">
+    </div>
+    <input class="finput" id="fn-${l.id}" placeholder="Nota do follow-up..." value="${l.follow_nota||''}" onblur="salvarFN('${l.id}')" style="margin-bottom:0;">
+  </div>`;
+
+  // sub-title in header: viatura + tipo
+  const subInfo=[l.carro,l.tipo].filter(Boolean).join(' · ');
+
+  document.getElementById('ficha-content').innerHTML=`
+    <!-- CABEÇALHO COLORIDO -->
+    <div class="ficha-hero ${opp?'opp':'lead'}">
+      <div class="ficha-av">${ini(l.nome)}</div>
+      <div style="flex:1;min-width:0;">
+        <div class="ficha-name">${l.nome}</div>
+        <div class="ficha-sub">${l.opp_id}${subInfo?' · '+subInfo:''}</div>
+        <div class="ficha-badge">${bdg(l.estado).replace(/<[^>]+>/g,'').trim()}</div>
+      </div>
+    </div>
+
+    <!-- BOTÕES 4 EM GRELHA -->
+    <div class="action-grid-4">
+      <a href="tel:${l.tel}" class="action-btn" onclick="prepararPostCall()"><span>📞</span>Ligar</a>
+      <button onclick="abrirTmplWA()" class="action-btn"><span>💬</span>WhatsApp</button>
+      <button onclick="abrirTmplSMS()" class="action-btn"><span>📱</span>SMS</button>
+      <button onclick="abrirTmplEmail()" class="action-btn"><span>✉️</span>Email</button>
+    </div>
+
+    <!-- NÃO ATENDEU + EDITAR (logo abaixo dos botões) -->
+    <div class="ficha-section" style="padding:.5rem 1rem;display:flex;gap:8px;align-items:center;">
+      <button onclick="naoAtendeu('${l.id}')" class="btn full" style="background:#fff3cd;border-color:#e0b84a;color:#7a5c00;font-size:13px;font-weight:600;">Não atendeu</button>
+      <button onclick="abrirEditar('${l.id}')" class="btn" style="font-size:12px;padding:7px 12px;color:#888;flex-shrink:0;">✏️ Editar</button>
+    </div>
+
+    <!-- NOTA RÁPIDA (logo abaixo, sempre visível) -->
+    <div class="ficha-section alt">
+      <p class="sec-title">Adicionar nota</p>
+      <textarea class="finput" id="ni-${l.id}" placeholder="O que aconteceu? (ou usa o microfone)" style="height:68px;margin-bottom:6px;font-size:13px;"></textarea>
+      <div style="display:flex;gap:8px;">
+        <button class="btn primary full" onclick="addNota('${l.id}')" style="font-size:13px;">Guardar nota</button>
+        <button class="btn sm" onclick="resumirNotas('${l.id}')" style="white-space:nowrap;font-size:12px;">✨ Resumir</button>
+      </div>
+    </div>
+
+    ${sugsHtml}
+
+    <!-- DADOS (compactos) -->
+    <div class="ficha-section">
+      <p class="sec-title">Dados</p>
+      ${crTel('Telemóvel',l.tel)}
+      ${cr('Email',l.email)}
+      ${cr('Viatura',l.carro)}
+      ${cr('KOM',l.kom)}
+      ${cr('Tipo',l.tipo)}
+      ${cr('Financiamento',l.financiamento)}
+      ${cr('Retoma',l.retoma)}
+      ${cr('Cliente exist.',l.cliente_existente?'Sim':'Não')}
+      ${l.nif?cr('NIF',l.nif):''}
+      ${l.frota?cr('Frota',l.frota):''}
+      ${l.negociacao_fora?cr('Negoc. fora',l.negociacao_fora):''}
+      ${l.relacao_interna?cr('Referência',l.relacao_interna):''}
+    </div>
+
+    ${l.td_pedido?`<div class="ficha-section alt">
+      <p class="sec-title">Test Drive</p>
+      ${cr('Data',l.td_agendado)}${cr('Stand',l.td_stand)}${cr('Especialista',l.td_esp)}
+    </div>`:''}
+
+    <!-- FOLLOW-UP -->
+    <div class="ficha-section alt">
+      <p class="sec-title">Follow-up</p>
+      ${followBox}
+    </div>
+
+    <!-- HISTÓRICO -->
+    <div class="ficha-section">
+      <p class="sec-title">Histórico</p>
+      ${notas||'<p style="font-size:13px;color:#999;">Sem notas</p>'}
+    </div>
+
+    <!-- COLAPSADOS -->
+    ${col(l.id+'-prefs','PREFERÊNCIAS',nPrefs||'',`<div id="prefs-${l.id}">${renderPrefs(l)}</div>`)}
+    ${col(l.id+'-props','PROPOSTAS',nPropostas||'',`<div style="margin-bottom:6px;">${renderPropostas(l)}</div><button onclick="abrirModalProposta('${l.id}')" class="btn sm" style="margin-top:4px;">+ Nova proposta</button>`)}
+    ${col(l.id+'-reun','REUNIÃO','',`${renderReuniao(l)}<button onclick="abrirModalReuniao('${l.id}')" class="btn sm" style="margin-top:6px;">+ Agendar reunião</button>`)}
+    ${col(l.id+'-bitrix','RESUMO BITRIX','',`<div class="resumo-box" id="res-${l.id}" style="font-size:11px;">${resumo(l)}</div><button class="btn full" onclick="copiar('${l.id}')" style="margin-top:7px;font-size:12px;">📋 Copiar resumo</button>`)}
+    ${col(l.id+'-fechar','FECHAR LEAD','',`
+      <div style="display:flex;flex-direction:column;gap:7px;margin-bottom:${(l.estado==='fechado'||l.estado==='sem_retorno')?'10px':'0'};">
+        <button class="btn full success" onclick="abrirModalSucesso('${l.id}')">✅ Fechar com sucesso</button>
+        <button class="btn full warning" onclick="abrirModalInsucesso('${l.id}')">❌ Fechar sem sucesso</button>
+        <button class="btn full danger" onclick="confirmarApagar('${l.id}')">Apagar lead</button>
+      </div>
+      ${(l.estado==='fechado'||l.estado==='sem_retorno')?`<div style="background:${l.bitrix_ok?'#e6f4ea':'#fff3cd'};border:1.5px solid ${l.bitrix_ok?'#2e7d32':'#b7770d'};border-radius:10px;padding:.75rem;display:flex;align-items:center;gap:10px;">
+        <input type="checkbox" id="bitrix-chk-${l.id}" ${l.bitrix_ok?'checked':''} onchange="marcarBitrix('${l.id}',this.checked)" style="width:20px;height:20px;flex-shrink:0;cursor:pointer;">
+        <label for="bitrix-chk-${l.id}" style="font-size:13px;font-weight:600;cursor:pointer;color:${l.bitrix_ok?'#276b2f':'#9a6510'};">${l.bitrix_ok?'Inserida no Bitrix':'Pendente — inserir no Bitrix'}</label>
+      </div>`:''}
+    `)}
+    <div style="height:1rem;"></div>
+  `;}
+
+function toggleCol(id,row){
+  const el=document.getElementById(id);
+  const arrow=document.getElementById('col-arrow-'+id);
+  if(!el)return;
+  const open=el.style.display==='block';
+  el.style.display=open?'none':'block';
+  if(arrow)arrow.textContent=open?'▼':'▲';
+}
+
+function editarNota(leadId,idx){
+  document.getElementById('nt-'+leadId+'-'+idx).style.display='none';
+  document.getElementById('ne-'+leadId+'-'+idx).style.display='block';
+  document.getElementById('neb-'+leadId+'-'+idx).style.display='flex';
+}
+function cancelarEdicaoNota(leadId,idx){
+  const l=leads.find(x=>String(x.id)===String(leadId));if(!l)return;
+  document.getElementById('nt-'+leadId+'-'+idx).style.display='block';
+  document.getElementById('ne-'+leadId+'-'+idx).style.display='none';
+  document.getElementById('neb-'+leadId+'-'+idx).style.display='none';
+}
+function guardarEdicaoNota(leadId,idx){
+  const l=leads.find(x=>String(x.id)===String(leadId));if(!l||!l.notas)return;
+  const el=document.getElementById('ne-'+leadId+'-'+idx);if(!el)return;
+  const txt=el.value.trim();if(!txt)return;
+  l.notas[idx].texto=txt;guardar(l);renderFicha(l);
+}
+function apagarNota(leadId,idx){
+  const l=leads.find(x=>String(x.id)===String(leadId));if(!l||!l.notas)return;
+  if(!confirm('Apagar esta nota?'))return;
+  l.notas.splice(idx,1);guardar(l);renderFicha(l);
+}
+function apagarPref(leadId,idx){const l=leads.find(x=>String(x.id)===String(leadId));if(!l)return;l.preferencias.splice(idx,1);guardar(l);renderFicha(l);}
+function apagarProposta(leadId,idx){const l=leads.find(x=>String(x.id)===String(leadId));if(!l)return;l.propostas.splice(idx,1);guardar(l);renderFicha(l);}
+
+function salvarFN(id){const l=leads.find(x=>String(x.id)===String(id));const el=document.getElementById('fn-'+id);if(l&&el){l.follow_nota=el.value;guardar(l);}}
+function setFollowData(id){
+  const l=leads.find(x=>String(x.id)===String(id));const el=document.getElementById('fdt-'+id);
+  if(l&&el&&el.value){
+    l.follow_data=el.value;
+    l.estado='follow_up';
+    const fn=document.getElementById('fn-'+id);if(fn&&fn.value)l.follow_nota=fn.value;
+    guardar(l);
+  }
+}
+function addNota(id){
+  const l=leads.find(x=>String(x.id)===String(id));const inp=document.getElementById('ni-'+id);
+  const txt=inp.value.trim();if(!txt)return;
+  const agora=new Date();if(!l.notas)l.notas=[];
+  l.notas.push({data:agora.toLocaleDateString('pt-PT')+' '+agora.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'}),texto:txt});
+  inp.value='';guardar(l);renderFicha(l);
+}
+function setFollow(id,dias,label){
+  const l=leads.find(x=>String(x.id)===String(id));const d=new Date();d.setDate(d.getDate()+dias);d.setHours(9,0,0,0);
+  l.follow_data=d.toISOString().split('T')[0];
+  l.estado='follow_up';
+  const el=document.getElementById('fn-'+id);l.follow_nota=el&&el.value?el.value:'Follow-up: '+label;
+  guardar(l);renderFicha(l);
+}
+function ciclarEstado(id){
+  const l=leads.find(x=>String(x.id)===String(id));const es=['contactar','follow_up','td_agendado','sem_retorno','fechado'];
+  l.estado=es[(es.indexOf(l.estado)+1)%es.length];guardar(l);renderFicha(l);
+}
+function copiar(id){const el=document.getElementById('res-'+id);if(el&&navigator.clipboard)navigator.clipboard.writeText(el.textContent);}
+
+function confirmarApagar(id){
+  const l=leads.find(x=>String(x.id)===String(id));if(!l)return;
+  if(confirm('Apagar a lead de '+l.nome+'? Ficará no Arquivo.')){
+    const agora=new Date();l.data_apagada=agora.toLocaleDateString('pt-PT');
+    const ap=JSON.parse(localStorage.getItem('leads_apagadas')||'[]');ap.unshift(l);
+    localStorage.setItem('leads_apagadas',JSON.stringify(ap));
+    leads=leads.filter(x=>String(x.id)!==String(id));
+    localStorage.setItem('leads_mb',JSON.stringify(leads));
+    eliminarNoSheets(id);fecharFicha();renderAtual();
+  }
+}
+function restaurarLead(id){
+  const ap=JSON.parse(localStorage.getItem('leads_apagadas')||'[]');
+  const l=ap.find(x=>String(x.id)===String(id));if(!l)return;
+  delete l.data_apagada;leads.unshift(l);guardar(l);
+  localStorage.setItem('leads_apagadas',JSON.stringify(ap.filter(x=>String(x.id)!==String(id))));
+  renderAtual();alert('Lead de '+l.nome+' restaurada!');
+}
+
+function abrirModalSucesso(id){modalLeadId=String(id);document.getElementById('sucesso-texto').value='';document.getElementById('modal-sucesso').classList.add('open');}
+function fecharModalSucesso(){document.getElementById('modal-sucesso').classList.remove('open');}
+function fecharComSucesso(){
+  const txt=document.getElementById('sucesso-texto').value.trim();if(!txt){alert('Indica o que o cliente comprou.');return;}
+  const l=leads.find(x=>String(x.id)===String(modalLeadId));if(!l)return;
+  const agora=new Date();const ds=agora.toLocaleDateString('pt-PT')+' '+agora.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'});
+  l.estado='fechado';if(!l.notas)l.notas=[];l.notas.push({data:ds,texto:'✅ Fechado com sucesso — '+txt});l.follow_nota='Fechado com sucesso';
+  guardar(l);fecharModalSucesso();fecharFicha();
+}
+function abrirModalInsucesso(id){
+  modalLeadId=String(id);insucessoSel=null;
+  document.getElementById('insucesso-texto').value='';
+  document.getElementById('btn-conf-insucesso').disabled=true;document.getElementById('btn-conf-insucesso').style.opacity='.4';
+  document.querySelectorAll('.opcao-btn').forEach(b=>b.classList.remove('selected'));
+  document.getElementById('modal-insucesso').classList.add('open');
+}
+function fecharModalInsucesso(){document.getElementById('modal-insucesso').classList.remove('open');}
+function selInsucesso(btn,motivo){
+  document.querySelectorAll('.opcao-btn').forEach(b=>b.classList.remove('selected'));btn.classList.add('selected');insucessoSel=motivo;
+  document.getElementById('btn-conf-insucesso').disabled=false;document.getElementById('btn-conf-insucesso').style.opacity='1';
+}
+function fecharComInsucesso(){
+  if(!insucessoSel)return;
+  const l=leads.find(x=>String(x.id)===String(modalLeadId));if(!l)return;
+  const agora=new Date();const ds=agora.toLocaleDateString('pt-PT')+' '+agora.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'});
+  const extra=document.getElementById('insucesso-texto').value.trim();
+  l.estado='sem_retorno';if(!l.notas)l.notas=[];
+  l.notas.push({data:ds,texto:'❌ Fechado sem sucesso — '+insucessoSel+(extra?' | '+extra:'')});l.follow_nota='Fechado: '+insucessoSel;
+  guardar(l);fecharModalInsucesso();fecharFicha();
+}
+
+function abrirModalReuniao(id){
+  modalLeadId=String(id);const l=leads.find(x=>String(x.id)===String(id));
+  document.getElementById('reuniao-dt').value=l&&l.reuniao_data?l.reuniao_data:'';
+  document.getElementById('reuniao-local').value=l&&l.reuniao_local?l.reuniao_local:'';
+  document.getElementById('reuniao-notas').value=l&&l.reuniao_notas?l.reuniao_notas:'';
+  document.getElementById('modal-reuniao').classList.add('open');
+}
+function fecharModalReuniao(){document.getElementById('modal-reuniao').classList.remove('open');}
+function guardarReuniao(){
+  const l=leads.find(x=>String(x.id)===String(modalLeadId));if(!l)return;
+  l.reuniao_data=document.getElementById('reuniao-dt').value;
+  l.reuniao_local=document.getElementById('reuniao-local').value;
+  l.reuniao_notas=document.getElementById('reuniao-notas').value;l.reuniao_realizada=false;
+  const agora=new Date();const ds=agora.toLocaleDateString('pt-PT')+' '+agora.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'});
+  if(!l.notas)l.notas=[];l.notas.push({data:ds,texto:'📅 Reunião agendada: '+l.reuniao_data+(l.reuniao_local?' em '+l.reuniao_local:'')});
+  guardar(l);fecharModalReuniao();renderFicha(l);
+}
+function confirmarReuniao(id){
+  const l=leads.find(x=>String(x.id)===String(id));if(!l)return;
+  l.reuniao_realizada=true;const agora=new Date();const ds=agora.toLocaleDateString('pt-PT')+' '+agora.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'});
+  if(!l.notas)l.notas=[];l.notas.push({data:ds,texto:'✅ Reunião realizada'});guardar(l);renderFicha(l);
+}
+
+function abrirModalProposta(id){
+  modalLeadId=String(id);
+  ['prop-modelo','prop-kom','prop-preco','prop-validade'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('prop-estado').value='enviada';
+  document.getElementById('modal-proposta').classList.add('open');
+}
+function fecharModalProposta(){document.getElementById('modal-proposta').classList.remove('open');}
+function guardarProposta(){
+  const l=leads.find(x=>String(x.id)===String(modalLeadId));if(!l)return;if(!l.propostas)l.propostas=[];
+  const agora=new Date();const ds=agora.toLocaleDateString('pt-PT')+' '+agora.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'});
+  const modelo=document.getElementById('prop-modelo').value;const preco=document.getElementById('prop-preco').value;
+  l.propostas.push({modelo,kom:document.getElementById('prop-kom').value,preco,validade:document.getElementById('prop-validade').value,estado:document.getElementById('prop-estado').value,data:agora.toLocaleDateString('pt-PT')});
+  if(!l.notas)l.notas=[];l.notas.push({data:ds,texto:'📄 Proposta enviada: '+modelo+(preco?' — '+Number(preco).toLocaleString('pt-PT')+'€':'')});
+  guardar(l);fecharModalProposta();renderFicha(l);
+}
+
+function abrirEditar(id){
+  modalLeadId=String(id);
+  const l=leads.find(x=>String(x.id)===String(id));if(!l)return;
+  document.getElementById('ov-editar').classList.add('open');
+  document.getElementById('editar-form').innerHTML=`
+    <div class="ffield"><label class="flabel">Nome completo</label><input class="finput" id="ed-nome" value="${l.nome||''}"></div>
+    <div class="ffield"><label class="flabel">Telemóvel (PT sem 351, estrangeiros com indicativo)</label><input class="finput" id="ed-tel" type="tel" value="${l.tel||''}"></div>
+    <div class="ffield"><label class="flabel">E-mail</label><input class="finput" id="ed-email" type="email" value="${l.email||''}"></div>
+    <div class="ffield"><label class="flabel">ID (OPP/LEAD)</label><input class="finput" id="ed-opp" value="${l.opp_id||''}"></div>
+    <div class="ffield"><label class="flabel">Viatura pretendida</label><input class="finput" id="ed-carro" value="${l.carro||''}"></div>
+    <div class="ffield"><label class="flabel">KOM</label><input class="finput" id="ed-kom" value="${l.kom||''}" inputmode="text"></div>
+    <div class="ffield"><label class="flabel">Tipo de cliente</label>
+      <select class="finput" id="ed-tipo">
+        <option ${l.tipo==='Particular'?'selected':''}>Particular</option>
+        <option ${l.tipo==='Empresa'?'selected':''}>Empresa</option>
+        <option ${l.tipo==='ENI'?'selected':''}>ENI</option>
+      </select>
+    </div>
+    <div class="ffield"><label class="flabel">NIF (empresa)</label><input class="finput" id="ed-nif" value="${l.nif||''}"></div>
+    <div class="ffield"><label class="flabel">Frota</label><input class="finput" id="ed-frota" value="${l.frota||''}"></div>
+    <div class="ffield"><label class="flabel">Negociação fora / concorrência</label><input class="finput" id="ed-neg" value="${l.negociacao_fora||''}"></div>
+    <div class="ffield"><label class="flabel">Relação / referência</label><input class="finput" id="ed-rel" value="${l.relacao_interna||''}"></div>
+    <div class="trow"><span style="font-size:13px;">Cliente existente</span><input type="checkbox" id="ed-exist" ${l.cliente_existente?'checked':''} style="width:18px;height:18px;"></div>
+    <div class="trow" style="margin-bottom:.75rem;"><span style="font-size:13px;">CAE Rent-a-car / Comércio auto</span><input type="checkbox" id="ed-cae" ${l.cae_rent?'checked':''} style="width:18px;height:18px;"></div>
+    <button class="btn primary full" onclick="guardarEditar()" style="margin-top:1rem;margin-bottom:2rem;">✓ Guardar alterações</button>
+  `;
+}
+function fecharEditar(){document.getElementById('ov-editar').classList.remove('open');}
+function guardarEditar(){
+  const l=leads.find(x=>String(x.id)===String(modalLeadId));if(!l)return;
+  const g=id=>document.getElementById(id);
+  l.nome=g('ed-nome').value.trim()||l.nome;
+  l.tel=g('ed-tel').value.trim()||l.tel;
+  l.email=g('ed-email').value.trim();
+  l.opp_id=g('ed-opp').value.trim()||l.opp_id;
+  l.carro=g('ed-carro').value.trim()||l.carro;
+  l.kom=g('ed-kom').value.trim();
+  l.tipo=g('ed-tipo').value;
+  l.nif=g('ed-nif').value.trim();
+  l.frota=g('ed-frota').value.trim();
+  l.negociacao_fora=g('ed-neg').value.trim();
+  l.relacao_interna=g('ed-rel').value.trim();
+  l.cliente_existente=g('ed-exist').checked;
+  l.cae_rent=g('ed-cae').checked;
+  guardar(l);fecharEditar();renderFicha(l);
+}
+
+function abrirNova(){document.getElementById('ov-nova').classList.add('open');document.getElementById('nova-form').innerHTML=`
+  <div class="ffield"><label class="flabel">Nome completo *</label><input class="finput" id="nf-nome"></div>
+  <div class="ffield"><label class="flabel">Telemóvel *</label><input class="finput" id="nf-tel" type="tel"></div>
+  <div class="ffield"><label class="flabel">E-mail</label><input class="finput" id="nf-email" type="email"></div>
+  <div class="ffield"><label class="flabel">ID (OPP/LEAD)</label><input class="finput" id="nf-opp"></div>
+  <div class="ffield"><label class="flabel">Viatura pretendida</label><input class="finput" id="nf-carro"></div>
+  <div class="ffield"><label class="flabel">KOM</label><input class="finput" id="nf-kom" inputmode="text"></div>
+  <div class="ffield"><label class="flabel">Tipo de cliente</label><select class="finput" id="nf-tipo"><option>Particular</option><option>Empresa</option><option>ENI</option></select></div>
+  <div class="ffield"><label class="flabel">NIF (empresa)</label><input class="finput" id="nf-nif"></div>
+  <div class="trow"><span style="font-size:13px;">Cliente existente</span><input type="checkbox" id="nf-exist" style="width:18px;height:18px;"></div>
+  <div class="trow" style="margin-bottom:.75rem;"><span style="font-size:13px;">CAE Rent-a-car / Comércio auto</span><input type="checkbox" id="nf-cae" style="width:18px;height:18px;"></div>
+  <div class="ffield"><label class="flabel">Negociação fora</label><input class="finput" id="nf-neg"></div>
+  <div class="ffield"><label class="flabel">Relação / referência</label><input class="finput" id="nf-rel"></div>
+  <div class="ffield"><label class="flabel">Notas iniciais</label><textarea class="finput" id="nf-nota" style="height:80px;"></textarea></div>
+  <button class="btn primary full" onclick="criarLead()" style="margin-bottom:2rem;">✓ Criar lead</button>`;}
+function fecharNova(){document.getElementById('ov-nova').classList.remove('open');}
+function criarLead(){
+  const g=id=>document.getElementById(id);const nome=g('nf-nome').value.trim(),tel=g('nf-tel').value.trim();
+  if(!nome||!tel){alert('Nome e telemóvel são obrigatórios');return;}
+  const agora=new Date();const ds=agora.toLocaleDateString('pt-PT')+' '+agora.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'});
+  const nova={id:Date.now(),nome,tel,email:g('nf-email').value.trim(),opp_id:g('nf-opp').value.trim()||'(sem ID)',tipo_lead:'Lead MBP',carro:g('nf-carro').value.trim()||'—',kom:g('nf-kom').value.trim(),tipo:g('nf-tipo').value,nif:g('nf-nif').value.trim(),frota:'',cae_rent:g('nf-cae').checked,cliente_existente:g('nf-exist').checked,sector:'',estado:'contactar',notas:[{data:ds,texto:g('nf-nota').value.trim()||'Lead criada.'}],follow_data:agora.toISOString().split('T')[0],follow_nota:'Primeiro contacto',negociacao_fora:g('nf-neg').value.trim(),relacao_interna:g('nf-rel').value.trim(),td_pedido:false,td_agendado:'',td_stand:'',td_esp:'',reuniao_data:'',reuniao_local:'',reuniao_notas:'',reuniao_realizada:false,preferencias:[],propostas:[],criado:agora.toISOString().split('T')[0]};
+  guardar(nova);fecharNova();renderAtual();
+}
+
+function abrirImport(){document.getElementById('ov-import').classList.add('open');}
+function fecharImport(){document.getElementById('ov-import').classList.remove('open');document.getElementById('import-input').value='';}
+function importarLead(){
+  const txt=document.getElementById('import-input').value.trim();if(!txt){alert('Cola o código primeiro');return;}
+  try{
+    const lead=JSON.parse(txt);if(!lead.nome||!lead.tel){alert('Código inválido');return;}
+    if(!lead.preferencias)lead.preferencias=[];if(!lead.propostas)lead.propostas=[];if(!lead.notas)lead.notas=[];
+    guardar(lead);fecharImport();renderAtual();alert('✅ Lead de '+lead.nome+' importada!');
+  }catch(e){alert('Código inválido.');}
+}
+
+function abrirCampanhas(){document.getElementById('ov-campanhas').classList.add('open');renderCampanhas();}
+function fecharCampanhas(){document.getElementById('ov-campanhas').classList.remove('open');}
+function abrirFormCampanha(){document.getElementById('form-campanha').style.display='block';}
+function fecharFormCampanha(){document.getElementById('form-campanha').style.display='none';}
+function guardarCampanha(){
+  const titulo=document.getElementById('camp-titulo').value.trim();if(!titulo){alert('Título obrigatório');return;}
+  campanhas.unshift({id:Date.now(),titulo,modelos:document.getElementById('camp-modelos').value.trim(),desc:document.getElementById('camp-desc').value.trim(),validade:document.getElementById('camp-validade').value,criada:new Date().toLocaleDateString('pt-PT')});
+  localStorage.setItem('campanhas',JSON.stringify(campanhas));fecharFormCampanha();renderCampanhas();
+}
+function renderCampanhas(){
+  const hoje=new Date();
+  document.getElementById('lista-campanhas').innerHTML=campanhas.length?campanhas.map((c,i)=>{
+    const exp=c.validade&&new Date(c.validade)<hoje;
+    return`<div class="proposta-card" style="${exp?'opacity:.5':''}"><div class="proposta-header"><span class="proposta-modelo">${c.titulo}</span><span style="font-size:11px;color:${exp?'#c0392b':'#2e7d32'}">${exp?'Expirada':'✅ Ativa'}</span></div><div class="proposta-meta">${c.modelos?'Modelos: '+c.modelos+' · ':''} Val: ${c.validade||'—'}</div>${c.desc?`<div style="font-size:12px;color:#555;margin-top:4px;">${c.desc}</div>`:''}<button onclick="apagarCampanha(${i})" style="background:none;border:none;color:#ccc;cursor:pointer;font-size:11px;margin-top:4px;">Apagar</button></div>`;
+  }).join(''):'<div class="empty">Sem campanhas</div>';
+}
+function apagarCampanha(idx){if(!confirm('Apagar?'))return;campanhas.splice(idx,1);localStorage.setItem('campanhas',JSON.stringify(campanhas));renderCampanhas();}
+
+function atualizarVoz(){
+  const l=fichaId?leads.find(x=>String(x.id)===fichaId):null;
+  document.getElementById('vh-ficha').innerHTML=l?`<b>${l.nome.split(' ')[0]}</b><br>Fala — processo e guardo`:'<b>Fala</b><br>Processo e guardo';
+}
+function toggleVoz(){if(recording)pararVoz();else iniciarVoz();}
+function iniciarVoz(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){alert('Usa o Chrome ou Safari.');return;}
+  SRec=new SR();SRec.lang='pt-PT';SRec.continuous=true;SRec.interimResults=true;
+  SRec.onresult=e=>{
+    let interim='',final='';
+    for(let i=e.resultIndex;i<e.results.length;i++){if(e.results[i].isFinal)final+=e.results[i][0].transcript;else interim+=e.results[i][0].transcript;}
+    if(final)transcript+=final;mostrarT((transcript+interim).trim());
+  };
+  SRec.onerror=()=>pararVoz();SRec.onend=()=>{if(recording)pararVoz();};
+  SRec.start();recording=true;transcript='';
+  ['mb-main','mb-ficha'].forEach(id=>{const b=document.getElementById(id);if(b){b.classList.add('rec');b.textContent='⏹';}});
+}
+function pararVoz(){
+  if(SRec){try{SRec.stop();}catch(e){}}recording=false;
+  ['mb-main','mb-ficha'].forEach(id=>{const b=document.getElementById(id);if(b){b.classList.remove('rec');b.textContent='🎤';}});
+}
+function mostrarT(txt){
+  if(!txt)return;const emF=!!fichaId;
+  const box=document.getElementById(emF?'tbox-ficha':'tbox-main');box.style.display='block';
+  document.getElementById(emF?'ttext-ficha':'ttext-main').value=txt;
+}
+async function usarT(){
+  const emF=!!fichaId;
+  const editado=(document.getElementById(emF?'ttext-ficha':'ttext-main').value||'').trim();
+  const txt=editado||transcript.trim();
+  ['tbox-main','tbox-ficha'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
+  transcript='';
+  if(!fichaId||!txt)return;
+  const l=leads.find(x=>String(x.id)===fichaId);if(!l)return;
+  const ind=document.getElementById('ai-ind');if(ind)ind.style.display='block';
+  try{
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:`És uma assistente especializada em leads de vendas da Mercedes-Benz Portugal. Analisa o texto falado por uma comercial e extrai informação estruturada.
+
+CONHECIMENTO DE MODELOS MERCEDES (corrige erros de transcrição de voz):
+- Modelos elétricos EQ: EQA, EQB, EQC, EQE, EQS, EQV, EQT
+- Modelos: Classe A, Classe B, Classe C, Classe E, Classe S, CLA, CLE, CLS, GLA, GLB, GLC, GLE, GLS, G-Class, AMG GT, SL, Sprinter, Vito, V-Class
+- Motorizações: 180, 200, 220, 250, 300, 350, 400, 450, 580 + sufixos d (diesel), e (híbrido), de (diesel híbrido)
+- "250+" ou "duzentos e cinquenta mais" → 250+
+- "450+" ou "quatrocentos e cinquenta mais" → 450+
+- "100% elétrico" ou "cem por cento elétrico" ou "totalmente elétrico" → 100% elétrico
+- "four mátique" ou "four matic" ou "4 matic" → 4MATIC
+- "IKEA" num contexto de carro → provavelmente EQA
+- Corrige outros erros óbvios de transcrição de modelos Mercedes
+
+EXTRACÇÃO DE DADOS FINANCEIROS (importante — extrai SEMPRE que mencionado):\n- "a pronto" / "pronto pagamento" / "paga a pronto" → financiamento: "Não"\n- "financiamento" / "crédito" / "prestações" → financiamento: "Sim"\n- "leasing" → financiamento: "Leasing"\n- "ALD" → financiamento: "ALD"\n- "renting" → financiamento: "Renting"\n- "retoma" / "tem carro para retomar" / "quer retomar" → retoma: "Sim" (ou descrição se mencionada)\n- "sem retoma" / "não tem retoma" → retoma: "Não"\n- "empresa" / "fatura empresa" → tipo: "Empresa"\n- "ENI" / "empresário em nome individual" → tipo: "ENI"\n\nEXTRACÇÃO DE PREFERÊNCIAS (muito importante — extrai SEMPRE que mencionado):
+- Cores (preto, branco, cinzento, azul, vermelho, etc.) → preferencias_gosta ou preferencias_nao_gosta
+- "prefere X" / "gosta de X" / "quer X" → preferencias_gosta
+- "não gosta de X" / "não quer X" / "detesta X" / "não gosta" → preferencias_nao_gosta
+- Características (teto de abrir, interiores claros, automático, diesel, elétrico, lugares, etc.) → preferencias
+
+Texto: "${txt}"
+
+Responde APENAS com JSON válido, sem mais nada:
+{
+  "nota": "texto da nota de contacto corrigido",
+  "follow_up_dias": null ou número (0=hoje,1=amanhã,3=3dias,7=semana),
+  "follow_nota": null ou texto,
+  "preferencias_gosta": [],
+  "preferencias_nao_gosta": [],
+  "td_pedido": false,
+  "td_data": null,
+  "td_stand": null,
+  "proposta_enviada": false,
+  "proposta_modelo": null,
+  "proposta_preco": null,
+  "financiamento": null,
+  "retoma": null,
+  "tipo_novo": null
+}`}]})});
+    const data=await resp.json();const parsed=JSON.parse(data.content[0].text);
+    const agora=new Date();const ds=agora.toLocaleDateString('pt-PT')+' '+agora.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'});
+    if(!l.notas)l.notas=[];if(!l.preferencias)l.preferencias=[];if(!l.propostas)l.propostas=[];
+    if(parsed.nota)l.notas.push({data:ds,texto:parsed.nota});
+    if(parsed.financiamento)l.financiamento=parsed.financiamento;
+    if(parsed.retoma)l.retoma=parsed.retoma;
+    if(parsed.tipo_novo)l.tipo=parsed.tipo_novo;
+    (parsed.preferencias_gosta||[]).forEach(p=>l.preferencias.push({tipo:'gosta',texto:p}));
+    (parsed.preferencias_nao_gosta||[]).forEach(p=>l.preferencias.push({tipo:'nao_gosta',texto:p}));
+    if(parsed.follow_up_dias!=null){const d=new Date();d.setDate(d.getDate()+parsed.follow_up_dias);l.follow_data=d.toISOString().split('T')[0];if(parsed.follow_nota)l.follow_nota=parsed.follow_nota;}
+    if(parsed.td_pedido){l.td_pedido=true;if(parsed.td_data)l.td_agendado=parsed.td_data;if(parsed.td_stand)l.td_stand=parsed.td_stand;}
+    if(parsed.proposta_enviada&&parsed.proposta_modelo){l.propostas.push({modelo:parsed.proposta_modelo,kom:'',preco:parsed.proposta_preco||'',validade:'',estado:'enviada',data:agora.toLocaleDateString('pt-PT')});}
+    guardar(l);renderFicha(l);setSyncStatus('ok','✨ Processado · '+ds);
+  }catch(e){
+    const agora=new Date();const ds=agora.toLocaleDateString('pt-PT')+' '+agora.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'});
+    if(!l.notas)l.notas=[];l.notas.push({data:ds,texto:txt});guardar(l);renderFicha(l);setSyncStatus('error','Guardado sem IA');
+  }
+  if(ind)ind.style.display='none';
+}
+function descartarT(){['tbox-main','tbox-ficha'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});transcript='';}
+
+function toggleHora(id){const chk=document.getElementById('hora-chk-'+id);const inp=document.getElementById('fhora-'+id);if(inp){inp.style.display=chk&&chk.checked?'inline-block':'none';}}else{
+    inp.style.display='none';
+    btn.innerHTML='<button onclick="toggleHora(\''+id+'\')" class="btn" style="font-size:11px;padding:4px 10px;color:#888;">+ Definir hora</button>';
+  }
+}
+function setFollowDataNew(id){
+  const l=leads.find(x=>String(x.id)===String(id));
+  const dateEl=document.getElementById('fdt-'+id);
+  const horaEl=document.getElementById('fhora-'+id);
+  if(!l||!dateEl||!dateEl.value)return;
+  const hora=horaEl&&horaEl.value?'T'+horaEl.value:'';
+  l.follow_data=dateEl.value+hora;
+  l.estado='follow_up';
+  const fn=document.getElementById('fn-'+id);if(fn&&fn.value)l.follow_nota=fn.value;
+  guardar(l);renderFicha(l);
+}
+function marcarBitrix(id,checked){
+  const l=leads.find(x=>String(x.id)===String(id));if(!l)return;
+  l.bitrix_ok=checked;
+  const agora=new Date();const ds=agora.toLocaleDateString('pt-PT')+' '+agora.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'});
+  if(checked){if(!l.notas)l.notas=[];l.notas.push({data:ds,texto:'✅ Inserida no Bitrix'});}
+  guardar(l);renderFicha(l);
+}
+
+
+// ─── UTILS ────────────────────────────────────────────────────────────────────
+function isOpp(l){return String(l.opp_id||'').toUpperCase().startsWith('OPP');}
+function diasUteisDesde(dataStr){
+  if(!dataStr)return 999;
+  const parts=dataStr.split(' ')[0].split('/');
+  if(parts.length===3){const d=new Date(parts[2],parts[1]-1,parts[0]);}
+  const d=new Date(dataStr.split(' ')[0]);
+  const hoje=new Date();hoje.setHours(0,0,0,0);
+  let count=0;const cur=new Date(d);cur.setHours(0,0,0,0);
+  while(cur<hoje){const dow=cur.getDay();if(dow!==0&&dow!==6)count++;cur.setDate(cur.getDate()+1);}
+  return count;
+}
+function ultimaNota(l){return(l.notas&&l.notas.length)?l.notas[l.notas.length-1].data:l.criado||'';}
+function formatTelClean(tel){return String(tel||'').replace(/\D/g,'');}
+function formatTelDisplay(tel){const d=formatTelClean(tel);return d.length===9?d.replace(/(\d{3})(\d{3})(\d{3})/,'$1 $2 $3'):tel;}
+function dstamp(){const a=new Date();return a.toLocaleDateString('pt-PT')+' '+a.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'});}
+
+// ─── QUICK MENU ───────────────────────────────────────────────────────────────
+let quickLeadId=null,longPressTimer=null;
+function bindLongPress(el,id){
+  el.addEventListener('touchstart',()=>{longPressTimer=setTimeout(()=>abrirQuickMenu(id),500);},{passive:true});
+  el.addEventListener('touchend',()=>{if(longPressTimer){clearTimeout(longPressTimer);longPressTimer=null;}});
+  el.addEventListener('touchmove',()=>{if(longPressTimer){clearTimeout(longPressTimer);longPressTimer=null;}},{passive:true});
+}
+function abrirQuickMenu(id){
+  quickLeadId=String(id);
+  const l=leads.find(x=>String(x.id)===String(id));if(!l)return;
+  document.getElementById('quick-menu-name').textContent=l.nome;
+  const telRaw=formatTelClean(l.tel);
+  document.getElementById('qm-ligar').onclick=()=>{fecharQuickMenu();prepararPostCall();window.open('tel:'+telRaw);};
+  document.getElementById('quick-menu').classList.add('open');
+}
+function quickWA(){const tmp=fichaId;fichaId=quickLeadId;fecharQuickMenu();abrirTmplWA();fichaId=tmp;}
+function quickSMS(){const tmp=fichaId;fichaId=quickLeadId;fecharQuickMenu();abrirTmplSMS();fichaId=tmp;}
+function fecharQuickMenu(){document.getElementById('quick-menu').classList.remove('open');quickLeadId=null;}
+function bindAllLongPress(){leads.forEach(l=>{const el=document.getElementById('card-'+l.id);if(el)bindLongPress(el,l.id);});}
+
+// ─── SMS TEMPLATE ─────────────────────────────────────────────────────────────
+function abrirTmplSMS(){
+  const l=fichaId?leads.find(x=>String(x.id)===fichaId):quickLeadId?leads.find(x=>String(x.id)===quickLeadId):null;
+  tmplLang='pt';
+  buildTmplList(document.getElementById('tmpl-sms-list'),TMPLS_WA_PT,'sms','pt');
+  document.getElementById('tmpl-sms-title').textContent=l?`📱 SMS — ${l.nome.split(' ')[0]}`:'📱 SMS';
+  document.getElementById('modal-tmpl-sms').classList.add('open');
+}
+
+// ─── WEEKLY CHART ─────────────────────────────────────────────────────────────
+function renderChart(){
+  const dias=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+  const hoje=new Date();const dow=hoje.getDay();
+  const semana=Array.from({length:7},(_,i)=>{const d=new Date(hoje);d.setDate(d.getDate()-dow+i);return d;});
+  const counts=semana.map(d=>{
+    const ds=d.toLocaleDateString('pt-PT');
+    return leads.reduce((acc,l)=>acc+((l.notas||[]).filter(n=>n.data&&n.data.startsWith(ds)).length?1:0),0);
+  });
+  const maxC=Math.max(...counts,1);
+  const barsEl=document.getElementById('chart-bars');
+  const lblsEl=document.getElementById('chart-labels');
+  if(!barsEl)return;
+  barsEl.innerHTML=counts.map((cnt,i)=>`<div class="chart-bar${i===dow?' today-bar':''}" style="height:${Math.max(3,Math.round(cnt/maxC*52))}px;" title="${cnt}"></div>`).join('');
+  lblsEl.innerHTML=semana.map((d,i)=>`<div class="chart-lbl" style="${i===dow?'font-weight:600;color:#1a1a1a':''}">${dias[d.getDay()]}</div>`).join('');
+}
+
+// ─── NÃO ATENDEU ─────────────────────────────────────────────────────────────
+function naoAtendeu(id){
+  const l=leads.find(x=>String(x.id)===String(id));if(!l)return;
+  if(!l.notas)l.notas=[];
+  l.notas.push({data:dstamp(),texto:'Tentei ligar, não atendeu.'});
+  const d=new Date();d.setDate(d.getDate()+1);d.setHours(9,0,0,0);
+  l.follow_data=d.toISOString().split('T')[0];
+  l.follow_nota='Tentar novamente';
+  if(l.estado==='contactar')l.estado='follow_up';
+  guardar(l);renderFicha(l);
+  setTimeout(()=>abrirTmplWA(),300);
+}
+
+// ─── RESUMO INTELIGENTE ───────────────────────────────────────────────────────
+async function resumirNotas(id){
+  const l=leads.find(x=>String(x.id)===String(id));if(!l||!l.notas||!l.notas.length)return;
+  const el=document.getElementById('ni-'+id);if(el)el.value='✨ A resumir...';
+  try{
+    const hist=l.notas.map(n=>`[${n.data}] ${n.texto}`).join('\n');
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:300,messages:[{role:'user',content:`Resume em 2-3 frases o historial desta lead Mercedes-Benz, em português europeu, na perspetiva de uma consultora comercial. Sê direto e factual.\n\nHistorial:\n${hist}`}]})});
+    const data=await resp.json();
+    if(el)el.value=data.content[0].text;
+  }catch(e){if(el)el.value='';}
+}
+
+// ─── CRIAR LEAD POR VOZ ───────────────────────────────────────────────────────
+async function criarLeadPorVoz(txt){
+  if(!txt)return;
+  setSyncStatus('syncing','A criar lead...');
+  try{
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:500,messages:[{role:'user',content:`Extrai dados de uma nova lead Mercedes-Benz a partir de texto ditado. Devolve APENAS JSON válido sem mais nada.\n\nTexto: "${txt}"\n\n{"nome":null,"tel":null,"email":null,"opp_id":null,"carro":null,"kom":null,"tipo":"Particular","nota":null}\n\nRegras: tel sem espaços sem +351; opp_id começa por OPP ou LEAD; tipo Particular/Empresa/ENI/Particular-Empresa.`}]})});
+    const data=await resp.json();
+    const raw=data.content[0].text.replace(/```json|```/g,'').trim();
+    const p=JSON.parse(raw);
+    if(!p.nome||!p.tel){setSyncStatus('error','Não percebi. Indica nome e número.');return;}
+    const telClean=formatTelClean(p.tel);
+    const dup=leads.find(l=>formatTelClean(l.tel)===telClean);
+    if(dup&&!confirm(`Já existe uma lead com este número: ${dup.nome}. Continuar?`)){setSyncStatus('ok','Cancelado.');return;}
+    const agora=new Date();
+    const nova={id:Date.now(),nome:p.nome,tel:p.tel,email:p.email||'',opp_id:p.opp_id||'(sem ID)',tipo_lead:'Lead MBP',carro:p.carro||'—',kom:p.kom||'',tipo:p.tipo||'Particular',nif:'',frota:'',cae_rent:false,cliente_existente:false,sector:'',estado:'contactar',notas:[{data:dstamp(),texto:p.nota||'Lead criada por voz.'}],follow_data:agora.toISOString().split('T')[0],follow_nota:'Primeiro contacto',negociacao_fora:'',relacao_interna:'',financiamento:'',retoma:'',td_pedido:false,td_agendado:'',td_stand:'',td_esp:'',reuniao_data:'',reuniao_local:'',reuniao_notas:'',reuniao_realizada:false,preferencias:[],propostas:[],criado:agora.toISOString().split('T')[0]};
+    guardar(nova);renderAtual();setSyncStatus('ok','✨ Lead de '+p.nome+' criada!');
+  }catch(e){setSyncStatus('error','Erro ao criar. Usa o formulário.');}
+}
+
+// ─── TAB MEMORY ───────────────────────────────────────────────────────────────
+function restaurarTab(){
+  const t=localStorage.getItem('lastTab')||'hoje';
+  const btn=document.getElementById('tab-btn-'+t);
+  if(btn)mudaTab(btn,t);
+}
+
+iniciarPostCallWatch();
+carregar();
+restaurarTab();
+</script>
+</body>
+</html>
