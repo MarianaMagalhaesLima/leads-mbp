@@ -1148,9 +1148,13 @@ function guardarTD(id){
 }
 
 function outlookTD(id){
-  const l=leads.find(x=>String(x.id)===String(id));if(!l||!l.td_agendado)return;
-  const dtStr=l.td_agendado.slice(0,10);
-  const horaStr=l.td_agendado.length>10?l.td_agendado.slice(11,16):'09:00';
+  const l=leads.find(x=>String(x.id)===String(id));if(!l)return;
+  // Lê do campo na ficha se ainda não foi guardado
+  const inputEl=document.getElementById('td-data-'+id);
+  const tdVal=(inputEl&&inputEl.value)?inputEl.value:(l.td_agendado||'');
+  if(!tdVal){alert('Define primeiro a data do test drive.');return;}
+  const dtStr=tdVal.slice(0,10);
+  const horaStr=tdVal.length>10?tdVal.slice(11,16):'09:00';
   const inicio=icsDateLocal(dtStr,horaStr);
   const local=l.td_stand||'';
   const localUpper=(local||'').toUpperCase();
@@ -1280,9 +1284,9 @@ function renderFicha(l){
         <div class="ficha-sub">${l.opp_id}${subInfo?' · '+subInfo:''}</div>
         <div style="margin-top:5px;">
           <select onchange="mudarEstado('${l.id}',this.value)" style="background:rgba(255,255,255,0.15);border:.5px solid rgba(255,255,255,0.25);color:#fff;border-radius:20px;font-size:10px;padding:2px 8px;font-weight:500;font-family:inherit;cursor:pointer;outline:none;">
-            <option value="contactar" ${l.estado==='contactar'?'selected':''}>Contactar</option>
-            <option value="follow_up" ${l.estado==='follow_up'?'selected':''}>Follow-up</option>
-            <option value="td_agendado" ${l.estado==='td_agendado'?'selected':''}>TD Agendado</option>
+            <option value="contactar" ${l.estado==='contactar'?'selected':''} style="background:#1a1a1a;color:#fff;">Contactar</option>
+            <option value="follow_up" ${l.estado==='follow_up'?'selected':''} style="background:#1a1a1a;color:#fff;">Follow-up</option>
+            <option value="td_agendado" ${l.estado==='td_agendado'?'selected':''} style="background:#1a1a1a;color:#fff;">TD Agendado</option>
           </select>
         </div>
       </div>
