@@ -544,7 +544,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 </div>
 
 <script>
-const SCRIPT='https://script.google.com/macros/s/AKfycbx8sQIbum1sOBfoglUk9pTfKm9id17Mn0wLjqYpzhTds6tm-twqqlOrbCoCLKL4XWkT/exec';
+const SCRIPT='https://script.google.com/macros/s/AKfycbwB61vgrLIbEnBaFHcVEy0pHrxjVUyfDVCr6BVKQFy01Ts5HznnwdrDORaCr09X_obc/exec';
 const HOJE=new Date();
 let leads=[],fichaId=null,SRec=null,recording=false,transcript='',tabAtual='hoje';
 let modalLeadId=null,insucessoSel=null,filtroArquivoAtual='todas';
@@ -786,14 +786,22 @@ function carregar(){
     const remotas=Array.isArray(data)?data:[];
     const locais=JSON.parse(localStorage.getItem('leads_mb')||'[]');
     const agora=Date.now();
-    leads=remotas.map(r=>{
+    // Separar apagadas das activas
+    const apagadasServidor=remotas.filter(r=>r.estado==='apagada');
+    const ativasServidor=remotas.filter(r=>r.estado!=='apagada');
+    // Merge com locais protegendo alterações recentes
+    leads=ativasServidor.map(r=>{
       const loc=locais.find(x=>String(x.id)===String(r.id));
-      // Se foi guardado localmente nos últimos 5 min, proteger do sync
       if(loc&&loc._savedAt&&(agora-loc._savedAt)<300000)return loc;
       return r;
     });
-    // Leads criadas localmente que ainda não chegaram ao servidor
-    locais.forEach(loc=>{if(!leads.find(r=>String(r.id)===String(loc.id)))leads.push(loc);});
+    locais.forEach(loc=>{if(loc.estado!=='apagada'&&!leads.find(r=>String(r.id)===String(loc.id)))leads.push(loc);});
+    // Sincronizar apagadas do servidor com localStorage
+    const apagadasLocal=JSON.parse(localStorage.getItem('leads_apagadas')||'[]');
+    apagadasServidor.forEach(r=>{
+      if(!apagadasLocal.find(x=>String(x.id)===String(r.id)))apagadasLocal.unshift(r);
+    });
+    localStorage.setItem('leads_apagadas',JSON.stringify(apagadasLocal));
     leads.forEach(l=>{
       if(!l.preferencias)l.preferencias=[];
       if(!l.propostas)l.propostas=[];
@@ -1435,8 +1443,11 @@ function confirmarApagar(id){
   const l=leads.find(x=>String(x.id)===String(id));if(!l)return;
   if(confirm('Apagar a lead de '+l.nome+'? Ficará no Arquivo.')){
     const agora=new Date();l.data_apagada=agora.toLocaleDateString('pt-PT');
+    l.estado='apagada';
     const ap=JSON.parse(localStorage.getItem('leads_apagadas')||'[]');ap.unshift(l);
     localStorage.setItem('leads_apagadas',JSON.stringify(ap));
+    // Guardar no servidor com estado apagada para sincronizar entre dispositivos
+    guardar(l);
     leads=leads.filter(x=>String(x.id)!==String(id));
     localStorage.setItem('leads_mb',JSON.stringify(leads));
     eliminarNoSheets(id);fecharFicha();renderAtual();
@@ -1445,7 +1456,7 @@ function confirmarApagar(id){
 function restaurarLead(id){
   const ap=JSON.parse(localStorage.getItem('leads_apagadas')||'[]');
   const l=ap.find(x=>String(x.id)===String(id));if(!l)return;
-  delete l.data_apagada;leads.unshift(l);guardar(l);
+  delete l.data_apagada;l.estado='contactar';leads.unshift(l);guardar(l);
   localStorage.setItem('leads_apagadas',JSON.stringify(ap.filter(x=>String(x.id)!==String(id))));
   renderAtual();alert('Lead de '+l.nome+' restaurada!');
 }
