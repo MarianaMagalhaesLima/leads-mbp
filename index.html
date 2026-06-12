@@ -1327,31 +1327,34 @@ function renderFicha(l){
       ${l.relacao_interna?cr('Referência',l.relacao_interna):''}
     </div>
 
-    <div class="ficha-section alt">
-      <p class="sec-title">Test Drive</p>
-      <div style="display:flex;flex-direction:column;gap:6px;">
-        <div style="display:flex;gap:6px;align-items:center;">
-          <label style="font-size:12px;color:#888;flex-shrink:0;width:52px;">Data</label>
-          <input class="finput" type="datetime-local" id="td-data-${l.id}" value="${l.td_agendado?l.td_agendado.slice(0,16):''}" style="flex:1;font-size:13px;padding:.4rem .6rem;margin-bottom:0;">
+    ${(()=>{
+      const tdAberto=!!(l.td_agendado||l.td_pedido);
+      const tdLabel=l.td_agendado?('🚗 TD · '+(l.td_agendado.slice(8,10)+'/'+l.td_agendado.slice(5,7))+(l.td_stand?' — '+l.td_stand:'')):'TEST DRIVE';
+      return col(l.id+'-td', tdLabel, '', `
+        <div style="display:flex;flex-direction:column;gap:6px;">
+          <div style="display:flex;gap:6px;align-items:center;">
+            <label style="font-size:12px;color:#888;flex-shrink:0;width:52px;">Data</label>
+            <input class="finput" type="datetime-local" id="td-data-${l.id}" value="${l.td_agendado?l.td_agendado.slice(0,16):''}" style="flex:1;font-size:13px;padding:.4rem .6rem;margin-bottom:0;">
+          </div>
+          <div style="display:flex;gap:6px;align-items:center;">
+            <label style="font-size:12px;color:#888;flex-shrink:0;width:52px;">Stand</label>
+            <select class="finput" id="td-stand-${l.id}" style="flex:1;font-size:13px;padding:.4rem .6rem;margin-bottom:0;">
+              <option value="">— selecionar —</option>
+              <option ${(l.td_stand||'')==='Boavista'?'selected':''}>Boavista</option>
+              <option ${(l.td_stand||'')==='Maia'?'selected':''}>Maia</option>
+            </select>
+          </div>
+          <div style="display:flex;gap:6px;align-items:center;">
+            <label style="font-size:12px;color:#888;flex-shrink:0;width:52px;">Espec.</label>
+            <input class="finput" id="td-esp-${l.id}" value="${l.td_esp||''}" placeholder="Especialista (opcional)" style="flex:1;font-size:13px;padding:.4rem .6rem;margin-bottom:0;">
+          </div>
+          <div style="display:flex;gap:8px;margin-top:2px;">
+            <button onclick="guardarTD('${l.id}')" class="btn primary full" style="font-size:13px;">Guardar</button>
+            <button id="btn-ics-td-${l.id}" onclick="outlookTD('${l.id}')" class="btn" style="font-size:12px;border-color:#185FA5;color:#185FA5;white-space:nowrap;${l.td_agendado?'':'opacity:.35;pointer-events:none;'}">📅 Outlook</button>
+          </div>
         </div>
-        <div style="display:flex;gap:6px;align-items:center;">
-          <label style="font-size:12px;color:#888;flex-shrink:0;width:52px;">Stand</label>
-          <select class="finput" id="td-stand-${l.id}" style="flex:1;font-size:13px;padding:.4rem .6rem;margin-bottom:0;">
-            <option value="">— selecionar —</option>
-            <option ${(l.td_stand||'')==='Boavista'?'selected':''}>Boavista</option>
-            <option ${(l.td_stand||'')==='Maia'?'selected':''}>Maia</option>
-          </select>
-        </div>
-        <div style="display:flex;gap:6px;align-items:center;">
-          <label style="font-size:12px;color:#888;flex-shrink:0;width:52px;">Espec.</label>
-          <input class="finput" id="td-esp-${l.id}" value="${l.td_esp||''}" placeholder="Especialista (opcional)" style="flex:1;font-size:13px;padding:.4rem .6rem;margin-bottom:0;">
-        </div>
-        <div style="display:flex;gap:8px;margin-top:2px;">
-          <button onclick="guardarTD('${l.id}')" class="btn primary full" style="font-size:13px;">Guardar</button>
-          <button id="btn-ics-td-${l.id}" onclick="outlookTD('${l.id}')" class="btn" style="font-size:12px;border-color:#185FA5;color:#185FA5;white-space:nowrap;${l.td_agendado?'':'opacity:.35;pointer-events:none;'}">📅 Outlook</button>
-        </div>
-      </div>
-    </div>
+      `, tdAberto);
+    })()}
 
     <!-- FOLLOW-UP -->
     <div class="ficha-section alt">
