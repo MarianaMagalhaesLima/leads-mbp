@@ -1270,6 +1270,7 @@ function renderFicha(l){
       ${cr('Tipo',l.tipo)}
       ${cr('Financiamento',l.financiamento)}
       ${renderRetomaDados(l)}
+      ${cr('Criado',l.criado?new Date(l.criado+'T12:00:00').toLocaleDateString('pt-PT'):'')}
       ${cr('Cliente exist.',l.cliente_existente?'Sim':'Não')}
       ${l.nif?cr('NIF',l.nif):''}
       ${l.frota?cr('Frota',l.frota):''}
@@ -1842,13 +1843,8 @@ function setFollowDataNew(id){
 function setHoraNew(id){
   const l=leads.find(x=>String(x.id)===String(id));
   const horaEl=document.getElementById('fhora-'+id);
-  const chkEl=document.getElementById('hora-chk-'+id);
-  if(!l)return;
-  if(chkEl&&chkEl.checked&&horaEl&&horaEl.value){
-    l.follow_hora=horaEl.value;
-  } else {
-    l.follow_hora='';
-  }
+  if(!l||!horaEl)return;
+  l.follow_hora=horaEl.value||'';
   guardar(l);
 }
 function marcarBitrix(id,checked){
