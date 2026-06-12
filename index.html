@@ -1371,9 +1371,35 @@ function renderFicha(l){
 
     ${(()=>{
       const tdAberto=!!(l.td_agendado||l.td_pedido);
-      const tdLabel=l.td_agendado?('🚗 TD · '+l.td_agendado.slice(8,10)+'/'+l.td_agendado.slice(5,7)+(l.td_stand?' — '+l.td_stand:'')):'TEST DRIVE';
+      const tdRaw=String(l.td_agendado||'');
+      // Construir label e valor de forma robusta independente do formato do Sheets
+      let tdLabel='TEST DRIVE';
+      let tdVal='';
+      if(tdRaw){
+        // Tentar extrair data e hora de qualquer formato
+        const dObj=new Date(tdRaw);
+        if(!isNaN(dObj)){
+          const off=dObj.getTimezoneOffset();
+          const loc=new Date(dObj.getTime()-off*60000);
+          const dd=String(loc.getUTCDate()).padStart(2,'0');
+          const mm=String(loc.getUTCMonth()+1).padStart(2,'0');
+          const hh=loc.getUTCHours();const mi=loc.getUTCMinutes();
+          const horaStr=(hh||mi)?String(hh).padStart(2,'0')+':'+String(mi).padStart(2,'0'):'';
+          tdLabel='🚗 TD · '+dd+'/'+mm+(l.td_stand?' — '+l.td_stand:'');
+          // Se a data vem do Sheets como 1899 (só hora), combinar com follow_data
+          const yyyy=loc.getUTCFullYear();
+          if(yyyy===1899||yyyy===1900){
+            // só hora — não temos data fiável
+            tdVal='';
+          } else {
+            tdVal=loc.getUTCFullYear()+'-'+mm+'-'+dd+(horaStr?'T'+horaStr:'');
+          }
+        } else if(tdRaw.length>=10){
+          // formato não parseable — usar slice como fallback
+          tdVal=tdRaw.slice(0,16);
+        }
+      }
       const isBV=(l.td_stand||'')==='Boavista';const isMaia=(l.td_stand||'')==='Maia';
-      const tdVal=l.td_agendado?l.td_agendado.slice(0,16):'';
       const outlookStyle='font-size:12px;border-color:#185FA5;color:#185FA5;white-space:nowrap;'+(l.td_agendado?'':'opacity:.35;pointer-events:none;');
       const tdHtml='<div style="display:flex;flex-direction:column;gap:6px;">'
         +'<div style="display:flex;gap:6px;align-items:center;"><label style="font-size:12px;color:#888;flex-shrink:0;width:52px;">Data</label>'
