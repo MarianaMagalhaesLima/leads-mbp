@@ -783,19 +783,27 @@ function carregar(){
     clearTimeout(timer);
     delete window[cb];
     const s=document.getElementById('jsonp-script');if(s)s.remove();
-    leads=Array.isArray(data)?data:[];
+    const remotas=Array.isArray(data)?data:[];
+    const locais=JSON.parse(localStorage.getItem('leads_mb')||'[]');
+    const agora=Date.now();
+    leads=remotas.map(r=>{
+      const loc=locais.find(x=>String(x.id)===String(r.id));
+      // Se foi guardado localmente nos últimos 5 min, proteger do sync
+      if(loc&&loc._savedAt&&(agora-loc._savedAt)<300000)return loc;
+      return r;
+    });
+    // Leads criadas localmente que ainda não chegaram ao servidor
+    locais.forEach(loc=>{if(!leads.find(r=>String(r.id)===String(loc.id)))leads.push(loc);});
     leads.forEach(l=>{
       if(!l.preferencias)l.preferencias=[];
       if(!l.propostas)l.propostas=[];
       if(!l.notas)l.notas=[];
-      // Normalizar follow_data: sempre YYYY-MM-DD, nunca ISO completo
+      // Normalizar follow_data: sempre YYYY-MM-DD
       if(l.follow_data){
         const raw=String(l.follow_data);
         if(raw.includes('T')){
-          // Extrair hora se existir e não for artefacto de UTC
           const partes=raw.replace('Z','').split('T');
           const horaUTC=partes[1]?partes[1].slice(0,5):'';
-          // Guardar hora só se não for 00:00 ou 23:00 (artefactos de timezone)
           if(!l.follow_hora&&horaUTC&&horaUTC!=='00:00'&&horaUTC!=='23:00')l.follow_hora=horaUTC;
           l.follow_data=partes[0];
         }
@@ -1193,7 +1201,9 @@ function renderFicha(l){
   const fDataRaw=String(l.follow_data||'');const fData=fDataRaw.length>=10?fDataRaw.slice(0,10):'';
   const fHora=l.follow_hora||'';
   const fTemHora=!!fHora;
-  const fLabel=fData?('Agendado para '+new Date(fData+'T12:00:00').toLocaleDateString('pt-PT')+(fTemHora?' às '+fHora:'')):'Sem follow-up agendado';
+  // Converter YYYY-MM-DD para DD/MM/YYYY sem usar Date() para evitar timezone issues
+  function fmtData(s){if(!s||s.length<10)return s;const p=s.slice(0,10).split('-');return p[2]+'/'+p[1]+'/'+p[0];}
+  const fLabel=fData?('Agendado para '+fmtData(fData)+(fTemHora?' às '+fHora:'')):'Sem follow-up agendado';
   const followBox=`<div id="follow-box-${l.id}" style="background:${fData?'#e6f4ea':'#f5f4f2'};border-radius:10px;padding:.65rem;border:${fData?'1.5px solid #2e7d32':'1px solid #e8e6e1'};">
     <div style="font-size:12px;color:${fData?'#276b2f':'#999'};font-weight:600;margin-bottom:5px;">${fLabel}</div>
     <input class="finput" type="date" id="fdt-${l.id}" value="${fData}" style="margin-bottom:5px;">
@@ -1818,10 +1828,14 @@ function guardarFollowUp(id){
   const dateEl=document.getElementById('fdt-'+id);
   const horaEl=document.getElementById('fhora-'+id);
   const notaEl=document.getElementById('fn-'+id);
-  if(dateEl&&dateEl.value)l.follow_data=dateEl.value;
+  if(dateEl&&dateEl.value){
+    // Garantir formato YYYY-MM-DD puro, sem hora
+    l.follow_data=dateEl.value.slice(0,10);
+  }
   if(horaEl)l.follow_hora=horaEl.value||'';
-  if(notaEl&&notaEl.value)l.follow_nota=notaEl.value;
+  if(notaEl)l.follow_nota=notaEl.value||l.follow_nota||'';
   if(l.follow_data)l.estado='follow_up';
+  l._savedAt=Date.now(); // timestamp para proteger do sync
   guardar(l);renderFicha(l);
 }
 function marcarBitrix(id,checked){
