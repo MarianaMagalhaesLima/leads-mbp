@@ -798,14 +798,18 @@ function carregar(){
       if(!l.preferencias)l.preferencias=[];
       if(!l.propostas)l.propostas=[];
       if(!l.notas)l.notas=[];
-      // Normalizar follow_data: sempre YYYY-MM-DD
+      // Normalizar follow_data: sempre YYYY-MM-DD, corrigindo timezone UTC→Portugal
       if(l.follow_data){
         const raw=String(l.follow_data);
         if(raw.includes('T')){
-          const partes=raw.replace('Z','').split('T');
-          const horaUTC=partes[1]?partes[1].slice(0,5):'';
-          if(!l.follow_hora&&horaUTC&&horaUTC!=='00:00'&&horaUTC!=='23:00')l.follow_hora=horaUTC;
-          l.follow_data=partes[0];
+          // Usar Date com meio-dia UTC para evitar cruzar meia-noite
+          const d=new Date(raw);
+          // Corrigir: adicionar offset de Portugal (UTC+1 inverno, UTC+2 verão)
+          const offset=d.getTimezoneOffset(); // minutos (negativo em Portugal)
+          const corrigido=new Date(d.getTime()-offset*60000);
+          const horaLocal=corrigido.toISOString().slice(11,16);
+          if(!l.follow_hora&&horaLocal&&horaLocal!=='00:00'&&horaLocal!=='23:00')l.follow_hora=horaLocal;
+          l.follow_data=corrigido.toISOString().slice(0,10);
         }
       }
     });
@@ -1270,7 +1274,7 @@ function renderFicha(l){
       ${cr('Tipo',l.tipo)}
       ${cr('Financiamento',l.financiamento)}
       ${renderRetomaDados(l)}
-      ${cr('Criado',l.criado?new Date(String(l.criado).slice(0,10)+'T12:00:00').toLocaleDateString('pt-PT'):'')}
+      ${cr('Criado',(()=>{if(!l.criado)return'';const d=new Date(String(l.criado));const off=d.getTimezoneOffset();const c=new Date(d.getTime()-off*60000);return c.toISOString().slice(0,10).split('-').reverse().join('/');})())}
       ${cr('Cliente exist.',l.cliente_existente?'Sim':'Não')}
       ${l.nif?cr('NIF',l.nif):''}
       ${l.frota?cr('Frota',l.frota):''}
