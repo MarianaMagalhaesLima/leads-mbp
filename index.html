@@ -1355,8 +1355,8 @@ function renderFicha(l){
         +'<div style="display:flex;gap:6px;align-items:center;"><label style="font-size:12px;color:#888;flex-shrink:0;width:52px;">Espec.</label>'
         +'<input class="finput" id="td-esp-'+l.id+'" value="'+(l.td_esp||'')+'" placeholder="Especialista (opcional)" style="flex:1;font-size:13px;padding:.4rem .6rem;margin-bottom:0;"></div>'
         +'<div style="display:flex;gap:8px;margin-top:2px;">'
-        +'<button onclick="guardarTD(\''+l.id+'\')" class="btn primary full" style="font-size:13px;">Guardar</button>'
-        +'<button id="btn-ics-td-'+l.id+'" onclick="outlookTD(\''+l.id+'\')" class="btn" style="'+outlookStyle+'">📅 Outlook</button>'
+        +'<button onclick="guardarTD('+JSON.stringify(String(l.id))+')" class="btn primary full" style="font-size:13px;">Guardar</button>'
+        +'<button id="btn-ics-td-'+l.id+'" onclick="outlookTD('+JSON.stringify(String(l.id))+')" class="btn" style="'+outlookStyle+'">📅 Outlook</button>'
         +'</div></div>';
       return col(l.id+'-td', tdLabel, '', tdHtml, tdAberto);
     })()}
