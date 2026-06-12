@@ -722,7 +722,6 @@ function carregar(){
       leads.forEach(l=>{if(!l.preferencias)l.preferencias=[];if(!l.propostas)l.propostas=[];if(!l.notas)l.notas=[];});
       setSyncStatus('ok','Local · '+new Date().toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'}));
       renderAtual();
-      setTimeout(backfillLeads,1000);
     }
   }catch(e){}
   // Then sync from server
@@ -743,10 +742,10 @@ function carregar(){
     const s=document.getElementById('jsonp-script');if(s)s.remove();
     leads=Array.isArray(data)?data:[];
     leads.forEach(l=>{if(!l.preferencias)l.preferencias=[];if(!l.propostas)l.propostas=[];if(!l.notas)l.notas=[];});
+    runBackfill();
     localStorage.setItem('leads_mb',JSON.stringify(leads));
     setSyncStatus('ok','Sincronizado · '+new Date().toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'}));
     renderAtual();
-    setTimeout(backfillLeads,1000);
   };
   const sc=document.createElement('script');sc.id='jsonp-script';
   sc.src=SCRIPT+'?action=load&callback='+cb;
@@ -1121,27 +1120,6 @@ function addNota(id){
   const agora=new Date();if(!l.notas)l.notas=[];
   l.notas.push({data:agora.toLocaleDateString('pt-PT')+' '+agora.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'}),texto:txt});
   inp.value='';guardar(l);renderFicha(l);
-  extrairDadosDeNotas(l);
-}
-
-async function extrairDadosDeNotas(l){
-  if(!l.notas||!l.notas.length)return;
-  const notas=l.notas.map(function(n){return n.texto;}).join(' | ');
-  const prompt='Analisa estas notas e extrai dados. JSON apenas. Notas: '+JSON.stringify(notas)+'. Devolve: {"financiamento":null,"retoma":null,"tipo":null,"preferencias_gosta":[],"preferencias_nao_gosta":[]}. financiamento: Pronto pagamento/Sim/Nao/Leasing/ALD/Renting. retoma: descricao ou Sim/Nao. tipo: Particular/Empresa/ENI. preferencias: array de strings.';
-  try{
-    const resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:300,messages:[{role:'user',content:prompt}]})});
-    const data=await resp.json();
-    const raw=data.content[0].text.replace(/```json|```/g,'').trim();
-    const p=JSON.parse(raw);
-    let changed=false;
-    if(p.financiamento&&(l.financiamento===''||l.financiamento===null||l.financiamento===undefined)){l.financiamento=p.financiamento;changed=true;}
-    if(p.retoma&&(l.retoma===''||l.retoma===null||l.retoma===undefined)){l.retoma=p.retoma;changed=true;}
-    if(p.tipo&&(l.tipo===''||l.tipo===null||l.tipo===undefined)){l.tipo=p.tipo;changed=true;}
-    if(!l.preferencias)l.preferencias=[];
-    (p.preferencias_gosta||[]).forEach(function(pref){if(!l.preferencias.some(function(x){return x.texto===pref;})){l.preferencias.push({tipo:'gosta',texto:pref});changed=true;}});
-    (p.preferencias_nao_gosta||[]).forEach(function(pref){if(!l.preferencias.some(function(x){return x.texto===pref;})){l.preferencias.push({tipo:'nao_gosta',texto:pref});changed=true;}});
-    if(changed){guardar(l);renderFicha(l);}
-  }catch(e){}
 }
 function setFollow(id,dias,label){
   const l=leads.find(x=>String(x.id)===String(id));const d=new Date();d.setDate(d.getDate()+dias);d.setHours(9,0,0,0);
@@ -1440,7 +1418,21 @@ Responde APENAS com JSON válido, sem mais nada:
 }
 function descartarT(){['tbox-main','tbox-ficha'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});transcript='';}
 
-function toggleHora(id){const chk=document.getElementById('hora-chk-'+id);const inp=document.getElementById('fhora-'+id);if(inp){inp.style.display=chk&&chk.checked?'inline-block':'none';}}
+function toggleHora(id){
+  const chk=document.getElementById('hora-chk-'+id);
+  const inp=document.getElementById('fhora-'+id);
+  if(!inp)return;
+  const mostrar=chk&&chk.checked;
+  inp.style.display=mostrar?'inline-block':'none';
+  if(!mostrar){
+    // Remove hora do follow_data se existia
+    const l=leads.find(x=>String(x.id)===String(id));
+    if(l&&l.follow_data&&l.follow_data.length>10){
+      l.follow_data=l.follow_data.slice(0,10);
+      guardar(l);
+    }
+  }
+}
 function setFollowDataNew(id){
   const l=leads.find(x=>String(x.id)===String(id));
   const dateEl=document.getElementById('fdt-'+id);
@@ -1568,6 +1560,90 @@ async function criarLeadPorVoz(txt){
   }catch(e){setSyncStatus('error','Erro ao criar. Usa o formulário.');}
 }
 
+// ─── BACKFILL JS PURO (sem API — Safari safe) ─────────────────────────────────
+function backfillLead(l){
+  let changed=false;
+  const todasNotas=(l.notas||[]).map(n=>n.texto||'').join(' ').toLowerCase();
+
+  // Financiamento
+  if(!l.financiamento||l.financiamento===''){
+    if(/\b(a pronto|pronto pagamento|paga a pronto|pp\b|cash)\b/.test(todasNotas)){
+      l.financiamento='Não';changed=true;
+    } else if(/\b(ald)\b/.test(todasNotas)){
+      l.financiamento='ALD';changed=true;
+    } else if(/\b(renting)\b/.test(todasNotas)){
+      l.financiamento='Renting';changed=true;
+    } else if(/\b(leasing)\b/.test(todasNotas)){
+      l.financiamento='Leasing';changed=true;
+    } else if(/\b(financiamento|crédito|credito|presta[çc][oõ]es|financiar)\b/.test(todasNotas)){
+      l.financiamento='Sim';changed=true;
+    }
+  }
+
+  // Retoma
+  if(!l.retoma||l.retoma===''){
+    if(/\b(sem retoma|n[aã]o tem retoma|sem carro para retomar)\b/.test(todasNotas)){
+      l.retoma='Não';changed=true;
+    } else if(/\bretoma\b/.test(todasNotas)){
+      // extrai contexto (marca/modelo se mencionado)
+      const m=todasNotas.match(/retoma[^.;,\n]{0,50}/);
+      l.retoma=m?'Sim — '+m[0].replace(/retoma[: ]*/i,'').trim().substring(0,40):'Sim';
+      changed=true;
+    }
+  }
+
+  // Tipo de cliente (só se ainda for o default "Particular" e notas indicarem outro)
+  if(l.tipo==='Particular'||!l.tipo){
+    if(/\beni\b|\bempres[aá]rio em nome individual\b/.test(todasNotas)){
+      l.tipo='ENI';changed=true;
+    } else if(/\bempresa\b|\bnif\b|\bfrota\b|\bsociedade\b/.test(todasNotas)&&!/\bparticular\b/.test(todasNotas)){
+      l.tipo='Empresa';changed=true;
+    }
+  }
+
+  // Preferências (só se array vazio)
+  if(!l.preferencias||l.preferencias.length===0){
+    if(!l.preferencias)l.preferencias=[];
+    // Cores — gosta
+    const coresGosta=/prefere (preto|branco|cinzento|azul|vermelho|cinza|prata|verde|castanho|bege|creme)|gosta de (preto|branco|cinzento|azul|vermelho|cinza|prata|verde|castanho|bege|creme)|quer (preto|branco|cinzento|azul|vermelho|cinza|prata|verde|castanho|bege|creme)/gi;
+    let mg;
+    while((mg=coresGosta.exec(todasNotas))!==null){
+      const cor=mg[0].replace(/prefere |gosta de |quer /i,'').trim();
+      if(!l.preferencias.some(p=>p.texto.toLowerCase()===cor))l.preferencias.push({tipo:'gosta',texto:cor.charAt(0).toUpperCase()+cor.slice(1)});
+      changed=true;
+    }
+    // Cores — não gosta
+    const coresNao=/n[aã]o gosta de (preto|branco|cinzento|azul|vermelho|cinza|prata|verde|castanho|bege|creme)|n[aã]o quer (preto|branco|cinzento|azul|vermelho|cinza|prata|verde|castanho|bege|creme)/gi;
+    while((mg=coresNao.exec(todasNotas))!==null){
+      const cor=mg[0].replace(/n[aã]o gosta de |n[aã]o quer /i,'').trim();
+      if(!l.preferencias.some(p=>p.texto.toLowerCase()===cor))l.preferencias.push({tipo:'nao_gosta',texto:cor.charAt(0).toUpperCase()+cor.slice(1)});
+      changed=true;
+    }
+    // Características genéricas
+    if(/\bsuv\b/.test(todasNotas)&&!l.preferencias.some(p=>p.texto==='SUV')){l.preferencias.push({tipo:'gosta',texto:'SUV'});changed=true;}
+    if(/\belétrico\b/.test(todasNotas)&&!l.preferencias.some(p=>p.texto==='Elétrico')){l.preferencias.push({tipo:'gosta',texto:'Elétrico'});changed=true;}
+    if(/\bdiesel\b/.test(todasNotas)&&!l.preferencias.some(p=>p.texto==='Diesel')){l.preferencias.push({tipo:'gosta',texto:'Diesel'});changed=true;}
+    if(/\bteto de abrir|teto panorâmico|panorâmico\b/.test(todasNotas)&&!l.preferencias.some(p=>p.texto.toLowerCase().includes('teto'))){l.preferencias.push({tipo:'gosta',texto:'Teto panorâmico'});changed=true;}
+    if(/\binteriores claros|interior claro|beige interior\b/.test(todasNotas)&&!l.preferencias.some(p=>p.texto.toLowerCase().includes('interior'))){l.preferencias.push({tipo:'gosta',texto:'Interiores claros'});changed=true;}
+  }
+
+  return changed;
+}
+
+function runBackfill(){
+  let count=0;
+  leads.forEach(l=>{
+    if(backfillLead(l))count++;
+  });
+  if(count>0){
+    localStorage.setItem('leads_mb',JSON.stringify(leads));
+    // Sincroniza silenciosamente (sem bloquear UI)
+    leads.forEach(l=>{
+      fetch(SCRIPT+'?action=save',{method:'POST',body:JSON.stringify({action:'save',lead:l})}).catch(()=>{});
+    });
+  }
+}
+
 // ─── TAB MEMORY ───────────────────────────────────────────────────────────────
 function restaurarTab(){
   const t=localStorage.getItem('lastTab')||'hoje';
@@ -1576,23 +1652,6 @@ function restaurarTab(){
 }
 
 iniciarPostCallWatch();
-
-async function backfillLeads(){
-  const key='backfill_v2_done';
-  if(localStorage.getItem(key))return;
-  const toProcess=leads.filter(function(l){
-    return (!l.financiamento||l.financiamento==='')&&l.notas&&l.notas.length>0;
-  });
-  if(!toProcess.length){localStorage.setItem(key,'1');return;}
-  setSyncStatus('syncing','A analisar leads existentes...');
-  for(const l of toProcess){
-    await extrairDadosDeNotas(l);
-    await new Promise(function(r){setTimeout(r,500);});
-  }
-  localStorage.setItem(key,'1');
-  setSyncStatus('ok','Análise concluída · '+new Date().toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'}));
-  renderAtual();
-}
 
   // Seed data if localStorage is empty
   (function(){
