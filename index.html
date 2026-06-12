@@ -722,6 +722,7 @@ function carregar(){
       leads.forEach(l=>{if(!l.preferencias)l.preferencias=[];if(!l.propostas)l.propostas=[];if(!l.notas)l.notas=[];});
       setSyncStatus('ok','Local · '+new Date().toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'}));
       renderAtual();
+      setTimeout(backfillLeads,1000);
     }
   }catch(e){}
   // Then sync from server
@@ -745,6 +746,7 @@ function carregar(){
     localStorage.setItem('leads_mb',JSON.stringify(leads));
     setSyncStatus('ok','Sincronizado · '+new Date().toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'}));
     renderAtual();
+    setTimeout(backfillLeads,1000);
   };
   const sc=document.createElement('script');sc.id='jsonp-script';
   sc.src=SCRIPT+'?action=load&callback='+cb;
@@ -1119,6 +1121,27 @@ function addNota(id){
   const agora=new Date();if(!l.notas)l.notas=[];
   l.notas.push({data:agora.toLocaleDateString('pt-PT')+' '+agora.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'}),texto:txt});
   inp.value='';guardar(l);renderFicha(l);
+  extrairDadosDeNotas(l);
+}
+
+async function extrairDadosDeNotas(l){
+  if(!l.notas||!l.notas.length)return;
+  const notas=l.notas.map(function(n){return n.texto;}).join(' | ');
+  const prompt='Analisa estas notas e extrai dados. JSON apenas. Notas: '+JSON.stringify(notas)+'. Devolve: {"financiamento":null,"retoma":null,"tipo":null,"preferencias_gosta":[],"preferencias_nao_gosta":[]}. financiamento: Pronto pagamento/Sim/Nao/Leasing/ALD/Renting. retoma: descricao ou Sim/Nao. tipo: Particular/Empresa/ENI. preferencias: array de strings.';
+  try{
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:300,messages:[{role:'user',content:prompt}]})});
+    const data=await resp.json();
+    const raw=data.content[0].text.replace(/```json|```/g,'').trim();
+    const p=JSON.parse(raw);
+    let changed=false;
+    if(p.financiamento&&!l.financiamento){l.financiamento=p.financiamento;changed=true;}
+    if(p.retoma&&!l.retoma){l.retoma=p.retoma;changed=true;}
+    if(p.tipo&&!l.tipo){l.tipo=p.tipo;changed=true;}
+    if(!l.preferencias)l.preferencias=[];
+    (p.preferencias_gosta||[]).forEach(function(pref){if(!l.preferencias.some(function(x){return x.texto===pref;})){l.preferencias.push({tipo:'gosta',texto:pref});changed=true;}});
+    (p.preferencias_nao_gosta||[]).forEach(function(pref){if(!l.preferencias.some(function(x){return x.texto===pref;})){l.preferencias.push({tipo:'nao_gosta',texto:pref});changed=true;}});
+    if(changed){guardar(l);renderFicha(l);}
+  }catch(e){}
 }
 function setFollow(id,dias,label){
   const l=leads.find(x=>String(x.id)===String(id));const d=new Date();d.setDate(d.getDate()+dias);d.setHours(9,0,0,0);
@@ -1553,6 +1576,23 @@ function restaurarTab(){
 }
 
 iniciarPostCallWatch();
+
+async function backfillLeads(){
+  const key='backfill_v1_done';
+  if(localStorage.getItem(key))return;
+  const toProcess=leads.filter(function(l){
+    return !l.financiamento&&!l.retoma&&l.notas&&l.notas.length>0;
+  });
+  if(!toProcess.length){localStorage.setItem(key,'1');return;}
+  setSyncStatus('syncing','A analisar leads existentes...');
+  for(const l of toProcess){
+    await extrairDadosDeNotas(l);
+    await new Promise(function(r){setTimeout(r,500);});
+  }
+  localStorage.setItem(key,'1');
+  setSyncStatus('ok','Análise concluída · '+new Date().toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'}));
+  renderAtual();
+}
 
   // Seed data if localStorage is empty
   (function(){
