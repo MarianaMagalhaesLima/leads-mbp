@@ -1446,11 +1446,11 @@ function confirmarApagar(id){
     l.estado='apagada';
     const ap=JSON.parse(localStorage.getItem('leads_apagadas')||'[]');ap.unshift(l);
     localStorage.setItem('leads_apagadas',JSON.stringify(ap));
-    // Guardar no servidor com estado apagada para sincronizar entre dispositivos
+    // Guardar no servidor com estado apagada (não apagar a linha)
     guardar(l);
     leads=leads.filter(x=>String(x.id)!==String(id));
     localStorage.setItem('leads_mb',JSON.stringify(leads));
-    eliminarNoSheets(id);fecharFicha();renderAtual();
+    fecharFicha();renderAtual();
   }
 }
 function restaurarLead(id){
