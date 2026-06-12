@@ -1278,7 +1278,13 @@ function renderFicha(l){
       <div style="flex:1;min-width:0;">
         <div class="ficha-name">${l.nome}</div>
         <div class="ficha-sub">${l.opp_id}${subInfo?' · '+subInfo:''}</div>
-        <div class="ficha-badge">${bdg(l.estado).replace(/<[^>]+>/g,'').trim()}</div>
+        <div style="margin-top:5px;">
+          <select onchange="mudarEstado('${l.id}',this.value)" style="background:rgba(255,255,255,0.15);border:.5px solid rgba(255,255,255,0.25);color:#fff;border-radius:20px;font-size:10px;padding:2px 8px;font-weight:500;font-family:inherit;cursor:pointer;outline:none;">
+            <option value="contactar" ${l.estado==='contactar'?'selected':''}>Contactar</option>
+            <option value="follow_up" ${l.estado==='follow_up'?'selected':''}>Follow-up</option>
+            <option value="td_agendado" ${l.estado==='td_agendado'?'selected':''}>TD Agendado</option>
+          </select>
+        </div>
       </div>
     </div>
 
@@ -1329,31 +1335,26 @@ function renderFicha(l){
 
     ${(()=>{
       const tdAberto=!!(l.td_agendado||l.td_pedido);
-      const tdLabel=l.td_agendado?('🚗 TD · '+(l.td_agendado.slice(8,10)+'/'+l.td_agendado.slice(5,7))+(l.td_stand?' — '+l.td_stand:'')):'TEST DRIVE';
-      return col(l.id+'-td', tdLabel, '', `
-        <div style="display:flex;flex-direction:column;gap:6px;">
-          <div style="display:flex;gap:6px;align-items:center;">
-            <label style="font-size:12px;color:#888;flex-shrink:0;width:52px;">Data</label>
-            <input class="finput" type="datetime-local" id="td-data-${l.id}" value="${l.td_agendado?l.td_agendado.slice(0,16):''}" style="flex:1;font-size:13px;padding:.4rem .6rem;margin-bottom:0;">
-          </div>
-          <div style="display:flex;gap:6px;align-items:center;">
-            <label style="font-size:12px;color:#888;flex-shrink:0;width:52px;">Stand</label>
-            <select class="finput" id="td-stand-${l.id}" style="flex:1;font-size:13px;padding:.4rem .6rem;margin-bottom:0;">
-              <option value="">— selecionar —</option>
-              <option ${(l.td_stand||'')==='Boavista'?'selected':''}>Boavista</option>
-              <option ${(l.td_stand||'')==='Maia'?'selected':''}>Maia</option>
-            </select>
-          </div>
-          <div style="display:flex;gap:6px;align-items:center;">
-            <label style="font-size:12px;color:#888;flex-shrink:0;width:52px;">Espec.</label>
-            <input class="finput" id="td-esp-${l.id}" value="${l.td_esp||''}" placeholder="Especialista (opcional)" style="flex:1;font-size:13px;padding:.4rem .6rem;margin-bottom:0;">
-          </div>
-          <div style="display:flex;gap:8px;margin-top:2px;">
-            <button onclick="guardarTD('${l.id}')" class="btn primary full" style="font-size:13px;">Guardar</button>
-            <button id="btn-ics-td-${l.id}" onclick="outlookTD('${l.id}')" class="btn" style="font-size:12px;border-color:#185FA5;color:#185FA5;white-space:nowrap;${l.td_agendado?'':'opacity:.35;pointer-events:none;'}">📅 Outlook</button>
-          </div>
-        </div>
-      `, tdAberto);
+      const tdLabel=l.td_agendado?('🚗 TD · '+l.td_agendado.slice(8,10)+'/'+l.td_agendado.slice(5,7)+(l.td_stand?' — '+l.td_stand:'')):'TEST DRIVE';
+      const isBV=(l.td_stand||'')==='Boavista';const isMaia=(l.td_stand||'')==='Maia';
+      const tdVal=l.td_agendado?l.td_agendado.slice(0,16):'';
+      const outlookStyle='font-size:12px;border-color:#185FA5;color:#185FA5;white-space:nowrap;'+(l.td_agendado?'':'opacity:.35;pointer-events:none;');
+      const tdHtml='<div style="display:flex;flex-direction:column;gap:6px;">'
+        +'<div style="display:flex;gap:6px;align-items:center;"><label style="font-size:12px;color:#888;flex-shrink:0;width:52px;">Data</label>'
+        +'<input class="finput" type="datetime-local" id="td-data-'+l.id+'" value="'+tdVal+'" style="flex:1;font-size:13px;padding:.4rem .6rem;margin-bottom:0;"></div>'
+        +'<div style="display:flex;gap:6px;align-items:center;"><label style="font-size:12px;color:#888;flex-shrink:0;width:52px;">Stand</label>'
+        +'<select class="finput" id="td-stand-'+l.id+'" style="flex:1;font-size:13px;padding:.4rem .6rem;margin-bottom:0;">'
+        +'<option value="">— selecionar —</option>'
+        +'<option'+(isBV?' selected':'')+'>Boavista</option>'
+        +'<option'+(isMaia?' selected':'')+'>Maia</option>'
+        +'</select></div>'
+        +'<div style="display:flex;gap:6px;align-items:center;"><label style="font-size:12px;color:#888;flex-shrink:0;width:52px;">Espec.</label>'
+        +'<input class="finput" id="td-esp-'+l.id+'" value="'+(l.td_esp||'')+'" placeholder="Especialista (opcional)" style="flex:1;font-size:13px;padding:.4rem .6rem;margin-bottom:0;"></div>'
+        +'<div style="display:flex;gap:8px;margin-top:2px;">'
+        +'<button onclick="guardarTD(\''+l.id+'\')" class="btn primary full" style="font-size:13px;">Guardar</button>'
+        +'<button id="btn-ics-td-'+l.id+'" onclick="outlookTD(\''+l.id+'\')" class="btn" style="'+outlookStyle+'">📅 Outlook</button>'
+        +'</div></div>';
+      return col(l.id+'-td', tdLabel, '', tdHtml, tdAberto);
     })()}
 
     <!-- FOLLOW-UP -->
@@ -1481,6 +1482,10 @@ function setFollow(id,dias,label){
 function ciclarEstado(id){
   const l=leads.find(x=>String(x.id)===String(id));const es=['contactar','follow_up','td_agendado','sem_retorno','fechado'];
   l.estado=es[(es.indexOf(l.estado)+1)%es.length];guardar(l);renderFicha(l);
+}
+function mudarEstado(id,val){
+  const l=leads.find(x=>String(x.id)===String(id));if(!l)return;
+  l.estado=val;guardar(l);renderFicha(l);
 }
 function copiar(id){const el=document.getElementById('res-'+id);if(el&&navigator.clipboard)navigator.clipboard.writeText(el.textContent);}
 
