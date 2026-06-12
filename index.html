@@ -1417,11 +1417,7 @@ Responde APENAS com JSON válido, sem mais nada:
 }
 function descartarT(){['tbox-main','tbox-ficha'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});transcript='';}
 
-function toggleHora(id){const chk=document.getElementById('hora-chk-'+id);const inp=document.getElementById('fhora-'+id);if(inp){inp.style.display=chk&&chk.checked?'inline-block':'none';}}else{
-    inp.style.display='none';
-    btn.innerHTML='<button onclick="toggleHora(\''+id+'\')" class="btn" style="font-size:11px;padding:4px 10px;color:#888;">+ Definir hora</button>';
-  }
-}
+function toggleHora(id){const chk=document.getElementById('hora-chk-'+id);const inp=document.getElementById('fhora-'+id);if(inp){inp.style.display=chk&&chk.checked?'inline-block':'none';}}
 function setFollowDataNew(id){
   const l=leads.find(x=>String(x.id)===String(id));
   const dateEl=document.getElementById('fdt-'+id);
