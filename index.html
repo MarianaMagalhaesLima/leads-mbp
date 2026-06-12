@@ -12,7 +12,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .app{max-width:480px;margin:0 auto;background:#fff;height:100vh;position:relative;overflow:hidden;}
 
 /* ── TOPBAR ── */
-.topbar{padding:.9rem 1rem .55rem;background:#1a1a1a;}
+.topbar{padding:.9rem 1rem .55rem;background:#0a2e1e;}
 .topbar-brand{font-size:10px;letter-spacing:.12em;color:rgba(255,255,255,0.4);text-transform:uppercase;margin-bottom:3px;}
 .topbar-row{display:flex;align-items:center;justify-content:space-between;gap:8px;}
 .topbar-name{font-size:16px;font-weight:700;color:#fff;}
@@ -23,7 +23,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .topbar-btns .btn.primary:active{background:#eee;}
 
 /* ── TABS ── */
-.tabs{display:flex;background:#111;overflow-x:auto;border-bottom:1px solid rgba(255,255,255,0.08);}
+.tabs{display:flex;background:#081f15;overflow-x:auto;border-bottom:1px solid rgba(255,255,255,0.08);}
 .tab{flex-shrink:0;font-size:13px;padding:.55rem .85rem;cursor:pointer;color:rgba(255,255,255,0.45);border:none;background:none;border-bottom:2px solid transparent;font-family:inherit;white-space:nowrap;}
 .tab.active{color:#fff;border-bottom-color:#fff;font-weight:600;}
 
@@ -35,7 +35,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .badge-done{background:#e6f4ea;color:#276b2f;}
 
 /* ── LEAD CARDS ── */
-.section{padding:.65rem .85rem;}
+.section{padding:.65rem .85rem;background:#f5f4f2;}
 .lead-card{background:#fff;border:1px solid #e8e6e1;border-radius:12px;padding:.65rem .9rem;margin-bottom:.5rem;cursor:pointer;user-select:none;transition:border-color .15s;}
 .lead-card:active{border-color:#bbb;background:#fafaf9;}
 /* Estado left-border nas cards */
@@ -56,7 +56,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .campanha-dot{display:inline-block;width:5px;height:5px;border-radius:50%;background:#b7770d;margin-right:3px;vertical-align:middle;}
 
 /* ── SEPARADOR HOJE ── */
-.hoje-sep{font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:#aaa;font-weight:600;padding:.5rem 0 .3rem;margin-top:.25rem;}
+.hoje-sep{font-size:10px;text-transform:uppercase;letter-spacing:.09em;font-weight:700;padding:4px 10px;margin:.2rem 0 0;display:flex;align-items:center;gap:5px;}
+.hoje-sep::before{content:'';width:5px;height:5px;border-radius:50%;flex-shrink:0;}
+.contactar-sep{background:#fce9e9;color:#a93226;}
+.contactar-sep::before{background:#c0392b;}
+.followup-sep{background:#fef3e2;color:#9a6510;}
+.followup-sep::before{background:#b7770d;}
 
 /* ── BUTTONS ── */
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;font-size:13px;padding:7px 14px;border:1px solid #ccc;border-radius:22px;cursor:pointer;background:#fff;color:#1a1a1a;font-family:inherit;}
@@ -100,10 +105,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 /* ── SECÇÕES ZEBRADAS ── */
 .sec-z{background:#fff;padding:.6rem 1rem;border-bottom:1px solid #eeede9;}
 .sec-z:nth-child(even){background:#f8f8f6;}
-.sec-title{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#aaa;font-weight:600;margin-bottom:.4rem;}
+.sec-title{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#aaa;font-weight:600;margin-bottom:.3rem;}
 
 /* ── DROW: label esquerda, valor direita ── */
-.drow{display:flex;justify-content:space-between;align-items:center;padding:3px 0;}
+.drow{display:flex;justify-content:space-between;align-items:center;padding:2px 0;}
 .dlbl{font-size:12px;color:#999;}
 .dval{font-size:12px;font-weight:600;color:#1a1a1a;text-align:right;max-width:65%;word-break:break-word;}
 
@@ -142,14 +147,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .stitle{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#888;margin-bottom:.6rem;font-weight:600;}
 
 /* ── SYNC BAR ── */
-.sync-bar{font-size:11px;color:#888;display:flex;align-items:center;gap:6px;padding:.3rem 1rem;border-bottom:1px solid #e8e6e1;background:#fafaf9;}
+.sync-bar{font-size:11px;color:#888;display:flex;align-items:center;gap:6px;padding:.3rem 1rem;border-bottom:1px solid #e0ddd6;background:#eeecea;}
 .sdot{width:6px;height:6px;border-radius:50%;background:#2e7d32;flex-shrink:0;}
 .sdot.syncing{background:#b7770d;animation:blink 1s infinite;}
 .sdot.error{background:#c0392b;}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
 
 /* ── VOZ BAR ── */
-.voz-bar{background:#fff;border-top:1px solid #e8e6e1;padding:.75rem 1rem;display:flex;align-items:center;gap:12px;position:sticky;bottom:0;}
+.voz-bar{background:#f5f4f2;border-top:1px solid #e0ddd6;padding:.75rem 1rem;display:flex;align-items:center;gap:12px;position:sticky;bottom:0;}
 .voz-hint{font-size:12px;color:#888;flex:1;line-height:1.4;}
 .voz-hint b{color:#1a1a1a;}
 .mic-btn{width:46px;height:46px;border-radius:50%;background:#1a1a1a;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:21px;color:#fff;transition:transform .15s;}
@@ -182,7 +187,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .opcao-btn{width:100%;text-align:left;justify-content:flex-start;margin-bottom:6px;border-radius:10px;font-size:13px;}
 .opcao-btn.selected{background:#1a1a1a;color:#fff;border-color:#1a1a1a;}
 #main-view{height:100vh;overflow-y:auto;}
-.search-bar{padding:.45rem .85rem;border-bottom:1px solid #e8e6e1;display:flex;gap:8px;align-items:center;}
+.search-bar{padding:.45rem .85rem;border-bottom:1px solid #e0ddd6;background:#f5f4f2;display:flex;gap:8px;align-items:center;}
 .tel-display{letter-spacing:.08em;}
 
 /* Template menu modal */
@@ -220,8 +225,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .bitrix-done{margin:.5rem 1rem;display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid #2e7d32;border-radius:10px;background:#e8f5e9;}
 
 /* Ficha section wrapper */
-.ficha-section{background:#fff;padding:.65rem 1rem;border-bottom:1px solid #eeede9;}
-.ficha-section.alt{background:#f8f8f6;}
+.ficha-section{background:#fff;padding:.5rem 1rem;border-bottom:1px solid #eeede9;}
+.ficha-section.alt{background:#f8f8f6;padding:.5rem 1rem;border-bottom:1px solid #eeede9;}
 </style>
 </head>
 <body>
@@ -525,8 +530,8 @@ function formatTelDisplay(tel){
 
 // ─── TEMPLATES ───────────────────────────────────────────────────────────────
 const TMPLS_WA_PT=[
-  {label:'1.º Contacto — Bom dia', body:`Bom dia,\nO meu nome é Mariana Magalhães e sou consultora comercial Mercedes-Benz na Sociedade Comercial C. Santos.\nEntrei em contacto porque recebi o seu interesse num dos nossos modelos e gostaria de me colocar à sua disposição para ajudar no que precisar — seja esclarecer dúvidas, apresentar opções ou agendar uma visita ao stand.\nCom os melhores cumprimentos,\nMariana Magalhães | Mercedes-Benz - Sociedade Comercial C. Santos`},
-  {label:'1.º Contacto — Boa tarde', body:`Boa tarde,\nO meu nome é Mariana Magalhães e sou consultora comercial Mercedes-Benz na Sociedade Comercial C. Santos.\nEntrei em contacto porque recebi o seu interesse num dos nossos modelos e gostaria de me colocar à sua disposição para ajudar no que precisar — seja esclarecer dúvidas, apresentar opções ou agendar uma visita ao stand.\nCom os melhores cumprimentos,\nMariana Magalhães | Mercedes-Benz - Sociedade Comercial C. Santos`},
+  {label:'1.º Contacto — Bom dia', body:`Bom dia,\n\nO meu nome é Mariana Magalhães e sou consultora comercial Mercedes-Benz na Sociedade Comercial C. Santos.\nEntrei em contacto porque recebi o seu interesse num dos nossos modelos e gostaria de me colocar à sua disposição para ajudar no que precisar — seja esclarecer dúvidas, apresentar opções ou agendar uma visita ao stand.\nCom os melhores cumprimentos,\nMariana Magalhães | Mercedes-Benz - Sociedade Comercial C. Santos`},
+  {label:'1.º Contacto — Boa tarde', body:`Boa tarde,\n\nO meu nome é Mariana Magalhães e sou consultora comercial Mercedes-Benz na Sociedade Comercial C. Santos.\nEntrei em contacto porque recebi o seu interesse num dos nossos modelos e gostaria de me colocar à sua disposição para ajudar no que precisar — seja esclarecer dúvidas, apresentar opções ou agendar uma visita ao stand.\nCom os melhores cumprimentos,\nMariana Magalhães | Mercedes-Benz - Sociedade Comercial C. Santos`},
   {label:'Não atendeu — Bom dia', body:`Bom dia. Tentei telefonar-lhe mas não consegui. Encontro-me disponível para falar quando for mais conveniente.\nMariana Magalhães | Mercedes-Benz - Sociedade Comercial C. Santos`},
   {label:'Não atendeu — Boa tarde', body:`Boa tarde. Tentei telefonar-lhe mas não consegui. Encontro-me disponível para falar quando for mais conveniente.\nMariana Magalhães | Mercedes-Benz - Sociedade Comercial C. Santos`},
   {label:'Follow-up proposta — Bom dia', body:`Bom dia. Venho verificar se teve oportunidade de analisar a proposta que lhe enviei e se tem alguma questão em que possa ajudar. Fico à disposição.\nMariana Magalhães | Mercedes-Benz - Sociedade Comercial C. Santos`},
@@ -545,8 +550,8 @@ const TMPLS_WA_EN=[
   {label:'1st Contact — Good afternoon', body:`Good afternoon,\nMy name is Mariana Magalhães and I am a Mercedes-Benz sales consultant at Sociedade Comercial C. Santos.\nI am reaching out because I received your interest in one of our models and would be happy to assist you — whether that is answering questions, presenting options, or scheduling a visit to our showroom.\nBest regards,\nMariana Magalhães | Mercedes-Benz - Sociedade Comercial C. Santos`},
   {label:'No answer — Good morning', body:`Good morning. I tried to reach you by phone but was unable to connect. I am available to speak at your convenience.\nMariana Magalhães | Mercedes-Benz - Sociedade Comercial C. Santos`},
   {label:'No answer — Good afternoon', body:`Good afternoon. I tried to reach you by phone but was unable to connect. I am available to speak at your convenience.\nMariana Magalhães | Mercedes-Benz - Sociedade Comercial C. Santos`},
-  {label:'Proposal follow-up — Good morning', body:`Good morning. I am following up to check whether you have had a chance to review the proposal I sent and whether there is anything I can help with. I remain at your disposal.\nMariana Magalhães | Mercedes-Benz - Sociedade Comercial C. Santos`},
-  {label:'Proposal follow-up — Good afternoon', body:`Good afternoon. I am following up to check whether you have had a chance to review the proposal I sent and whether there is anything I can help with. I remain at your disposal.\nMariana Magalhães | Mercedes-Benz - Sociedade Comercial C. Santos`},
+  {label:'Proposal follow-up — Good morning', body:`Good morning. I would like to check whether you have had a chance to review the proposal I sent and whether there is anything I can help with. I remain at your disposal.\nMariana Magalhães | Mercedes-Benz - Sociedade Comercial C. Santos`},
+  {label:'Proposal follow-up — Good afternoon', body:`Good afternoon. I would like to check whether you have had a chance to review the proposal I sent and whether there is anything I can help with. I remain at your disposal.\nMariana Magalhães | Mercedes-Benz - Sociedade Comercial C. Santos`},
   {label:'Test drive tomorrow — Good morning', body:`Good morning. I am writing to confirm the test drive scheduled for tomorrow. Please do not hesitate to reach out if you have any questions. Thank you. 😊\nMariana Magalhães | Mercedes-Benz - Sociedade Comercial C. Santos`},
   {label:'Test drive tomorrow — Good afternoon', body:`Good afternoon. I am writing to confirm the test drive scheduled for tomorrow. Please do not hesitate to reach out if you have any questions. Thank you. 😊\nMariana Magalhães | Mercedes-Benz - Sociedade Comercial C. Santos`},
   {label:'Inactive lead — Good morning', body:`Good morning. It has been a while since we last spoke and I wanted to check whether your interest in a Mercedes-Benz is still active or whether there is anything I can help with. I remain available — please feel free to contact me at any time.\nMariana Magalhães | Mercedes-Benz - Sociedade Comercial C. Santos`},
@@ -556,16 +561,30 @@ const TMPLS_WA_EN=[
 ];
 
 const TMPLS_EMAIL_PT=[
-  {label:'Apresentação — Bom dia', subject:'Mercedes-Benz | Sociedade Comercial C. Santos – Mariana Magalhães', body:`Bom dia,\nTentei entrar em contacto por telefone mas não consegui estabelecer ligação, pelo que aproveito para me apresentar por esta via.\nO meu nome é Mariana Magalhães e sou consultora comercial Mercedes-Benz na Sociedade Comercial C. Santos. Recebi o seu interesse num dos nossos modelos e gostaria de me colocar à sua disposição para ajudar no que precisar — seja esclarecer dúvidas, apresentar opções ou agendar uma visita ao stand.\nPode contactar-me a qualquer momento por resposta a este email ou diretamente pelo 918 080 238.\nObrigada.`},
-  {label:'Apresentação — Boa tarde', subject:'Mercedes-Benz | Sociedade Comercial C. Santos – Mariana Magalhães', body:`Boa tarde,\nTentei entrar em contacto por telefone mas não consegui estabelecer ligação, pelo que aproveito para me apresentar por esta via.\nO meu nome é Mariana Magalhães e sou consultora comercial Mercedes-Benz na Sociedade Comercial C. Santos. Recebi o seu interesse num dos nossos modelos e gostaria de me colocar à sua disposição para ajudar no que precisar — seja esclarecer dúvidas, apresentar opções ou agendar uma visita ao stand.\nPode contactar-me a qualquer momento por resposta a este email ou diretamente pelo 918 080 238.\nObrigada.`},
-  {label:'N.º incorreto — Bom dia', subject:'Mercedes-Benz | Sociedade Comercial C. Santos – Mariana Magalhães', body:`Bom dia,\nO meu nome é Mariana Magalhães e sou consultora comercial Mercedes-Benz na Sociedade Comercial C. Santos. Tentei entrar em contacto por telefone a propósito do seu interesse num dos nossos modelos, mas o número que temos em sistema não está correto.\nCaso pretenda, pode responder a este email ou contactar-me diretamente através do 918 080 238 — terei todo o gosto em ajudar e dar seguimento ao seu pedido.\nObrigada.`},
-  {label:'N.º incorreto — Boa tarde', subject:'Mercedes-Benz | Sociedade Comercial C. Santos – Mariana Magalhães', body:`Boa tarde,\nO meu nome é Mariana Magalhães e sou consultora comercial Mercedes-Benz na Sociedade Comercial C. Santos. Tentei entrar em contacto por telefone a propósito do seu interesse num dos nossos modelos, mas o número que temos em sistema não está correto.\nCaso pretenda, pode responder a este email ou contactar-me diretamente através do 918 080 238 — terei todo o gosto em ajudar e dar seguimento ao seu pedido.\nObrigada.`},
-  {label:'Envio de proposta — Bom dia', subject:'Proposta Mercedes-Benz | Sociedade Comercial C. Santos', body:`Bom dia,\nAntes de mais, permita-me agradecer-lhe o contacto, bem como o interesse demonstrado na Sociedade Comercial C. Santos e na Mercedes-Benz.\nConforme acordado, remeto, em anexo, a proposta referente ao modelo do seu interesse. Estou à sua inteira disposição para esclarecer qualquer dúvida ou ajustar a proposta de acordo com as suas necessidades.\nMuito obrigada.`},
-  {label:'Envio de proposta — Boa tarde', subject:'Proposta Mercedes-Benz | Sociedade Comercial C. Santos', body:`Boa tarde,\nAntes de mais, permita-me agradecer-lhe o contacto, bem como o interesse demonstrado na Sociedade Comercial C. Santos e na Mercedes-Benz.\nConforme acordado, remeto, em anexo, a proposta referente ao modelo do seu interesse. Estou à sua inteira disposição para esclarecer qualquer dúvida ou ajustar a proposta de acordo com as suas necessidades.\nMuito obrigada.`},
-  {label:'Follow-up proposta — Bom dia', subject:'Proposta Mercedes-Benz | Sociedade Comercial C. Santos', body:`Bom dia,\nVenho verificar se teve oportunidade de analisar a proposta que lhe enviei e se tem alguma questão em que eu possa ajudar.\nMuito obrigada.`},
-  {label:'Follow-up proposta — Boa tarde', subject:'Proposta Mercedes-Benz | Sociedade Comercial C. Santos', body:`Boa tarde,\nVenho verificar se teve oportunidade de analisar a proposta que lhe enviei e se tem alguma questão em que eu possa ajudar.\nMuito obrigada.`},
-  {label:'Lembrete test drive — Bom dia', subject:'Test Drive Mercedes-Benz | Sociedade Comercial C. Santos', body:`Bom dia,\nVenho relembrar o test drive agendado para amanhã e recordar que estarei à sua disposição para qualquer questão que surja até lá.\nObrigada.`},
-  {label:'Lembrete test drive — Boa tarde', subject:'Test Drive Mercedes-Benz | Sociedade Comercial C. Santos', body:`Boa tarde,\nVenho relembrar o test drive agendado para amanhã e recordar que estarei à sua disposição para qualquer questão que surja até lá.\nObrigada.`},
+  {label:'Apresentação — Bom dia', subject:'Mercedes-Benz | Sociedade Comercial C. Santos – Mariana Magalhães', body:`Bom dia,\n\nTentei entrar em contacto por telefone mas não consegui estabelecer ligação, pelo que aproveito para me apresentar por esta via.\nO meu nome é Mariana Magalhães e sou consultora comercial Mercedes-Benz na Sociedade Comercial C. Santos. Recebi o seu interesse num dos nossos modelos e gostaria de me colocar à sua disposição para ajudar no que precisar — seja esclarecer dúvidas, apresentar opções ou agendar uma visita ao stand.\nPode contactar-me a qualquer momento por resposta a este email ou diretamente pelo 918 080 238.\nObrigada.`},
+  {label:'Apresentação — Boa tarde', subject:'Mercedes-Benz | Sociedade Comercial C. Santos – Mariana Magalhães', body:`Boa tarde,\n\nTentei entrar em contacto por telefone mas não consegui estabelecer ligação, pelo que aproveito para me apresentar por esta via.\nO meu nome é Mariana Magalhães e sou consultora comercial Mercedes-Benz na Sociedade Comercial C. Santos. Recebi o seu interesse num dos nossos modelos e gostaria de me colocar à sua disposição para ajudar no que precisar — seja esclarecer dúvidas, apresentar opções ou agendar uma visita ao stand.\nPode contactar-me a qualquer momento por resposta a este email ou diretamente pelo 918 080 238.\nObrigada.`},
+  {label:'N.º incorreto — Bom dia', subject:'Mercedes-Benz | Sociedade Comercial C. Santos – Mariana Magalhães', body:`Bom dia,\n\nO meu nome é Mariana Magalhães e sou consultora comercial Mercedes-Benz na Sociedade Comercial C. Santos. Tentei entrar em contacto por telefone a propósito do seu interesse num dos nossos modelos, mas o número que temos em sistema não está correto.\nCaso pretenda, pode responder a este email ou contactar-me diretamente através do 918 080 238 — terei todo o gosto em ajudar e dar seguimento ao seu pedido.\nObrigada.`},
+  {label:'N.º incorreto — Boa tarde', subject:'Mercedes-Benz | Sociedade Comercial C. Santos – Mariana Magalhães', body:`Boa tarde,\n\nO meu nome é Mariana Magalhães e sou consultora comercial Mercedes-Benz na Sociedade Comercial C. Santos. Tentei entrar em contacto por telefone a propósito do seu interesse num dos nossos modelos, mas o número que temos em sistema não está correto.\nCaso pretenda, pode responder a este email ou contactar-me diretamente através do 918 080 238 — terei todo o gosto em ajudar e dar seguimento ao seu pedido.\nObrigada.`},
+  {label:'Envio de proposta — Bom dia', subject:'Proposta Mercedes-Benz | Sociedade Comercial C. Santos', body:`Bom dia,\n\nAntes de mais, permita-me agradecer-lhe o contacto, bem como o interesse demonstrado na Sociedade Comercial C. Santos e na Mercedes-Benz.\nConforme acordado, remeto, em anexo, a proposta referente ao modelo do seu interesse. Estou à sua inteira disposição para esclarecer qualquer dúvida ou ajustar a proposta de acordo com as suas necessidades.\nMuito obrigada.`},
+  {label:'Envio de proposta — Boa tarde', subject:'Proposta Mercedes-Benz | Sociedade Comercial C. Santos', body:`Boa tarde,\n\nAntes de mais, permita-me agradecer-lhe o contacto, bem como o interesse demonstrado na Sociedade Comercial C. Santos e na Mercedes-Benz.\nConforme acordado, remeto, em anexo, a proposta referente ao modelo do seu interesse. Estou à sua inteira disposição para esclarecer qualquer dúvida ou ajustar a proposta de acordo com as suas necessidades.\nMuito obrigada.`},
+  {label:'Follow-up proposta — Bom dia', subject:'Proposta Mercedes-Benz | Sociedade Comercial C. Santos', body:`Bom dia,\n\nGostaria de saber se teve oportunidade de analisar a proposta que lhe enviei e se existe alguma questão em que eu possa ajudar.\nMuito obrigada.`},
+  {label:'Follow-up proposta — Boa tarde', subject:'Proposta Mercedes-Benz | Sociedade Comercial C. Santos', body:`Boa tarde,\n\nGostaria de saber se teve oportunidade de analisar a proposta que lhe enviei e se existe alguma questão em que eu possa ajudar.\nMuito obrigada.`},
+  {label:'Lembrete test drive — Bom dia', subject:'Test Drive Mercedes-Benz | Sociedade Comercial C. Santos', body:`Bom dia,\n\nGostaria de relembrar que tem o test drive agendado para amanhã e que estou à sua disposição para qualquer questão que surja até lá.\nObrigada.`},
+  {label:'Lembrete test drive — Boa tarde', subject:'Test Drive Mercedes-Benz | Sociedade Comercial C. Santos', body:`Boa tarde,\n\nGostaria de relembrar que tem o test drive agendado para amanhã e que estou à sua disposição para qualquer questão que surja até lá.\nObrigada.`},
+  {label:'{label:'Agradecimento de visita — Bom dia', subject:'Mercedes-Benz | Sociedade Comercial C. Santos – Mariana Magalhães', body:`Bom dia,
+
+Foi um prazer recebê-lo(a) hoje no nosso stand e espero que tenha gostado de conhecer o modelo de perto.
+
+Fico à sua inteira disposição para qualquer questão que surja — seja sobre especificações, financiamento ou para avançarmos com uma proposta. Espero poder ajudar em breve.
+
+Obrigada.`},
+  {label:'{label:'Agradecimento de visita — Boa tarde', subject:'Mercedes-Benz | Sociedade Comercial C. Santos – Mariana Magalhães', body:`Boa tarde,
+
+Foi um prazer recebê-lo(a) hoje no nosso stand e espero que tenha gostado de conhecer o modelo de perto.
+
+Fico à sua inteira disposição para qualquer questão que surja — seja sobre especificações, financiamento ou para avançarmos com uma proposta. Espero poder ajudar em breve.
+
+Obrigada.`},
 ];
 
 const TMPLS_EMAIL_EN=[
@@ -575,10 +594,20 @@ const TMPLS_EMAIL_EN=[
   {label:'Incorrect number — Good afternoon', subject:'Mercedes-Benz | Sociedade Comercial C. Santos – Mariana Magalhães', body:`Good afternoon,\nMy name is Mariana Magalhães and I am a Mercedes-Benz sales consultant at Sociedade Comercial C. Santos. I tried to reach you by phone regarding your interest in one of our models, however the number we have on record does not appear to be correct.\nShould you wish, you are welcome to reply to this email or contact me directly on 918 080 238 — I would be very happy to assist and follow up on your request.`},
   {label:'Sending proposal — Good morning', subject:'Mercedes-Benz Proposal | Sociedade Comercial C. Santos', body:`Good morning,\nAs agreed, please find attached the proposal for the model you are interested in.\nI remain at your full disposal to answer any questions or adjust the proposal according to your needs.`},
   {label:'Sending proposal — Good afternoon', subject:'Mercedes-Benz Proposal | Sociedade Comercial C. Santos', body:`Good afternoon,\nAs agreed, please find attached the proposal for the model you are interested in.\nI remain at your full disposal to answer any questions or adjust the proposal according to your needs.`},
-  {label:'Proposal follow-up — Good morning', subject:'Mercedes-Benz Proposal | Sociedade Comercial C. Santos', body:`Good morning,\nI am following up to check whether you have had a chance to review the proposal I sent and whether there is anything I can help with.\nThank you very much.`},
-  {label:'Proposal follow-up — Good afternoon', subject:'Mercedes-Benz Proposal | Sociedade Comercial C. Santos', body:`Good afternoon,\nI am following up to check whether you have had a chance to review the proposal I sent and whether there is anything I can help with.\nThank you very much.`},
-  {label:'Test drive reminder — Good morning', subject:'Test Drive Mercedes-Benz | Sociedade Comercial C. Santos', body:`Good morning,\nI am writing to remind you of the test drive scheduled for tomorrow and to let you know that I am available for any questions in the meantime.\nThank you.`},
-  {label:'Test drive reminder — Good afternoon', subject:'Test Drive Mercedes-Benz | Sociedade Comercial C. Santos', body:`Good afternoon,\nI am writing to remind you of the test drive scheduled for tomorrow and to let you know that I am available for any questions in the meantime.\nThank you.`},
+  {label:'Proposal follow-up — Good morning', subject:'Mercedes-Benz Proposal | Sociedade Comercial C. Santos', body:`Good morning,\nI would like to check whether you have had a chance to review the proposal I sent and whether there is anything I can help with.\nThank you very much.`},
+  {label:'Proposal follow-up — Good afternoon', subject:'Mercedes-Benz Proposal | Sociedade Comercial C. Santos', body:`Good afternoon,\nI would like to check whether you have had a chance to review the proposal I sent and whether there is anything I can help with.\nThank you very much.`},
+  {label:'Test drive reminder — Good morning', subject:'Test Drive Mercedes-Benz | Sociedade Comercial C. Santos', body:`Good morning,\nI would like to remind you that your test drive is scheduled for tomorrow and that I am available for any questions in the meantime.\nThank you.`},
+  {label:'Test drive reminder — Good afternoon', subject:'Test Drive Mercedes-Benz | Sociedade Comercial C. Santos', body:`Good afternoon,\nI would like to remind you that your test drive is scheduled for tomorrow and that I am available for any questions in the meantime.\nThank you.`},
+  {label:'{label:'Thank you for your visit — Good morning', subject:'Mercedes-Benz | Sociedade Comercial C. Santos – Mariana Magalhães', body:`Good morning,
+
+It was a pleasure to have you with us today and I hope you enjoyed getting to know the model in person.
+
+I am at your full disposal for any questions — whether about specifications, financing, or moving forward with a proposal. I hope to be of help soon.`},
+  {label:'{label:'Thank you for your visit — Good afternoon', subject:'Mercedes-Benz | Sociedade Comercial C. Santos – Mariana Magalhães', body:`Good afternoon,
+
+It was a pleasure to have you with us today and I hope you enjoyed getting to know the model in person.
+
+I am at your full disposal for any questions — whether about specifications, financing, or moving forward with a proposal. I hope to be of help soon.`},
 ];
 
 // ─── TEMPLATE MODAL BUILDERS ─────────────────────────────────────────────────
@@ -768,8 +797,8 @@ function renderHoje(){
   const contactar=ordenar(ativos().filter(l=>l.estado==='contactar'));
   const followup=ordenar(ativos().filter(l=>l.estado!=='contactar'&&isUrg(l)));
   let html='';
-  if(contactar.length){html+=`<div class="hoje-sep">Contactar hoje</div>`+contactar.map(cardHTML).join('');}
-  if(followup.length){html+=`<div class="hoje-sep" style="margin-top:.35rem;">Follow-up</div>`+followup.map(cardHTML).join('');}
+  if(contactar.length){html+=`<div class="hoje-sep contactar-sep">Contactar hoje</div>`+contactar.map(cardHTML).join('');}
+  if(followup.length){html+=`<div class="hoje-sep followup-sep" style="margin-top:.2rem;">Follow-up</div>`+followup.map(cardHTML).join('');}
   document.getElementById('lista-hoje').innerHTML=html||'<div class="empty">Sem urgências hoje</div>';
   bindAllLongPress();
 }
@@ -916,11 +945,10 @@ function renderFicha(l){
   const followBox=`<div id="follow-box-${l.id}" style="background:${l.follow_data?'#e6f4ea':'#f5f4f2'};border-radius:10px;padding:.65rem;border:${l.follow_data?'1.5px solid #2e7d32':'1px solid #e8e6e1'};">
     ${l.follow_data?`<div style="font-size:12px;color:#276b2f;font-weight:600;margin-bottom:5px;">Agendado para ${new Date(l.follow_data).toLocaleDateString('pt-PT')}${l.follow_data.length>10?' '+l.follow_data.slice(11,16):''}</div>`:'<div style="font-size:12px;color:#999;margin-bottom:5px;">Sem follow-up agendado</div>'}
     <input class="finput" type="date" id="fdt-${l.id}" value="${l.follow_data?l.follow_data.slice(0,10):''}" onchange="setFollowDataNew('${l.id}')" style="margin-bottom:5px;">
-    <div id="hora-toggle-${l.id}" style="margin-bottom:5px;${l.follow_data&&l.follow_data.length>10?'display:none':''}">
-      <button onclick="toggleHora('${l.id}')" class="btn sm" style="color:#888;">+ Definir hora</button>
-    </div>
-    <div id="hora-input-${l.id}" style="display:${l.follow_data&&l.follow_data.length>10?'block':'none'};margin-bottom:5px;">
-      <input class="finput" type="time" id="fhora-${l.id}" value="${l.follow_data&&l.follow_data.length>10?l.follow_data.slice(11,16):''}" onchange="setFollowDataNew('${l.id}')">
+    <div style="display:flex;align-items:center;gap:6px;margin-bottom:5px;">
+      <input type="checkbox" id="hora-chk-${l.id}" ${l.follow_data&&l.follow_data.length>10?'checked':''} onchange="toggleHora('${l.id}')" style="width:15px;height:15px;cursor:pointer;">
+      <label for="hora-chk-${l.id}" style="font-size:12px;color:#888;cursor:pointer;">Hora</label>
+      <input class="finput" type="time" id="fhora-${l.id}" value="${l.follow_data&&l.follow_data.length>10?l.follow_data.slice(11,16):''}" onchange="setFollowDataNew('${l.id}')" style="display:${l.follow_data&&l.follow_data.length>10?'inline-block':'none'};width:auto;padding:.35rem .6rem;font-size:13px;margin-bottom:0;">
     </div>
     <input class="finput" id="fn-${l.id}" placeholder="Nota do follow-up..." value="${l.follow_nota||''}" onblur="salvarFN('${l.id}')" style="margin-bottom:0;">
   </div>`;
@@ -1320,7 +1348,7 @@ CONHECIMENTO DE MODELOS MERCEDES (corrige erros de transcrição de voz):
 - "IKEA" num contexto de carro → provavelmente EQA
 - Corrige outros erros óbvios de transcrição de modelos Mercedes
 
-EXTRACÇÃO DE PREFERÊNCIAS (muito importante — extrai SEMPRE que mencionado):
+EXTRACÇÃO DE DADOS FINANCEIROS (importante — extrai SEMPRE que mencionado):\n- "a pronto" / "pronto pagamento" / "paga a pronto" → financiamento: "Não"\n- "financiamento" / "crédito" / "prestações" → financiamento: "Sim"\n- "leasing" → financiamento: "Leasing"\n- "ALD" → financiamento: "ALD"\n- "renting" → financiamento: "Renting"\n- "retoma" / "tem carro para retomar" / "quer retomar" → retoma: "Sim" (ou descrição se mencionada)\n- "sem retoma" / "não tem retoma" → retoma: "Não"\n- "empresa" / "fatura empresa" → tipo: "Empresa"\n- "ENI" / "empresário em nome individual" → tipo: "ENI"\n\nEXTRACÇÃO DE PREFERÊNCIAS (muito importante — extrai SEMPRE que mencionado):
 - Cores (preto, branco, cinzento, azul, vermelho, etc.) → preferencias_gosta ou preferencias_nao_gosta
 - "prefere X" / "gosta de X" / "quer X" → preferencias_gosta
 - "não gosta de X" / "não quer X" / "detesta X" / "não gosta" → preferencias_nao_gosta
@@ -1340,12 +1368,18 @@ Responde APENAS com JSON válido, sem mais nada:
   "td_stand": null,
   "proposta_enviada": false,
   "proposta_modelo": null,
-  "proposta_preco": null
+  "proposta_preco": null,
+  "financiamento": null,
+  "retoma": null,
+  "tipo_novo": null
 }`}]})});
     const data=await resp.json();const parsed=JSON.parse(data.content[0].text);
     const agora=new Date();const ds=agora.toLocaleDateString('pt-PT')+' '+agora.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'});
     if(!l.notas)l.notas=[];if(!l.preferencias)l.preferencias=[];if(!l.propostas)l.propostas=[];
     if(parsed.nota)l.notas.push({data:ds,texto:parsed.nota});
+    if(parsed.financiamento)l.financiamento=parsed.financiamento;
+    if(parsed.retoma)l.retoma=parsed.retoma;
+    if(parsed.tipo_novo)l.tipo=parsed.tipo_novo;
     (parsed.preferencias_gosta||[]).forEach(p=>l.preferencias.push({tipo:'gosta',texto:p}));
     (parsed.preferencias_nao_gosta||[]).forEach(p=>l.preferencias.push({tipo:'nao_gosta',texto:p}));
     if(parsed.follow_up_dias!=null){const d=new Date();d.setDate(d.getDate()+parsed.follow_up_dias);l.follow_data=d.toISOString().split('T')[0];if(parsed.follow_nota)l.follow_nota=parsed.follow_nota;}
@@ -1360,13 +1394,7 @@ Responde APENAS com JSON válido, sem mais nada:
 }
 function descartarT(){['tbox-main','tbox-ficha'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});transcript='';}
 
-function toggleHora(id){
-  const inp=document.getElementById('hora-input-'+id);
-  const btn=document.getElementById('hora-toggle-'+id);
-  if(inp.style.display==='none'){
-    inp.style.display='block';
-    btn.innerHTML='<button onclick="toggleHora(\''+id+'\')" class="btn" style="font-size:11px;padding:4px 10px;color:#c0392b;">✕ Remover hora</button>';
-  }else{
+function toggleHora(id){const chk=document.getElementById('hora-chk-'+id);const inp=document.getElementById('fhora-'+id);if(inp){inp.style.display=chk&&chk.checked?'inline-block':'none';}}else{
     inp.style.display='none';
     btn.innerHTML='<button onclick="toggleHora(\''+id+'\')" class="btn" style="font-size:11px;padding:4px 10px;color:#888;">+ Definir hora</button>';
   }
