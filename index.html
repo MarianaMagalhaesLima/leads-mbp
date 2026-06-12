@@ -479,7 +479,45 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 </div>
 
 
-<!-- QUICK MENU (long press) -->
+<!-- MODAL RETOMA -->
+<div class="modal-bg" id="modal-retoma">
+  <div class="modal" style="max-height:85vh;overflow-y:auto;">
+    <div class="modal-title">🔄 Retoma</div>
+    <div class="ffield" style="margin-top:.75rem;">
+      <label class="flabel">Tem retoma?</label>
+      <select class="finput" id="ret-tem" onchange="toggleRetomaTem()">
+        <option value="Sim">Sim</option>
+        <option value="Não">Não</option>
+      </select>
+    </div>
+    <div id="ret-campos">
+      <div class="ffield"><label class="flabel">Viatura (marca / modelo / ano)</label><input class="finput" id="ret-veiculo" placeholder="Ex: Volkswagen Golf 2019"></div>
+      <div class="ffield">
+        <label class="flabel">Avaliação SCCS</label>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <input class="finput" id="ret-aval-sccs" type="number" placeholder="Ex: 15000" style="flex:1;">
+          <select class="finput" id="ret-avaliador" style="width:70px;flex-shrink:0;">
+            <option value="Reis">Reis</option>
+            <option value="JF">JF</option>
+          </select>
+        </div>
+      </div>
+      <div class="ffield">
+        <label class="flabel">Avaliações comércio</label>
+        <div id="ret-comercio-list"></div>
+        <button type="button" onclick="adicionarComercianteRetoma()" class="btn sm" style="margin-top:6px;font-size:12px;">+ Adicionar comerciante</button>
+      </div>
+      <div class="ffield"><label class="flabel">Entrega retoma</label><input class="finput" id="ret-entrega" placeholder="Ex: imediata, janeiro, na entrega do carro novo"></div>
+      <div class="ffield"><label class="flabel">Observações</label><textarea class="finput" id="ret-obs" style="height:60px;" placeholder="Outras informações relevantes..."></textarea></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:.5rem;">
+      <button class="btn primary full" onclick="guardarRetoma()">Guardar</button>
+      <button class="btn full" onclick="fecharModalRetoma()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+</div>
 <div class="quick-menu" id="quick-menu" onclick="fecharQuickMenu()">
   <div class="quick-menu-inner" onclick="event.stopPropagation()">
     <div class="quick-menu-name" id="quick-menu-name"></div>
@@ -887,6 +925,31 @@ function campoTel(label,val){
   </div></div>`;
 }
 
+function renderRetomaDados(l){
+  const ri=l.retoma_info||{};
+  if(l.retoma==='Não'||l.retoma===''){
+    // Só mostra linha simples
+    return l.retoma?`<div class="drow"><span class="dlbl">Retoma</span><span class="dval">${l.retoma}</span></div>`:'';
+  }
+  // Tem retoma — mostra bloco estruturado
+  let html=`<div class="drow"><span class="dlbl">Retoma</span><span class="dval" style="display:flex;align-items:center;gap:6px;">Sim<button onclick="abrirRetoma('${l.id}')" style="background:none;border:none;color:#aaa;cursor:pointer;font-size:11px;padding:0;" title="Editar retoma">✏️</button></span></div>`;
+  if(ri.veiculo)html+=`<div class="drow"><span class="dlbl" style="padding-left:8px;color:#bbb;">Viatura</span><span class="dval">${ri.veiculo}</span></div>`;
+  // Avaliação SCCS
+  const avaliador=ri.avaliacao_sccs_avaliador||'Reis';
+  if(ri.avaliacao_sccs)html+=`<div class="drow"><span class="dlbl" style="padding-left:8px;color:#bbb;">Aval. SCCS (${avaliador})</span><span class="dval">${Number(ri.avaliacao_sccs).toLocaleString('pt-PT')} €</span></div>`;
+  else html+=`<div class="drow"><span class="dlbl" style="padding-left:8px;color:#bbb;">Aval. SCCS (${avaliador})</span><span class="dval" style="color:#ccc;">—</span></div>`;
+  // Avaliações comércio
+  const comercio=ri.avaliacao_comercio||{};
+  Object.entries(comercio).forEach(([c,v])=>{
+    const disp=v==='SI'?'<span style="color:#a93226;font-size:11px;">Sem interesse</span>':`${Number(v).toLocaleString('pt-PT')} €`;
+    html+=`<div class="drow"><span class="dlbl" style="padding-left:8px;color:#bbb;">Aval. ${c}</span><span class="dval">${disp}</span></div>`;
+  });
+  // Entrega
+  if(ri.entrega_prevista)html+=`<div class="drow"><span class="dlbl" style="padding-left:8px;color:#bbb;">Entrega retoma</span><span class="dval">${ri.entrega_prevista}</span></div>`;
+  if(ri.notas_extra)html+=`<div class="drow"><span class="dlbl" style="padding-left:8px;color:#bbb;">Obs.</span><span class="dval" style="color:#666;font-weight:400;">${ri.notas_extra}</span></div>`;
+  return html;
+}
+
 function renderPrefs(l){
   if(!l.preferencias||!l.preferencias.length)return'<p style="font-size:13px;color:#888;">Sem preferências</p>';
   return l.preferencias.map((p,i)=>`<div class="pref-item"><span style="font-size:18px;">${p.tipo==='gosta'?'✅':'❌'}</span><span style="font-size:13px;flex:1;">${p.texto}</span><button onclick="apagarPref('${l.id}',${i})" style="background:none;border:none;color:#ccc;cursor:pointer;font-size:16px;">✕</button></div>`).join('');
@@ -1026,7 +1089,7 @@ function renderFicha(l){
       ${cr('KOM',l.kom)}
       ${cr('Tipo',l.tipo)}
       ${cr('Financiamento',l.financiamento)}
-      ${cr('Retoma',l.retoma)}
+      ${renderRetomaDados(l)}
       ${cr('Cliente exist.',l.cliente_existente?'Sim':'Não')}
       ${l.nif?cr('NIF',l.nif):''}
       ${l.frota?cr('Frota',l.frota):''}
@@ -1207,6 +1270,98 @@ function confirmarReuniao(id){
   if(!l.notas)l.notas=[];l.notas.push({data:ds,texto:'✅ Reunião realizada'});guardar(l);renderFicha(l);
 }
 
+const COMERCIANTES_DEFAULT=['Aguiar','PTF','André Pinto','Marco Almeida','Jorge Brás'];
+
+function renderComercianteRow(nome,val){
+  // val: null=vazio, number=valor, 'SI'=sem interesse
+  const isSI=val==='SI';
+  const numVal=(!isSI&&val)?val:'';
+  return`<div class="ret-com-row" style="display:flex;align-items:center;gap:6px;margin-bottom:5px;">
+    <input class="finput ret-com-nome" value="${nome}" placeholder="Comerciante" style="flex:1;font-size:13px;padding:.4rem .6rem;">
+    <input class="finput ret-com-val" type="number" value="${numVal}" placeholder="€" style="width:80px;font-size:13px;padding:.4rem .5rem;" ${isSI?'disabled style="background:#f5f4f2;width:80px;font-size:13px;padding:.4rem .5rem;"':''}>
+    <button type="button" onclick="toggleSI(this)" title="Sem interesse" style="background:${isSI?'#fce9e9':'none'};border:1px solid ${isSI?'#c0392b':'#ddd'};border-radius:8px;padding:4px 7px;cursor:pointer;font-size:11px;color:${isSI?'#a93226':'#aaa'};white-space:nowrap;">SI</button>
+    <button type="button" onclick="this.closest('.ret-com-row').remove()" style="background:none;border:none;color:#ccc;cursor:pointer;font-size:16px;padding:0 2px;">✕</button>
+  </div>`;
+}
+
+function toggleSI(btn){
+  const row=btn.closest('.ret-com-row');
+  const inp=row.querySelector('.ret-com-val');
+  const ativo=btn.style.background==='rgb(252, 233, 233)'||btn.style.background==='#fce9e9';
+  if(ativo){
+    // desactivar SI
+    btn.style.background='none';btn.style.borderColor='#ddd';btn.style.color='#aaa';
+    inp.disabled=false;inp.style.background='';
+  } else {
+    // activar SI
+    btn.style.background='#fce9e9';btn.style.borderColor='#c0392b';btn.style.color='#a93226';
+    inp.value='';inp.disabled=true;inp.style.background='#f5f4f2';
+  }
+}
+
+function adicionarComercianteRetoma(){
+  const list=document.getElementById('ret-comercio-list');
+  list.insertAdjacentHTML('beforeend',renderComercianteRow('',''));
+}
+
+function abrirRetoma(id){
+  modalLeadId=String(id);
+  const l=leads.find(x=>String(x.id)===String(id));if(!l)return;
+  const ri=l.retoma_info||{};
+  const comercio=ri.avaliacao_comercio||{};
+  document.getElementById('ret-tem').value=l.retoma==='Não'?'Não':'Sim';
+  document.getElementById('ret-veiculo').value=ri.veiculo||'';
+  document.getElementById('ret-aval-sccs').value=ri.avaliacao_sccs||'';
+  document.getElementById('ret-avaliador').value=ri.avaliacao_sccs_avaliador||'Reis';
+  document.getElementById('ret-entrega').value=ri.entrega_prevista||'';
+  document.getElementById('ret-obs').value=ri.notas_extra||'';
+  // Render comerciantes
+  const list=document.getElementById('ret-comercio-list');
+  list.innerHTML='';
+  // Comerciantes guardados
+  const temGuardados=Object.keys(comercio).length>0;
+  if(temGuardados){
+    Object.entries(comercio).forEach(([nome,val])=>list.insertAdjacentHTML('beforeend',renderComercianteRow(nome,val)));
+  } else {
+    // Pré-preenche com os habituais em branco
+    COMERCIANTES_DEFAULT.forEach(c=>list.insertAdjacentHTML('beforeend',renderComercianteRow(c,'')));
+  }
+  toggleRetomaTem();
+  document.getElementById('modal-retoma').classList.add('open');
+}
+function fecharModalRetoma(){document.getElementById('modal-retoma').classList.remove('open');}
+function toggleRetomaTem(){
+  const tem=document.getElementById('ret-tem').value==='Sim';
+  document.getElementById('ret-campos').style.display=tem?'block':'none';
+}
+function guardarRetoma(){
+  const l=leads.find(x=>String(x.id)===String(modalLeadId));if(!l)return;
+  const tem=document.getElementById('ret-tem').value;
+  l.retoma=tem;
+  if(tem==='Sim'){
+    const comercio={};
+    document.querySelectorAll('.ret-com-row').forEach(row=>{
+      const nome=row.querySelector('.ret-com-nome').value.trim();if(!nome)return;
+      const siBtn=row.querySelector('button');
+      const isSI=siBtn.style.background==='rgb(252, 233, 233)'||siBtn.style.background==='#fce9e9';
+      const val=row.querySelector('.ret-com-val').value;
+      if(isSI)comercio[nome]='SI';
+      else if(val)comercio[nome]=val;
+    });
+    l.retoma_info={
+      veiculo:document.getElementById('ret-veiculo').value.trim(),
+      avaliacao_sccs:document.getElementById('ret-aval-sccs').value||'',
+      avaliacao_sccs_avaliador:document.getElementById('ret-avaliador').value||'Reis',
+      avaliacao_comercio:comercio,
+      entrega_prevista:document.getElementById('ret-entrega').value.trim(),
+      notas_extra:document.getElementById('ret-obs').value.trim()
+    };
+  } else {
+    l.retoma_info={};
+  }
+  guardar(l);fecharModalRetoma();renderFicha(l);
+}
+
 function abrirModalProposta(id){
   modalLeadId=String(id);
   ['prop-modelo','prop-kom','prop-preco','prop-validade'].forEach(id=>document.getElementById(id).value='');
@@ -1372,7 +1527,7 @@ CONHECIMENTO DE MODELOS MERCEDES (corrige erros de transcrição de voz):
 - "IKEA" num contexto de carro → provavelmente EQA
 - Corrige outros erros óbvios de transcrição de modelos Mercedes
 
-EXTRACÇÃO DE DADOS FINANCEIROS (importante — extrai SEMPRE que mencionado):\n- "a pronto" / "pronto pagamento" / "paga a pronto" → financiamento: "Não"\n- "financiamento" / "crédito" / "prestações" → financiamento: "Sim"\n- "leasing" → financiamento: "Leasing"\n- "ALD" → financiamento: "ALD"\n- "renting" → financiamento: "Renting"\n- "retoma" / "tem carro para retomar" / "quer retomar" → retoma: "Sim" (ou descrição se mencionada)\n- "sem retoma" / "não tem retoma" → retoma: "Não"\n- "empresa" / "fatura empresa" → tipo: "Empresa"\n- "ENI" / "empresário em nome individual" → tipo: "ENI"\n\nEXTRACÇÃO DE PREFERÊNCIAS (muito importante — extrai SEMPRE que mencionado):
+EXTRACÇÃO DE DADOS FINANCEIROS (importante — extrai SEMPRE que mencionado):\n- "a pronto" / "pronto pagamento" / "paga a pronto" → financiamento: "Não"\n- "financiamento" / "crédito" / "prestações" → financiamento: "Sim"\n- "leasing" → financiamento: "Leasing"\n- "ALD" → financiamento: "ALD"\n- "renting" → financiamento: "Renting"\n- "retoma" / "tem carro para retomar" / "quer retomar" → retoma: "Sim"\n- "sem retoma" / "não tem retoma" → retoma: "Não"\n- "empresa" / "fatura empresa" → tipo: "Empresa"\n- "ENI" / "empresário em nome individual" → tipo: "ENI"\n\nEXTRACÇÃO DE PREFERÊNCIAS (muito importante — extrai SEMPRE que mencionado):
 - Cores (preto, branco, cinzento, azul, vermelho, etc.) → preferencias_gosta ou preferencias_nao_gosta
 - "prefere X" / "gosta de X" / "quer X" → preferencias_gosta
 - "não gosta de X" / "não quer X" / "detesta X" / "não gosta" → preferencias_nao_gosta
@@ -1395,6 +1550,16 @@ Responde APENAS com JSON válido, sem mais nada:
   "proposta_preco": null,
   "financiamento": null,
   "retoma": null,
+  "retoma_veiculo": null,
+  "retoma_aval_sccs": null,
+  "retoma_avaliador": null,
+  "retoma_aguiar": null,
+  "retoma_ptf": null,
+  "retoma_andre": null,
+  "retoma_marco": null,
+  "retoma_jbras": null,
+  "retoma_entrega": null,
+  "retoma_obs": null,
   "tipo_novo": null
 }`}]})});
     const data=await resp.json();const parsed=JSON.parse(data.content[0].text);
@@ -1403,6 +1568,21 @@ Responde APENAS com JSON válido, sem mais nada:
     if(parsed.nota)l.notas.push({data:ds,texto:parsed.nota});
     if(parsed.financiamento)l.financiamento=parsed.financiamento;
     if(parsed.retoma)l.retoma=parsed.retoma;
+    if(parsed.retoma==='Sim'){
+      if(!l.retoma_info)l.retoma_info={};
+      if(parsed.retoma_veiculo)l.retoma_info.veiculo=parsed.retoma_veiculo;
+      if(parsed.retoma_aval_sccs)l.retoma_info.avaliacao_sccs=parsed.retoma_aval_sccs;
+      if(parsed.retoma_avaliador)l.retoma_info.avaliacao_sccs_avaliador=parsed.retoma_avaliador;
+      const com=l.retoma_info.avaliacao_comercio||{};
+      if(parsed.retoma_aguiar)com['Aguiar']=parsed.retoma_aguiar;
+      if(parsed.retoma_ptf)com['PTF']=parsed.retoma_ptf;
+      if(parsed.retoma_andre)com['André Pinto']=parsed.retoma_andre;
+      if(parsed.retoma_marco)com['Marco Almeida']=parsed.retoma_marco;
+      if(parsed.retoma_jbras)com['Jorge Brás']=parsed.retoma_jbras;
+      l.retoma_info.avaliacao_comercio=com;
+      if(parsed.retoma_entrega)l.retoma_info.entrega_prevista=parsed.retoma_entrega;
+      if(parsed.retoma_obs)l.retoma_info.notas_extra=parsed.retoma_obs;
+    }
     if(parsed.tipo_novo)l.tipo=parsed.tipo_novo;
     (parsed.preferencias_gosta||[]).forEach(p=>l.preferencias.push({tipo:'gosta',texto:p}));
     (parsed.preferencias_nao_gosta||[]).forEach(p=>l.preferencias.push({tipo:'nao_gosta',texto:p}));
@@ -1580,14 +1760,12 @@ function backfillLead(l){
     }
   }
 
-  // Retoma
-  if(!l.retoma||l.retoma===''){
+  // Retoma — re-faz sempre se gerado por backfill antigo (continha contexto que podia truncar)
+  if(!l.retoma||l.retoma===''||l.retoma.startsWith('Sim — ')){
     if(/\b(sem retoma|n[aã]o tem retoma|sem carro para retomar)\b/.test(todasNotas)){
       l.retoma='Não';changed=true;
     } else if(/\bretoma\b/.test(todasNotas)){
-      // extrai contexto (marca/modelo se mencionado)
-      const m=todasNotas.match(/retoma[^.;,\n]{0,50}/);
-      l.retoma=m?'Sim — '+m[0].replace(/retoma[: ]*/i,'').trim().substring(0,40):'Sim';
+      l.retoma='Sim';
       changed=true;
     }
   }
