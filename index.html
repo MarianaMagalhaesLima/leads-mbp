@@ -1833,13 +1833,15 @@ function guardarFollowUp(id){
   const horaEl=document.getElementById('fhora-'+id);
   const notaEl=document.getElementById('fn-'+id);
   if(dateEl&&dateEl.value){
-    // Garantir formato YYYY-MM-DD puro, sem hora
-    l.follow_data=dateEl.value.slice(0,10);
+    const data=dateEl.value.slice(0,10);
+    const hora=horaEl&&horaEl.value?horaEl.value:'';
+    // Guardar hora dentro do follow_data para o servidor não a perder
+    l.follow_data=hora?data+'T'+hora:data;
+    l.follow_hora=hora;
   }
-  if(horaEl)l.follow_hora=horaEl.value||'';
   if(notaEl)l.follow_nota=notaEl.value||l.follow_nota||'';
   if(l.follow_data)l.estado='follow_up';
-  l._savedAt=Date.now(); // timestamp para proteger do sync
+  l._savedAt=Date.now();
   guardar(l);renderFicha(l);
 }
 function marcarBitrix(id,checked){
