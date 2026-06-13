@@ -897,7 +897,7 @@ function carregar(){
     // Merge com locais protegendo alterações recentes
     leads=ativasServidor.map(r=>{
       const loc=locais.find(x=>String(x.id)===String(r.id));
-      if(loc&&loc._savedAt&&(agora-loc._savedAt)<300000)return loc;
+      if(loc&&loc._savedAt)return loc;
       return r;
     });
     locais.forEach(loc=>{if(loc.estado!=='apagada'&&!leads.find(r=>String(r.id)===String(loc.id)))leads.push(loc);});
