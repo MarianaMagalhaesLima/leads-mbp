@@ -929,11 +929,8 @@ function carregar(){
         if(!raw)return'';
         const s=String(raw);
         if(/^\d{4}-\d{2}-\d{2}$/.test(s))return s;
-        const loc=sheetsLocalDate(s);
-        if(!loc)return'';
-        // Usar getFullYear/Month/Date (hora local) em vez de UTC para evitar desvio de fuso
         const d=new Date(s);
-        if(isNaN(d))return'';
+        if(!d||isNaN(d))return'';
         return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
       }
       function normHora(raw){
