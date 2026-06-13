@@ -2009,9 +2009,12 @@ async function processarTextoComIA(l, txt){
     const data=await resp.json();const parsed=JSON.parse(data.content[0].text);
     if(!l.notas)l.notas=[];if(!l.preferencias)l.preferencias=[];if(!l.propostas)l.propostas=[];
     if(parsed.nota)l.notas.push({data:ds,texto:parsed.nota});
-    if(parsed.financiamento)l.financiamento=parsed.financiamento;
-    if(parsed.retoma)l.retoma=parsed.retoma;
-    if(parsed.retoma==='Sim'){
+    // Actualizar sempre que a IA devolver um valor (sobrescreve valor anterior)
+    if(parsed.financiamento!==null&&parsed.financiamento!==undefined)l.financiamento=parsed.financiamento;
+    if(parsed.retoma!==null&&parsed.retoma!==undefined)l.retoma=parsed.retoma;
+    // Se menciona veículo de retoma, inferir retoma=Sim automaticamente
+    if(parsed.retoma_veiculo&&!parsed.retoma)l.retoma='Sim';
+    if(l.retoma==='Sim'||parsed.retoma_veiculo){
       if(!l.retoma_info)l.retoma_info={};
       if(parsed.retoma_veiculo)l.retoma_info.veiculo=parsed.retoma_veiculo;
       if(parsed.retoma_aval_sccs)l.retoma_info.avaliacao_sccs=parsed.retoma_aval_sccs;
@@ -2215,7 +2218,7 @@ function backfillLead(l){
   let changed=false;
   const todasNotas=(l.notas||[]).map(n=>n.texto||'').join(' ').toLowerCase();
 
-  // Financiamento
+  // Financiamento — backfill só se campo completamente vazio (IA tem prioridade)
   if(!l.financiamento||l.financiamento===''){
     if(/\b(a pronto|pronto pagamento|paga a pronto|pp\b|cash)\b/.test(todasNotas)){
       l.financiamento='Não';changed=true;
@@ -2230,8 +2233,8 @@ function backfillLead(l){
     }
   }
 
-  // Retoma — re-faz sempre se gerado por backfill antigo (continha contexto que podia truncar)
-  if(!l.retoma||l.retoma===''||l.retoma.startsWith('Sim — ')){
+  // Retoma — backfill só se campo completamente vazio (IA tem prioridade)
+  if(!l.retoma||l.retoma===''){
     if(/\b(sem retoma|n[aã]o tem retoma|sem carro para retomar)\b/.test(todasNotas)){
       l.retoma='Não';changed=true;
     } else if(/\bretoma\b/.test(todasNotas)){
