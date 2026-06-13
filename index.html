@@ -135,7 +135,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 /* ── NOTAS / RESUMO ── */
 .nota-block{background:#f5f4f2;border-radius:8px;padding:.65rem .85rem;margin-bottom:6px;}
 .nota-meta{font-size:11px;color:#999;margin-bottom:3px;}
-.nota-text{font-size:13px;color:#1a1a1a;line-height:1.5;}
+.nota-text{font-size:13px;color:#1a1a1a;line-height:1.5;white-space:pre-wrap;word-break:break-word;}
 .resumo-box{background:#f5f4f2;border-radius:10px;padding:.85rem;font-size:12px;color:#1a1a1a;line-height:1.6;font-family:'Courier New',monospace;white-space:pre-wrap;word-break:break-word;}
 
 /* ── INPUTS ── */
@@ -547,6 +547,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 const SCRIPT='https://script.google.com/macros/s/AKfycbwB61vgrLIbEnBaFHcVEy0pHrxjVUyfDVCr6BVKQFy01Ts5HznnwdrDORaCr09X_obc/exec';
 const HOJE=new Date();
 let leads=[],fichaId=null,SRec=null,recording=false,transcript='',tabAtual='hoje';
+let undoLog={};// {leadId:[{snapshot,ts,desc}]}
+const UNDO_MAX=10;
 let modalLeadId=null,insucessoSel=null,filtroArquivoAtual='todas';
 let campanhas=JSON.parse(localStorage.getItem('campanhas')||'[]');
 let postCallTimer=null;
@@ -581,6 +583,71 @@ const TMPLS_WA_PT=[
   {label:'Pós-visita — Bom dia', body:`Bom dia. Agradeço a visita de hoje ao nosso showroom. Fico à disposição para qualquer questão que surja e espero poder ajudar em breve. 😊\nMariana Magalhães | Mercedes-Benz - Sociedade Comercial C. Santos`},
   {label:'Pós-visita — Boa tarde', body:`Boa tarde. Agradeço a visita de hoje ao nosso showroom. Fico à disposição para qualquer questão que surja e espero poder ajudar em breve. 😊\nMariana Magalhães | Mercedes-Benz - Sociedade Comercial C. Santos`},
 ];
+
+// ─── TEMPLATES CONFIRMAÇÃO TEST DRIVE ───────────────────────────────────────
+const TMPLS_CONF_TD_BV_WA={label:'Confirmação TD — Boavista (WhatsApp)',body:`Caro Cliente,
+
+Serve a presente mensagem para confirmar a marcação do seu test drive. Seguem os detalhes do agendamento:
+
+Data: {DATA}
+Hora: {HORA}
+Local: Avenida da Boavista, 3743, Porto
+Modelo: {MODELO}
+
+Para a eventualidade de surgir alguma alteração, pedia-lhe que entrasse em contacto comigo com a devida antecedência.
+Muito obrigada.
+
+Até breve,
+Mariana Magalhães — Sociedade Comercial C. Santos - Mercedes-Benz`};
+const TMPLS_CONF_TD_BV_EMAIL={label:'Confirmação TD — Boavista (Email)',subject:'Confirmação de Test Drive',body:`Caro Cliente,
+
+Serve a presente mensagem para confirmar a marcação do seu test drive. Seguem os detalhes do agendamento:
+
+Data: {DATA}
+Hora: {HORA}
+Local: Avenida da Boavista, 3743, Porto
+Modelo: {MODELO}
+
+Para a eventualidade de surgir alguma alteração, pedia-lhe que entrasse em contacto comigo com a devida antecedência.
+Muito obrigada.`};
+const TMPLS_CONF_TD_MAIA_WA={label:'Confirmação TD — Maia (WhatsApp)',body:`Caro Cliente,
+
+Serve a presente mensagem para confirmar a marcação do seu test drive. Seguem os detalhes do agendamento:
+
+Data: {DATA}
+Hora: {HORA}
+Local: Rua da Estrada, 95, Maia
+Modelo: {MODELO}
+
+Pedimos que se dirija ao showroom de viaturas novas e informe na receção que tem um test drive agendado.
+
+Para a eventualidade de surgir alguma alteração, pedia-lhe que entrasse em contacto comigo com a devida antecedência.
+Muito obrigada.
+
+Até breve,
+Mariana Magalhães — Sociedade Comercial C. Santos - Mercedes-Benz`};
+const TMPLS_CONF_TD_MAIA_EMAIL={label:'Confirmação TD — Maia (Email)',subject:'Confirmação de Test Drive',body:`Caro Cliente,
+
+Serve a presente mensagem para confirmar a marcação do seu test drive. Seguem os detalhes do agendamento:
+
+Data: {DATA}
+Hora: {HORA}
+Local: Rua da Estrada, 95, Maia
+Modelo: {MODELO}
+
+Pedimos que se dirija ao showroom de viaturas novas e informe na receção que tem um test drive agendado.
+
+Para a eventualidade de surgir alguma alteração, pedia-lhe que entrasse em contacto comigo com a devida antecedência.
+Muito obrigada.`};
+
+function preencherConfTD(tmpl){
+  const l=fichaId?leads.find(x=>String(x.id)===fichaId):null;
+  if(!l)return tmpl;
+  const dt=l.td_agendado||'';
+  const data=dt.length>=10?dt.slice(8,10)+'/'+dt.slice(5,7)+'/'+dt.slice(0,4):'';
+  const hora=dt.length>=16?dt.slice(11,16):'';
+  return {...tmpl,body:tmpl.body.replace('{DATA}',data||'___').replace('{HORA}',hora||'___').replace('{MODELO}',l.carro||'___'),subject:tmpl.subject};
+}
 
 // EN templates — placeholders (to be filled in later)
 const TMPLS_WA_EN=[
@@ -651,9 +718,39 @@ I am at your full disposal for any questions — whether about specifications, f
 // ─── TEMPLATE MODAL BUILDERS ─────────────────────────────────────────────────
 function buildTmplList(container, tmpls, tipo, lang){
   const isPT = lang==='pt';
+  const l=fichaId?leads.find(x=>String(x.id)===fichaId):null;
   const items = tmpls.map(t=>`<button class="tmpl-btn" onclick="enviarTemplate('${tipo}','${encodeURIComponent(JSON.stringify(t))}')">${t.label}</button>`).join('');
   const enBtn = `<button class="tmpl-btn en-toggle" onclick="toggleTmplLang('${tipo}')">${isPT?'🌐 EN':'🌐 PT'}</button>`;
-  container.innerHTML = items + enBtn;
+  // Blank button
+  const blankTmpl=tipo==='email'?{label:'Em branco',subject:'',body:''}:{label:'Em branco',body:''};
+  const blankBtn=`<button class="tmpl-btn" style="border-color:#ccc;color:#888;" onclick="enviarTemplate('${tipo}','${encodeURIComponent(JSON.stringify(blankTmpl))}')">📝 Em branco</button>`;
+  // TD confirmation buttons (only if lead has TD scheduled)
+  let tdBtns='';
+  if(l&&l.td_agendado){
+    const stand=(l.td_stand||'').toUpperCase();
+    if(tipo==='wa'||tipo==='sms'){
+      const tmplBV=preencherConfTD(TMPLS_CONF_TD_BV_WA);
+      const tmplMaia=preencherConfTD(TMPLS_CONF_TD_MAIA_WA);
+      if(stand.includes('BOAVISTA')){
+        tdBtns=`<button class="tmpl-btn" style="border-color:#1e7a4a;color:#1e7a4a;" onclick="enviarTemplate('${tipo}','${encodeURIComponent(JSON.stringify(tmplBV))}')">✅ Confirmação TD Boavista</button>`;
+      } else if(stand.includes('MAIA')){
+        tdBtns=`<button class="tmpl-btn" style="border-color:#1e7a4a;color:#1e7a4a;" onclick="enviarTemplate('${tipo}','${encodeURIComponent(JSON.stringify(tmplMaia))}')">✅ Confirmação TD Maia</button>`;
+      } else {
+        tdBtns=`<button class="tmpl-btn" style="border-color:#1e7a4a;color:#1e7a4a;" onclick="enviarTemplate('${tipo}','${encodeURIComponent(JSON.stringify(tmplBV))}')">✅ Confirmação TD Boavista</button><button class="tmpl-btn" style="border-color:#1e7a4a;color:#1e7a4a;" onclick="enviarTemplate('${tipo}','${encodeURIComponent(JSON.stringify(tmplMaia))}')">✅ Confirmação TD Maia</button>`;
+      }
+    } else if(tipo==='email'){
+      const tmplBV=preencherConfTD(TMPLS_CONF_TD_BV_EMAIL);
+      const tmplMaia=preencherConfTD(TMPLS_CONF_TD_MAIA_EMAIL);
+      if(stand.includes('BOAVISTA')){
+        tdBtns=`<button class="tmpl-btn" style="border-color:#1e7a4a;color:#1e7a4a;" onclick="enviarTemplate('${tipo}','${encodeURIComponent(JSON.stringify(tmplBV))}')">✅ Confirmação TD Boavista</button>`;
+      } else if(stand.includes('MAIA')){
+        tdBtns=`<button class="tmpl-btn" style="border-color:#1e7a4a;color:#1e7a4a;" onclick="enviarTemplate('${tipo}','${encodeURIComponent(JSON.stringify(tmplMaia))}')">✅ Confirmação TD Maia</button>`;
+      } else {
+        tdBtns=`<button class="tmpl-btn" style="border-color:#1e7a4a;color:#1e7a4a;" onclick="enviarTemplate('${tipo}','${encodeURIComponent(JSON.stringify(tmplBV))}')">✅ Confirmação TD Boavista</button><button class="tmpl-btn" style="border-color:#1e7a4a;color:#1e7a4a;" onclick="enviarTemplate('${tipo}','${encodeURIComponent(JSON.stringify(tmplMaia))}')">✅ Confirmação TD Maia</button>`;
+      }
+    }
+  }
+  container.innerHTML = tdBtns + blankBtn + items + enBtn;
 }
 
 function toggleTmplLang(tipo){
@@ -807,60 +904,70 @@ function carregar(){
       if(!l.propostas)l.propostas=[];
       if(!l.notas)l.notas=[];
       // Normalizar datas — aceita YYYY-MM-DD, ISO e formato longo do Sheets
+      // Extrai a hora local correcta respeitando o offset GMT da string do Sheets
+      function sheetsLocalDate(s){
+        // Tenta extrair offset GMT da string (ex: "GMT+0100")
+        const m=s.match(/GMT([+-])(\d{2})(\d{2})/);
+        const d=new Date(s);
+        if(isNaN(d))return null;
+        if(m){
+          const sign=m[1]==='+'?1:-1;
+          const offMs=sign*(parseInt(m[2])*60+parseInt(m[3]))*60000;
+          return new Date(d.getTime()+offMs);
+        }
+        return d;
+      }
       function normData(raw){
         if(!raw)return'';
         const s=String(raw);
-        // Já está no formato correcto
         if(/^\d{4}-\d{2}-\d{2}$/.test(s))return s;
-        // Qualquer outro formato — usar Date e corrigir timezone
-        const d=new Date(s);
-        if(isNaN(d))return'';
-        const offset=d.getTimezoneOffset();
-        const c=new Date(d.getTime()-offset*60000);
-        return c.toISOString().slice(0,10);
+        const loc=sheetsLocalDate(s);
+        if(!loc)return'';
+        return loc.getUTCFullYear()+'-'+String(loc.getUTCMonth()+1).padStart(2,'0')+'-'+String(loc.getUTCDate()).padStart(2,'0');
       }
       function normHora(raw){
         if(!raw)return'';
         const s=String(raw);
-        const d=new Date(s);
-        if(isNaN(d))return'';
-        const offset=d.getTimezoneOffset();
-        const c=new Date(d.getTime()-offset*60000);
-        const h=c.toISOString().slice(11,16);
-        return(h==='00:00'||h==='23:00')?'':h;
+        // Se for formato 1899 (serial de hora do Sheets) — usar UTC directamente
+        if(s.includes('1899')||s.includes('1900')){
+          const d=new Date(s);
+          if(isNaN(d))return'';
+          const h=String(d.getUTCHours()).padStart(2,'0')+':'+String(d.getUTCMinutes()).padStart(2,'0');
+          return(h==='00:00')?'':h;
+        }
+        const loc=sheetsLocalDate(s);
+        if(!loc)return'';
+        const h=String(loc.getUTCHours()).padStart(2,'0')+':'+String(loc.getUTCMinutes()).padStart(2,'0');
+        return(h==='00:00')?'':h;
       }
       if(l.follow_data){
         const raw=String(l.follow_data);
-        // Extrair hora do follow_data se ainda não tiver follow_hora
-        if(!l.follow_hora&&(raw.includes('T')||raw.includes('GMT'))){
+        // Se follow_data tem hora embutida, tem prioridade sobre follow_hora (que pode ser serial 1899 errado)
+        if(raw.includes('GMT')||( raw.includes('T')&&!raw.startsWith('1899'))){
           l.follow_hora=normHora(raw);
+        } else if(l.follow_hora){
+          // follow_hora separado — normalizar se vier como serial 1899
+          const fh=String(l.follow_hora);
+          if(fh.includes('1899')||fh.includes('1900')){
+            l.follow_hora=normHora(fh);
+          }
         }
         l.follow_data=normData(raw);
       }
-      // Normalizar follow_hora quando vem do Sheets como 1899-12-30T...
-      if(l.follow_hora){
-        const fh=String(l.follow_hora);
-        if(fh.includes('T')||fh.includes('1899')||fh.includes('GMT')){
-          l.follow_hora=normHora(fh);
-        }
-      }
       if(l.criado)l.criado=normData(String(l.criado));
-      // Normalizar td_agendado — preservar hora (formato YYYY-MM-DDTHH:MM)
+      // Normalizar td_agendado para YYYY-MM-DDTHH:MM usando offset GMT
       if(l.td_agendado){
         const rawTD=String(l.td_agendado);
-        if(rawTD.length>=16&&rawTD.includes('T')){
-          // já está no formato correcto — garantir apenas YYYY-MM-DDTHH:MM
+        if(/^\d{4}-\d{2}-\d{2}/.test(rawTD)){
           l.td_agendado=rawTD.slice(0,16);
-        } else if(rawTD.length===10){
-          // só data, sem hora — manter como está
-          l.td_agendado=rawTD;
         } else {
-          // outro formato — tentar parsear preservando hora local
-          const d=new Date(rawTD);
-          if(!isNaN(d)){
-            const off=d.getTimezoneOffset();
-            const c=new Date(d.getTime()-off*60000);
-            l.td_agendado=c.toISOString().slice(0,16);
+          const loc=sheetsLocalDate(rawTD);
+          if(loc&&!isNaN(loc)&&loc.getUTCFullYear()>1900){
+            const mm=String(loc.getUTCMonth()+1).padStart(2,'0');
+            const dd=String(loc.getUTCDate()).padStart(2,'0');
+            const hh=String(loc.getUTCHours()).padStart(2,'0');
+            const mi=String(loc.getUTCMinutes()).padStart(2,'0');
+            l.td_agendado=loc.getUTCFullYear()+'-'+mm+'-'+dd+'T'+hh+':'+mi;
           }
         }
       }
@@ -883,7 +990,15 @@ function carregar(){
   document.head.appendChild(sc);
 }
 
-async function guardar(lead){
+async function guardar(lead,_undoDesc){
+  // Guardar snapshot para desfazer (antes de sobrescrever)
+  const existing=leads.find(x=>String(x.id)===String(lead.id));
+  if(existing){
+    const lid=String(lead.id);
+    if(!undoLog[lid])undoLog[lid]=[];
+    undoLog[lid].unshift({snapshot:JSON.parse(JSON.stringify(existing)),ts:Date.now(),desc:_undoDesc||'Alteração'});
+    if(undoLog[lid].length>UNDO_MAX)undoLog[lid].length=UNDO_MAX;
+  }
   lead._localTs=Date.now();
   const i=leads.findIndex(x=>String(x.id)===String(lead.id));
   if(i>=0)leads[i]=lead;else leads.unshift(lead);
@@ -893,6 +1008,19 @@ async function guardar(lead){
     await fetch(SCRIPT+'?action=save',{method:'POST',body:JSON.stringify({action:'save',lead})});
     setSyncStatus('ok','Guardado · '+new Date().toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'}));
   }catch(e){setSyncStatus('error','Guardado localmente');}
+}
+
+function desfazer(id){
+  const lid=String(id);
+  if(!undoLog[lid]||!undoLog[lid].length){alert('Nada para desfazer.');return;}
+  const entry=undoLog[lid].shift();
+  const l=entry.snapshot;
+  const i=leads.findIndex(x=>String(x.id)===lid);
+  if(i>=0)leads[i]=l;
+  localStorage.setItem('leads_mb',JSON.stringify(leads));
+  guardar(l,'(restaurado)');
+  renderFicha(l);
+  setSyncStatus('ok','↩ Desfeito: '+entry.desc);
 }
 
 async function eliminarNoSheets(id){
@@ -1291,11 +1419,10 @@ function renderFicha(l){
   const fLabel=fData?('Agendado para '+fmtData(fData)+(fTemHora?' às '+fHora:'')):'Sem follow-up agendado';
   const followBox=`<div id="follow-box-${l.id}" style="background:${fData?'#e6f4ea':'#f5f4f2'};border-radius:10px;padding:.65rem;border:${fData?'1.5px solid #2e7d32':'1px solid #e8e6e1'};">
     <div style="font-size:12px;color:${fData?'#276b2f':'#999'};font-weight:600;margin-bottom:5px;">${fLabel}</div>
-    <input class="finput" type="date" id="fdt-${l.id}" value="${fData}" style="margin-bottom:5px;">
     <div style="display:flex;align-items:center;gap:6px;margin-bottom:5px;">
-      <label style="font-size:12px;color:#888;flex-shrink:0;">Hora</label>
-      <input class="finput" type="time" id="fhora-${l.id}" value="${fHora}" style="width:auto;padding:.35rem .6rem;font-size:13px;margin-bottom:0;">
-      <button onclick="limparHora('${l.id}')" style="background:none;border:none;color:#ccc;cursor:pointer;font-size:16px;padding:0;display:${fTemHora?'inline':'none'};" title="Remover hora">✕</button>
+      <input class="finput" type="date" id="fdt-${l.id}" value="${fData}" style="flex:1;margin-bottom:0;">
+      <input class="finput" type="time" id="fhora-${l.id}" value="${fHora}" style="width:100px;flex-shrink:0;padding:.35rem .5rem;font-size:13px;margin-bottom:0;">
+      <button onclick="limparHora('${l.id}')" style="background:none;border:none;color:#ccc;cursor:pointer;font-size:16px;padding:0;flex-shrink:0;display:${fTemHora?'inline':'none'};" title="Remover hora">✕</button>
     </div>
     <input class="finput" id="fn-${l.id}" placeholder="Nota do follow-up..." value="${l.follow_nota||''}" style="margin-bottom:0;">
     <div style="display:flex;gap:8px;margin-top:8px;">
@@ -1332,10 +1459,10 @@ function renderFicha(l){
       <button onclick="abrirTmplEmail()" class="action-btn"><span>✉️</span>Email</button>
     </div>
 
-    <!-- NÃO ATENDEU + EDITAR (logo abaixo dos botões) -->
-    <div class="ficha-section" style="padding:.5rem 1rem;display:flex;gap:8px;align-items:center;">
-      <button onclick="naoAtendeu('${l.id}')" class="btn full" style="background:#fff3cd;border-color:#e0b84a;color:#7a5c00;font-size:13px;font-weight:600;">Não atendeu</button>
-      <button onclick="abrirEditar('${l.id}')" class="btn" style="font-size:12px;padding:7px 12px;color:#888;flex-shrink:0;">✏️ Editar</button>
+    <!-- EDITAR + DESFAZER -->
+    <div class="ficha-section" style="padding:.5rem 1rem;display:flex;justify-content:flex-end;gap:8px;">
+      <button onclick="desfazer('${l.id}')" class="btn" style="font-size:12px;padding:7px 12px;color:#b5451b;" title="Desfazer última alteração">↩ Desfazer</button>
+      <button onclick="abrirEditar('${l.id}')" class="btn" style="font-size:12px;padding:7px 12px;color:#888;">✏️ Editar</button>
     </div>
 
     <!-- NOTA RÁPIDA (logo abaixo, sempre visível) -->
@@ -1344,7 +1471,6 @@ function renderFicha(l){
       <textarea class="finput" id="ni-${l.id}" placeholder="O que aconteceu? (ou usa o microfone)" style="height:68px;margin-bottom:6px;font-size:13px;"></textarea>
       <div style="display:flex;gap:8px;">
         <button class="btn primary full" onclick="addNota('${l.id}')" style="font-size:13px;">Guardar nota</button>
-        <button class="btn sm" onclick="resumirNotas('${l.id}')" style="white-space:nowrap;font-size:12px;">✨ Resumir</button>
       </div>
       <div id="sugestao-cont-${l.id}" style="display:none;"></div>
     </div>
@@ -1372,31 +1498,28 @@ function renderFicha(l){
     ${(()=>{
       const tdAberto=!!(l.td_agendado||l.td_pedido);
       const tdRaw=String(l.td_agendado||'');
-      // Construir label e valor de forma robusta independente do formato do Sheets
       let tdLabel='TEST DRIVE';
       let tdVal='';
       if(tdRaw){
-        // Tentar extrair data e hora de qualquer formato
-        const dObj=new Date(tdRaw);
-        if(!isNaN(dObj)){
-          const off=dObj.getTimezoneOffset();
-          const loc=new Date(dObj.getTime()-off*60000);
-          const dd=String(loc.getUTCDate()).padStart(2,'0');
-          const mm=String(loc.getUTCMonth()+1).padStart(2,'0');
-          const hh=loc.getUTCHours();const mi=loc.getUTCMinutes();
-          const horaStr=(hh||mi)?String(hh).padStart(2,'0')+':'+String(mi).padStart(2,'0'):'';
-          tdLabel='🚗 TD · '+dd+'/'+mm+(l.td_stand?' — '+l.td_stand:'');
-          // Se a data vem do Sheets como 1899 (só hora), combinar com follow_data
-          const yyyy=loc.getUTCFullYear();
-          if(yyyy===1899||yyyy===1900){
-            // só hora — não temos data fiável
-            tdVal='';
-          } else {
-            tdVal=loc.getUTCFullYear()+'-'+mm+'-'+dd+(horaStr?'T'+horaStr:'');
-          }
-        } else if(tdRaw.length>=10){
-          // formato não parseable — usar slice como fallback
+        if(/^\d{4}-\d{2}-\d{2}/.test(tdRaw)){
+          // já está no formato correcto YYYY-MM-DD[THH:MM]
           tdVal=tdRaw.slice(0,16);
+          const dd=tdRaw.slice(8,10);const mm=tdRaw.slice(5,7);
+          tdLabel='🚗 TD · '+dd+'/'+mm+(l.td_stand?' — '+l.td_stand:'');
+        } else {
+          // formato longo do Sheets — parsear com offset GMT
+          const loc=sheetsLocalDate(tdRaw);
+          if(loc&&!isNaN(loc)){
+            const yyyy=loc.getUTCFullYear();
+            if(yyyy>1900){
+              const dd=String(loc.getUTCDate()).padStart(2,'0');
+              const mm=String(loc.getUTCMonth()+1).padStart(2,'0');
+              const hh=String(loc.getUTCHours()).padStart(2,'0');
+              const mi=String(loc.getUTCMinutes()).padStart(2,'0');
+              tdVal=yyyy+'-'+mm+'-'+dd+'T'+hh+':'+mi;
+              tdLabel='🚗 TD · '+dd+'/'+mm+(l.td_stand?' — '+l.td_stand:'');
+            }
+          }
         }
       }
       const isBV=(l.td_stand||'')==='Boavista';const isMaia=(l.td_stand||'')==='Maia';
@@ -1435,6 +1558,14 @@ function renderFicha(l){
     ${col(l.id+'-prefs','PREFERÊNCIAS',nPrefs||'',`<div id="prefs-${l.id}">${renderPrefs(l)}</div>`)}
     ${col(l.id+'-props','PROPOSTAS',nPropostas||'',`<div style="margin-bottom:6px;">${renderPropostas(l)}</div><button onclick="abrirModalProposta('${l.id}')" class="btn sm" style="margin-top:4px;">+ Nova proposta</button>`)}
     ${col(l.id+'-reun','REUNIÃO','',`${renderReuniao(l)}<button onclick="abrirModalReuniao('${l.id}')" class="btn sm" style="margin-top:6px;">+ Agendar reunião</button>`)}
+    ${col(l.id+'-resumo','✨ RESUMO IA','',(()=>{
+      const txt=l._resumo_ia||'';
+      const dt=l._resumo_dt?(' · '+l._resumo_dt):'';
+      return '<div style="font-size:12px;color:#555;line-height:1.6;white-space:pre-wrap;word-break:break-word;margin-bottom:8px;">'+(txt||'<span style="color:#aaa;">Ainda sem resumo — clica em Atualizar.</span>')+'</div>'
+        +'<div style="font-size:10px;color:#bbb;margin-bottom:6px;">'+( l._resumo_dt?'Atualizado '+l._resumo_dt:'')+'</div>'
+        +'<button onclick="resumirNotas(&#39;'+l.id+'&#39;)" class="btn full" style="font-size:12px;">🔄 Atualizar resumo</button>';
+    })(),false)}
+
     ${col(l.id+'-bitrix','RESUMO BITRIX','',`<div class="resumo-box" id="res-${l.id}" style="font-size:11px;">${resumo(l)}</div><button class="btn full" onclick="copiar('${l.id}')" style="margin-top:7px;font-size:12px;">📋 Copiar resumo</button>`)}
     ${col(l.id+'-fechar','FECHAR LEAD','',`
       <div style="display:flex;flex-direction:column;gap:7px;margin-bottom:${(l.estado==='fechado'||l.estado==='sem_retorno')?'10px':'0'};">
@@ -1873,7 +2004,7 @@ async function processarTextoComIA(l, txt){
   const agora=new Date();const ds=agora.toLocaleDateString('pt-PT')+' '+agora.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'});
   const hoje=agora.toLocaleDateString('pt-PT', {weekday:'long', year:'numeric', month:'long', day:'numeric'});
   try{
-    const resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:`És uma assistente especializada em leads de vendas da Mercedes-Benz Portugal. Analisa o texto escrito ou falado por uma comercial e extrai informação estruturada.\n\nCONHECIMENTO DE MODELOS MERCEDES (corrige erros de transcrição de voz):\n- Modelos elétricos EQ: EQA, EQB, EQC, EQE, EQS, EQV, EQT\n- Modelos: Classe A, Classe B, Classe C, Classe E, Classe S, CLA, CLE, CLS, GLA, GLB, GLC, GLE, GLS, G-Class, AMG GT, SL, Sprinter, Vito, V-Class\n- Motorizações: 180, 200, 220, 250, 300, 350, 400, 450, 580 + sufixos d (diesel), e (híbrido), de (diesel híbrido)\n- "250+" ou "duzentos e cinquenta mais" → 250+\n- "450+" ou "quatrocentos e cinquenta mais" → 450+\n- "100% elétrico" ou "cem por cento elétrico" ou "totalmente elétrico" → 100% elétrico\n- "four mátique" ou "four matic" ou "4 matic" → 4MATIC\n- "IKEA" num contexto de carro → provavelmente EQA\n- Corrige outros erros óbvios de transcrição de modelos Mercedes\n\nEXTRACÇÃO DE DADOS FINANCEIROS (importante — extrai SEMPRE que mencionado):\n- "a pronto" / "pronto pagamento" / "paga a pronto" → financiamento: "Não"\n- "financiamento" / "crédito" / "prestações" → financiamento: "Sim"\n- "leasing" → financiamento: "Leasing"\n- "ALD" → financiamento: "ALD"\n- "renting" → financiamento: "Renting"\n- "retoma" / "tem carro para retomar" / "quer retomar" → retoma: "Sim"\n- "sem retoma" / "não tem retoma" → retoma: "Não"\n- "empresa" / "fatura empresa" → tipo: "Empresa"\n- "ENI" / "empresário em nome individual" → tipo: "ENI"\n\nEXTRACÇÃO DE PREFERÊNCIAS (muito importante — extrai SEMPRE que mencionado):\n- Cores (preto, branco, cinzento, azul, vermelho, etc.) → preferencias_gosta ou preferencias_nao_gosta\n- "prefere X" / "gosta de X" / "quer X" → preferencias_gosta\n- "não gosta de X" / "não quer X" / "detesta X" / "não gosta" → preferencias_nao_gosta\n- Características (teto de abrir, interiores claros, automático, diesel, elétrico, lugares, etc.) → preferencias\n\nEXTRACÇÃO DE TEST DRIVE (muito importante):\n- "test drive agendado para X" / "TD marcado para X" / "agendei TD para X" → td_pedido: true, td_data: data YYYY-MM-DD HH:MM\n- "na Boavista" / "stand Boavista" → td_stand: "Boavista"\n- "na Maia" / "stand Maia" → td_stand: "Maia"\n- Se o texto refere uma data relativa (e.g. "terça feira dia 23"), converte para a data absoluta mais próxima no futuro\n- Se menciona hora (e.g. "11h30", "11:30", "às 11 e meia"), inclui no td_data como YYYY-MM-DD HH:MM\n\nHoje é ${hoje}.\n\nTexto: "${txt}"\n\nResponde APENAS com JSON válido, sem mais nada:\n{\n  "nota": "texto da nota de contacto corrigido",\n  "follow_up_dias": null ou número (0=hoje,1=amanhã,3=3dias,7=semana),\n  "follow_nota": null ou texto,\n  "preferencias_gosta": [],\n  "preferencias_nao_gosta": [],\n  "td_pedido": false,\n  "td_data": null,\n  "td_stand": null,\n  "proposta_enviada": false,\n  "proposta_modelo": null,\n  "proposta_preco": null,\n  "financiamento": null,\n  "retoma": null,\n  "retoma_veiculo": null,\n  "retoma_aval_sccs": null,\n  "retoma_avaliador": null,\n  "retoma_aguiar": null,\n  "retoma_ptf": null,\n  "retoma_andre": null,\n  "retoma_marco": null,\n  "retoma_jbras": null,\n  "retoma_entrega": null,\n  "retoma_obs": null,\n  "tipo_novo": null\n}`}]})});
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:`És uma assistente especializada em leads de vendas da Mercedes-Benz Portugal. Analisa o texto escrito ou falado por uma comercial e extrai informação estruturada.\n\nCONHECIMENTO DE MODELOS MERCEDES (corrige erros de transcrição de voz):\n- Modelos elétricos EQ: EQA, EQB, EQC, EQE, EQS, EQV, EQT\n- Modelos: Classe A, Classe B, Classe C, Classe E, Classe S, CLA, CLE, CLS, GLA, GLB, GLC, GLE, GLS, G-Class, AMG GT, SL, Sprinter, Vito, V-Class\n- Motorizações: 180, 200, 220, 250, 300, 350, 400, 450, 580 + sufixos d (diesel), e (híbrido), de (diesel híbrido)\n- "250+" ou "duzentos e cinquenta mais" → 250+\n- "450+" ou "quatrocentos e cinquenta mais" → 450+\n- "100% elétrico" ou "cem por cento elétrico" ou "totalmente elétrico" → 100% elétrico\n- "four mátique" ou "four matic" ou "4 matic" → 4MATIC\n- "IKEA" num contexto de carro → provavelmente EQA\n- Corrige outros erros óbvios de transcrição de modelos Mercedes\n\nEXTRACÇÃO DE DADOS FINANCEIROS (importante — extrai SEMPRE que mencionado):\n- "a pronto" / "pronto pagamento" / "paga a pronto" → financiamento: "Não"\n- "financiamento" / "crédito" / "prestações" → financiamento: "Sim"\n- "leasing" → financiamento: "Leasing"\n- "ALD" → financiamento: "ALD"\n- "renting" → financiamento: "Renting"\n- "retoma" / "tem carro para retomar" / "quer retomar" → retoma: "Sim"\n- "sem retoma" / "não tem retoma" → retoma: "Não"\n- "empresa" / "fatura empresa" → tipo: "Empresa"\n- "ENI" / "empresário em nome individual" → tipo: "ENI"\n\nEXTRACÇÃO DE PREFERÊNCIAS (muito importante — extrai TODAS sem excepção):\\n- Cores → preferencias_gosta ou preferencias_nao_gosta\\n- \"prefere X\" / \"gosta de X\" / \"quer X\" / \"interessa\" → preferencias_gosta\\n- \"não gosta de X\" / \"não quer X\" / \"detesta X\" → preferencias_nao_gosta\\n- Carroçaria (Station Wagon, Limousine, SUV, Coupé, Cabrio, etc.), cor, motorização, opcionais (teto de abrir, vidros escurecidos, interiores claros, etc.), transmissão, combustível\\n- Quando há preferência principal + alternativa: redigir como frase curta — ex: \"Station Wagon (também pode ser Limousine)\" — NUNCA separar em dois itens\\n- Cada item deve ser uma frase curta clara, não uma palavra solta\\n\\nEXTRACÇÃO DE TEST DRIVE (muito importante):\n- "test drive agendado para X" / "TD marcado para X" / "agendei TD para X" → td_pedido: true, td_data: data YYYY-MM-DD HH:MM\n- "na Boavista" / "stand Boavista" → td_stand: "Boavista"\n- "na Maia" / "stand Maia" → td_stand: "Maia"\n- Se o texto refere uma data relativa (e.g. "terça feira dia 23"), converte para a data absoluta mais próxima no futuro\n- Se menciona hora (e.g. "11h30", "11:30", "às 11 e meia"), inclui no td_data como YYYY-MM-DD HH:MM\n\nHoje é ${hoje}.\n\nTexto: "${txt}"\n\nResponde APENAS com JSON válido, sem mais nada:\n{\n  "nota": "texto da nota de contacto corrigido",\n  "follow_up_dias": null ou número (0=hoje,1=amanhã,3=3dias,7=semana),\n  "follow_nota": null ou texto,\n  "preferencias_gosta": [],\n  "preferencias_nao_gosta": [],\n  "td_pedido": false,\n  "td_data": null,\n  "td_stand": null,\n  "proposta_enviada": false,\n  "proposta_modelo": null,\n  "proposta_preco": null,\n  "financiamento": null,\n  "retoma": null,\n  "retoma_veiculo": null,\n  "retoma_aval_sccs": null,\n  "retoma_avaliador": null,\n  "retoma_aguiar": null,\n  "retoma_ptf": null,\n  "retoma_andre": null,\n  "retoma_marco": null,\n  "retoma_jbras": null,\n  "retoma_entrega": null,\n  "retoma_obs": null,\n  "tipo_novo": null\n}`}]})});
     const data=await resp.json();const parsed=JSON.parse(data.content[0].text);
     if(!l.notas)l.notas=[];if(!l.preferencias)l.preferencias=[];if(!l.propostas)l.propostas=[];
     if(parsed.nota)l.notas.push({data:ds,texto:parsed.nota});
@@ -1968,7 +2099,14 @@ function diasUteisDesde(dataStr){
 }
 function ultimaNota(l){return(l.notas&&l.notas.length)?l.notas[l.notas.length-1].data:l.criado||'';}
 function formatTelClean(tel){return String(tel||'').replace(/\D/g,'');}
-function formatTelDisplay(tel){const d=formatTelClean(tel);return d.length===9?d.replace(/(\d{3})(\d{3})(\d{3})/,'$1 $2 $3'):tel;}
+function formatTelDisplay(tel){
+  const s=String(tel||'').trim();
+  if(s.startsWith('+')){return '00'+s.slice(1);}
+  const d=formatTelClean(s);
+  if(d.length===9)return d.replace(/(\d{3})(\d{3})(\d{3})/,'$1 $2 $3');
+  if(d.length>9&&!s.startsWith('00'))return '00'+d;
+  return tel;
+}
 function dstamp(){const a=new Date();return a.toLocaleDateString('pt-PT')+' '+a.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'});}
 
 // ─── QUICK MENU ───────────────────────────────────────────────────────────────
@@ -2033,13 +2171,21 @@ function naoAtendeu(id){
 // ─── RESUMO INTELIGENTE ───────────────────────────────────────────────────────
 async function resumirNotas(id){
   const l=leads.find(x=>String(x.id)===String(id));if(!l||!l.notas||!l.notas.length)return;
-  const el=document.getElementById('ni-'+id);if(el)el.value='✨ A resumir...';
+  setSyncStatus('syncing','✨ A resumir...');
   try{
     const hist=l.notas.map(n=>`[${n.data}] ${n.texto}`).join('\n');
-    const resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:300,messages:[{role:'user',content:`Resume em 2-3 frases o historial desta lead Mercedes-Benz, em português europeu, na perspetiva de uma consultora comercial. Sê direto e factual.\n\nHistorial:\n${hist}`}]})});
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:500,messages:[{role:'user',content:`Resume o historial desta lead Mercedes-Benz em português europeu, na perspetiva de uma consultora comercial. Usa tópicos curtos (bullet points com •). Inclui: interesse do cliente, estado da negociação, próximos passos, e dados relevantes (financiamento, retoma, preferências, TD agendado). Sê direto e factual.\n\nHistorial:\n${hist}`}]})});
     const data=await resp.json();
-    if(el)el.value=data.content[0].text;
-  }catch(e){if(el)el.value='';}
+    const txt=data.content[0].text;
+    const dt=new Date().toLocaleDateString('pt-PT')+' '+new Date().toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'});
+    l._resumo_ia=txt;l._resumo_dt=dt;
+    guardar(l,'Resumo IA actualizado');
+    renderFicha(l);
+    // Abrir a persiana do resumo
+    const col=document.getElementById('col-'+id+'-resumo');
+    if(col)col.style.display='block';
+    setSyncStatus('ok','✨ Resumo atualizado');
+  }catch(e){setSyncStatus('error','Erro ao resumir');}
 }
 
 // ─── CRIAR LEAD POR VOZ ───────────────────────────────────────────────────────
