@@ -2171,7 +2171,9 @@ function naoAtendeu(id){
 
 // ─── RESUMO INTELIGENTE ───────────────────────────────────────────────────────
 async function resumirNotas(id){
-  const l=leads.find(x=>String(x.id)===String(id));if(!l||!l.notas||!l.notas.length)return;
+  const l=leads.find(x=>String(x.id)===String(id));
+  if(!l){setSyncStatus('error','Lead não encontrada (id='+id+')');return;}
+  if(!l.notas||!l.notas.length){setSyncStatus('error','Sem notas para resumir.');return;}
   setSyncStatus('syncing','✨ A resumir...');
   try{
     const hist=l.notas.map(n=>`[${n.data}] ${n.texto}`).join('\n');
