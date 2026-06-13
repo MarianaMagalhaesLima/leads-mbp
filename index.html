@@ -1495,6 +1495,15 @@ function renderFicha(l){
       ${l.relacao_interna?cr('Referência',l.relacao_interna):''}
     </div>
 
+    <!-- RESUMO IA -->
+    <div class="ficha-section alt">
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <p class="sec-title" style="margin:0;">✨ Resumo IA</p>
+        <button onclick="resumirNotas('${l.id}')" class="btn sm" style="font-size:11px;padding:3px 10px;">${l._resumo_ia?'🔄 Atualizar':'Resumo'}</button>
+      </div>
+      ${l._resumo_ia?`<div style="font-size:12px;color:#555;line-height:1.7;white-space:pre-wrap;word-break:break-word;margin-top:8px;">${l._resumo_ia}</div><div style="font-size:10px;color:#bbb;margin-top:4px;">${l._resumo_dt?'Atualizado '+l._resumo_dt:''}</div>`:'<div style="font-size:12px;color:#bbb;margin-top:6px;">Ainda sem resumo.</div>'}
+    </div>
+
     ${(()=>{
       const tdAberto=!!(l.td_agendado||l.td_pedido);
       const tdRaw=String(l.td_agendado||'');
@@ -1558,14 +1567,6 @@ function renderFicha(l){
     ${col(l.id+'-prefs','PREFERÊNCIAS',nPrefs||'',`<div id="prefs-${l.id}">${renderPrefs(l)}</div>`)}
     ${col(l.id+'-props','PROPOSTAS',nPropostas||'',`<div style="margin-bottom:6px;">${renderPropostas(l)}</div><button onclick="abrirModalProposta('${l.id}')" class="btn sm" style="margin-top:4px;">+ Nova proposta</button>`)}
     ${col(l.id+'-reun','REUNIÃO','',`${renderReuniao(l)}<button onclick="abrirModalReuniao('${l.id}')" class="btn sm" style="margin-top:6px;">+ Agendar reunião</button>`)}
-    ${col(l.id+'-resumo','✨ RESUMO IA','',(()=>{
-      const txt=l._resumo_ia||'';
-      const dt=l._resumo_dt?(' · '+l._resumo_dt):'';
-      return '<div style="font-size:12px;color:#555;line-height:1.6;white-space:pre-wrap;word-break:break-word;margin-bottom:8px;">'+(txt||'<span style="color:#aaa;">Ainda sem resumo — clica em Atualizar.</span>')+'</div>'
-        +'<div style="font-size:10px;color:#bbb;margin-bottom:6px;">'+( l._resumo_dt?'Atualizado '+l._resumo_dt:'')+'</div>'
-        +'<button onclick="resumirNotas(&#39;'+l.id+'&#39;)" class="btn full" style="font-size:12px;">🔄 Atualizar resumo</button>';
-    })(),false)}
-
     ${col(l.id+'-bitrix','RESUMO BITRIX','',`<div class="resumo-box" id="res-${l.id}" style="font-size:11px;">${resumo(l)}</div><button class="btn full" onclick="copiar('${l.id}')" style="margin-top:7px;font-size:12px;">📋 Copiar resumo</button>`)}
     ${col(l.id+'-fechar','FECHAR LEAD','',`
       <div style="display:flex;flex-direction:column;gap:7px;margin-bottom:${(l.estado==='fechado'||l.estado==='sem_retorno')?'10px':'0'};">
