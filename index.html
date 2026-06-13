@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Leads MBP">
-<title>Leads MBP</title>
+<title>Leads MBP v2.1</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f4f2;color:#1a1a1a;min-height:100vh;}
@@ -236,7 +236,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <div class="topbar">
     <div class="topbar-brand">Mercedes-Benz · Sociedade Comercial C. Santos</div>
     <div class="topbar-row">
-      <span class="topbar-name">Mariana Magalhães</span>
+      <span class="topbar-name">Mariana Magalhães</span><span style="font-size:9px;opacity:0.5;margin-left:6px;">v2.1</span>
       <div class="topbar-btns">
         <button class="btn" onclick="abrirCampanhas()" title="Campanhas">📢</button>
         <button class="btn" onclick="abrirImport()" title="Importar">⬇</button>
@@ -2007,10 +2007,12 @@ async function processarTextoComIA(l, txt){
   try{
     const resp=await fetch(SCRIPT+'?action=gemini',{method:'POST',body:JSON.stringify({action:'gemini',mensagem:`És uma assistente especializada em leads de vendas da Mercedes-Benz Portugal. Analisa o texto escrito ou falado por uma comercial e extrai informação estruturada.\n\nCONHECIMENTO DE MODELOS MERCEDES (corrige erros de transcrição de voz):\n- Modelos elétricos EQ: EQA, EQB, EQC, EQE, EQS, EQV, EQT\n- Modelos: Classe A, Classe B, Classe C, Classe E, Classe S, CLA, CLE, CLS, GLA, GLB, GLC, GLE, GLS, G-Class, AMG GT, SL, Sprinter, Vito, V-Class\n- Motorizações: 180, 200, 220, 250, 300, 350, 400, 450, 580 + sufixos d (diesel), e (híbrido), de (diesel híbrido)\n- "250+" ou "duzentos e cinquenta mais" → 250+\n- "450+" ou "quatrocentos e cinquenta mais" → 450+\n- "100% elétrico" ou "cem por cento elétrico" ou "totalmente elétrico" → 100% elétrico\n- "four mátique" ou "four matic" ou "4 matic" → 4MATIC\n- "IKEA" num contexto de carro → provavelmente EQA\n- Corrige outros erros óbvios de transcrição de modelos Mercedes\n\nEXTRACÇÃO DE DADOS FINANCEIROS (importante — extrai SEMPRE que mencionado):\n- "a pronto" / "pronto pagamento" / "paga a pronto" → financiamento: "Não"\n- "financiamento" / "crédito" / "prestações" → financiamento: "Sim"\n- "leasing" → financiamento: "Leasing"\n- "ALD" → financiamento: "ALD"\n- "renting" → financiamento: "Renting"\n- "retoma" / "tem carro para retomar" / "quer retomar" → retoma: "Sim"\n- "sem retoma" / "não tem retoma" → retoma: "Não"\n- "empresa" / "fatura empresa" → tipo: "Empresa"\n- "ENI" / "empresário em nome individual" → tipo: "ENI"\n\nEXTRACÇÃO DE PREFERÊNCIAS (muito importante — extrai TODAS sem excepção):\\n- Cores → preferencias_gosta ou preferencias_nao_gosta\\n- \"prefere X\" / \"gosta de X\" / \"quer X\" / \"interessa\" → preferencias_gosta\\n- \"não gosta de X\" / \"não quer X\" / \"detesta X\" → preferencias_nao_gosta\\n- Carroçaria (Station Wagon, Limousine, SUV, Coupé, Cabrio, etc.), cor, motorização, opcionais (teto de abrir, vidros escurecidos, interiores claros, etc.), transmissão, combustível\\n- Quando há preferência principal + alternativa: redigir como frase curta — ex: \"Station Wagon (também pode ser Limousine)\" — NUNCA separar em dois itens\\n- Cada item deve ser uma frase curta clara, não uma palavra solta\\n\\nEXTRACÇÃO DE TEST DRIVE (muito importante):\n- "test drive agendado para X" / "TD marcado para X" / "agendei TD para X" → td_pedido: true, td_data: data YYYY-MM-DD HH:MM\n- "na Boavista" / "stand Boavista" → td_stand: "Boavista"\n- "na Maia" / "stand Maia" → td_stand: "Maia"\n- Se o texto refere uma data relativa (e.g. "terça feira dia 23"), converte para a data absoluta mais próxima no futuro\n- Se menciona hora (e.g. "11h30", "11:30", "às 11 e meia"), inclui no td_data como YYYY-MM-DD HH:MM\n\nHoje é ${hoje}.\n\nTexto: "${txt}"\n\nResponde APENAS com JSON válido, sem mais nada:\n{\n  "nota": "texto da nota de contacto corrigido",\n  "follow_up_dias": null ou número (0=hoje,1=amanhã,3=3dias,7=semana),\n  "follow_nota": null ou texto,\n  "preferencias_gosta": [],\n  "preferencias_nao_gosta": [],\n  "td_pedido": false,\n  "td_data": null,\n  "td_stand": null,\n  "proposta_enviada": false,\n  "proposta_modelo": null,\n  "proposta_preco": null,\n  "financiamento": null,\n  "retoma": null,\n  "retoma_veiculo": null,\n  "retoma_aval_sccs": null,\n  "retoma_avaliador": null,\n  "retoma_aguiar": null,\n  "retoma_ptf": null,\n  "retoma_andre": null,\n  "retoma_marco": null,\n  "retoma_jbras": null,\n  "retoma_entrega": null,\n  "retoma_obs": null,\n  "tipo_novo": null\n}`,maxTokens:1000})});
     const data=await resp.json();
-    let rawText=data.content[0].text;
-    // Extrair JSON mesmo que venha com texto à volta
+    // Apps Script devolve {content:[{text:...}]} ou pode devolver {error:...}
+    if(data.error)throw new Error('Erro Apps Script: '+JSON.stringify(data.error));
+    const rawText=(data.content&&data.content[0]&&data.content[0].text)?data.content[0].text:JSON.stringify(data);
+    console.log('Gemini rawText:', rawText.slice(0,300));
     const jsonMatch=rawText.match(/\{[\s\S]*\}/);
-    if(!jsonMatch)throw new Error('Sem JSON na resposta: '+rawText.slice(0,200));
+    if(!jsonMatch)throw new Error('Sem JSON: '+rawText.slice(0,200));
     const parsed=JSON.parse(jsonMatch[0]);
     if(!l.notas)l.notas=[];if(!l.preferencias)l.preferencias=[];if(!l.propostas)l.propostas=[];
     if(parsed.nota)l.notas.push({data:ds,texto:parsed.nota});
