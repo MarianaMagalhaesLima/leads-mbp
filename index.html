@@ -887,7 +887,7 @@ function carregar(){
     clearTimeout(timer);
     delete window[cb];
     const s=document.getElementById('jsonp-script');if(s)s.remove();
-    const IGNORAR_IDS=['20260603000004']; // leads duplicadas a ignorar permanentemente
+    const IGNORAR_IDS=['1748908800002']; // leads duplicadas a ignorar permanentemente
     const remotas=Array.isArray(data)?data:[];
     const locais=JSON.parse(localStorage.getItem('leads_mb')||'[]');
     const agora=Date.now();
