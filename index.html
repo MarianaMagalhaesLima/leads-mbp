@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Leads MBP">
-<title>Leads MBP v2.2</title>
+<title>Leads MBP v2.2.1</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f4f2;color:#1a1a1a;min-height:100vh;}
@@ -236,7 +236,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
 <div id="main-view">
   <div class="topbar">
-    <div class="topbar-brand"><span>Mercedes-Benz · Sociedade Comercial C. Santos</span><span class="app-version" onclick="forcarAtualizacao()" title="Toca para forçar atualização">v2.2 🔄</span></div>
+    <div class="topbar-brand"><span>Mercedes-Benz · Sociedade Comercial C. Santos</span><span class="app-version" onclick="forcarAtualizacao()" title="Toca para forçar atualização">v2.2.1 🔄</span></div>
     <div class="topbar-row">
       <span class="topbar-name">Mariana Magalhães</span>
       <div class="topbar-btns">
@@ -1327,8 +1327,9 @@ function outlookTD(id){
   const local=l.td_stand||'';
   const localUpper=(local||'').toUpperCase();
   const desc=localUpper.includes('BOAVISTA')?'⚠️⚠️⚠️ TEST DRIVE NA BOAVISTA ⚠️⚠️⚠️':'';
+  const modeloSemMarca=(l.carro||'').replace(/^Mercedes-Benz\s*/i,'').trim();
   const ics=buildIcs({
-    titulo:'Test Drive '+l.carro+' — '+l.nome,
+    titulo:'Test Drive '+modeloSemMarca+' — '+l.nome,
     inicio,duracaoMin:60,local,
     descricao:desc,
     lembretes:[1440,60]
@@ -1372,7 +1373,7 @@ function corTipoLead(l){
   const t=l.tipo_lead||'';
   if(t==='Opp MBP'||isOpp(l))return'#1e7a4a';
   if(t==='Recado'||t==='Telefone Boavista'||t==='Telefone BV')return'#185FA5';
-  if(t==='Lead SCCS')return'#2b5797';
+  if(t==='Lead SCCS'||t==='Lead SCCS (RAC)')return'#2b5797';
   if(t==='Presencial Boavista'||t==='Presencial Maia')return'#b5451b';
   if(t==='Cliente'||t==='Recomendação Cliente')return'#7a4aaa';
   return'#1a1a1a';
@@ -1914,7 +1915,7 @@ function abrirEditar(id){
     <div class="ffield"><label class="flabel">Tipo de lead *</label>
       <select class="finput" id="ed-tipo-lead">
         <option value="">— Selecionar —</option>
-        ${['Lead MBP','Opp MBP','Lead SCCS','Recado','Telefone Boavista','Presencial Boavista','Presencial Maia','Cliente','Recomendação Cliente'].map(t=>`<option ${(l.tipo_lead||'')=== t?'selected':''}>${t}</option>`).join('')}
+        ${['Lead MBP','Opp MBP','Lead SCCS','Lead SCCS (RAC)','Recado','Telefone Boavista','Presencial Boavista','Presencial Maia','Cliente','Recomendação Cliente'].map(t=>`<option ${(l.tipo_lead||'')=== t?'selected':''}>${t}</option>`).join('')}
       </select>
     </div>
     <div class="ffield"><label class="flabel">Tipo de cliente</label>
@@ -1961,7 +1962,7 @@ function abrirNova(){document.getElementById('ov-nova').classList.add('open');do
   <div class="ffield"><label class="flabel">ID (OPP/LEAD)</label><input class="finput" id="nf-opp"></div>
   <div class="ffield"><label class="flabel">Viatura pretendida</label><input class="finput" id="nf-carro"></div>
   <div class="ffield"><label class="flabel">KOM</label><input class="finput" id="nf-kom" inputmode="text"></div>
-  <div class="ffield"><label class="flabel">Tipo de lead *</label><select class="finput" id="nf-tipo-lead"><option value="">— Selecionar —</option><option>Lead MBP</option><option>Opp MBP</option><option>Lead SCCS</option><option>Recado</option><option>Telefone Boavista</option><option>Presencial Boavista</option><option>Presencial Maia</option><option>Cliente</option><option>Recomendação Cliente</option></select></div>
+  <div class="ffield"><label class="flabel">Tipo de lead *</label><select class="finput" id="nf-tipo-lead"><option value="">— Selecionar —</option><option>Lead MBP</option><option>Opp MBP</option><option>Lead SCCS</option><option>Lead SCCS (RAC)</option><option>Recado</option><option>Telefone Boavista</option><option>Presencial Boavista</option><option>Presencial Maia</option><option>Cliente</option><option>Recomendação Cliente</option></select></div>
   <div class="ffield"><label class="flabel">Tipo de cliente</label><select class="finput" id="nf-tipo"><option>Particular</option><option>Empresa</option><option>ENI</option></select></div>
   <div class="ffield"><label class="flabel">NIF (empresa)</label><input class="finput" id="nf-nif"></div>
   <div class="trow"><span style="font-size:13px;">Cliente existente</span><input type="checkbox" id="nf-exist" style="width:18px;height:18px;"></div>
