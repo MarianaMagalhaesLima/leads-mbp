@@ -1163,9 +1163,11 @@ function campoTel(label,val){
 
 function renderRetomaDados(l){
   const ri=l.retoma_info||{};
-  if(l.retoma==='Não'||l.retoma===''){
-    // Só mostra linha simples
-    return l.retoma?`<div class="drow"><span class="dlbl">Retoma</span><span class="dval">${l.retoma}</span></div>`:'';
+  if(l.retoma==='Não'){
+    return`<div class="drow"><span class="dlbl">Retoma</span><span class="dval" style="display:flex;align-items:center;gap:6px;">Não<button onclick="abrirRetoma('${l.id}')" style="background:none;border:none;color:#aaa;cursor:pointer;font-size:11px;padding:0;" title="Editar retoma">✏️</button></span></div>`;
+  }
+  if(!l.retoma){
+    return`<div class="drow"><span class="dlbl">Retoma</span><span class="dval" style="display:flex;align-items:center;gap:6px;"><span style="color:#ccc;">—</span><button onclick="abrirRetoma('${l.id}')" style="background:none;border:none;color:#aaa;cursor:pointer;font-size:11px;padding:0;" title="Editar retoma">✏️</button></span></div>`;
   }
   // Tem retoma — mostra bloco estruturado
   let html=`<div class="drow"><span class="dlbl">Retoma</span><span class="dval" style="display:flex;align-items:center;gap:6px;">Sim<button onclick="abrirRetoma('${l.id}')" style="background:none;border:none;color:#aaa;cursor:pointer;font-size:11px;padding:0;" title="Editar retoma">✏️</button></span></div>`;
