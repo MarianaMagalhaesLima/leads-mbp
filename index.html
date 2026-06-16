@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Leads MBP">
-<title>Leads MBP v2.2.2</title>
+<title>Leads MBP v2.2.3</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f4f2;color:#1a1a1a;min-height:100vh;}
@@ -236,7 +236,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
 <div id="main-view">
   <div class="topbar">
-    <div class="topbar-brand"><span>Mercedes-Benz · Sociedade Comercial C. Santos</span><span class="app-version" onclick="forcarAtualizacao()" title="Toca para forçar atualização">v2.2.2 🔄</span></div>
+    <div class="topbar-brand"><span>Mercedes-Benz · Sociedade Comercial C. Santos</span><span class="app-version" onclick="forcarAtualizacao()" title="Toca para forçar atualização">v2.2.3 🔄</span></div>
     <div class="topbar-row">
       <span class="topbar-name">Mariana Magalhães</span>
       <div class="topbar-btns">
@@ -1091,7 +1091,8 @@ function isLembreteAgora(l){
 }
 function renderHoje(){
   const agora=ativos().filter(isLembreteAgora);
-  const contactar=ordenar(ativos().filter(l=>!isLembreteAgora(l)&&l.estado==='contactar'));
+  // Primeiro contacto — mais antigas no topo (criado ASC)
+  const contactar=ativos().filter(l=>!isLembreteAgora(l)&&l.estado==='contactar').sort((a,b)=>new Date(a.criado||0)-new Date(b.criado||0));
   const followup=ordenar(ativos().filter(l=>!isLembreteAgora(l)&&l.estado!=='contactar'&&isUrg(l)));
   let html='';
   if(agora.length){html+=`<div class="hoje-sep" style="background:#e8e4f8;color:#4a2d7a;margin-bottom:0;">⏰ Agora</div>`+agora.map(cardHTML).join('');}
@@ -1977,6 +1978,19 @@ function fecharNova(){document.getElementById('ov-nova').classList.remove('open'
 function criarLead(){
   const g=id=>document.getElementById(id);const nome=g('nf-nome').value.trim(),tel=g('nf-tel').value.trim();
   if(!nome||!tel){alert('Nome e telemóvel são obrigatórios');return;}
+  if(!g('nf-tipo-lead').value){alert('Tipo de lead é obrigatório');return;}
+  // Detecção de duplicados
+  const telNorm=tel.replace(/\s+/g,'').replace(/^00/,'+').replace(/^\+351/,'');
+  const emailNovo=g('nf-email').value.trim().toLowerCase();
+  const duplicados=ativos().filter(l=>{
+    const telEx=(l.tel||'').replace(/\s+/g,'').replace(/^00/,'+').replace(/^\+351/,'');
+    const emailEx=(l.email||'').toLowerCase();
+    return telEx===telNorm||(emailNovo&&emailEx&&emailEx===emailNovo);
+  });
+  if(duplicados.length){
+    const nomes=duplicados.map(l=>l.nome).join(', ');
+    if(!confirm(`⚠️ Possível duplicado!\n\nJá existe uma lead com o mesmo contacto:\n${nomes}\n\nContinuar mesmo assim?`))return;
+  }
   const agora=new Date();const ds=agora.toLocaleDateString('pt-PT')+' '+agora.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'});
   const nova={id:Date.now(),nome,tel,email:g('nf-email').value.trim(),opp_id:g('nf-opp').value.trim()||'(sem ID)',tipo_lead:g('nf-tipo-lead').value||'Lead MBP',carro:g('nf-carro').value.trim()||'—',kom:g('nf-kom').value.trim(),tipo:g('nf-tipo').value,nif:g('nf-nif').value.trim(),frota:'',cae_rent:g('nf-cae').checked,cliente_existente:g('nf-exist').checked,sector:'',estado:'contactar',notas:[{data:ds,texto:g('nf-nota').value.trim()||'Lead criada.'}],follow_data:agora.toISOString().split('T')[0],follow_nota:'Primeiro contacto',negociacao_fora:g('nf-neg').value.trim(),relacao_interna:g('nf-rel').value.trim(),td_pedido:false,td_agendado:'',td_stand:'',td_esp:'',reuniao_data:'',reuniao_local:'',reuniao_notas:'',reuniao_realizada:false,preferencias:[],propostas:[],criado:agora.toISOString().split('T')[0]};
   guardar(nova);fecharNova();renderAtual();
