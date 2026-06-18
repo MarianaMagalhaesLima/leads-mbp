@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Leads MBP">
-<title>Leads MBP v2.2.16</title>
+<title>Leads MBP v2.2.17</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f4f2;color:#1a1a1a;min-height:100vh;}
@@ -236,7 +236,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
 <div id="main-view">
   <div class="topbar">
-    <div class="topbar-brand"><span>Mercedes-Benz · Sociedade Comercial C. Santos</span><span class="app-version" onclick="forcarAtualizacao()" title="Toca para forçar atualização">v2.2.16 🔄</span></div>
+    <div class="topbar-brand"><span>Mercedes-Benz · Sociedade Comercial C. Santos</span><span class="app-version" onclick="forcarAtualizacao()" title="Toca para forçar atualização">v2.2.17 🔄</span></div>
     <div class="topbar-row">
       <span class="topbar-name">Mariana Magalhães</span>
       <div class="topbar-btns">
@@ -301,7 +301,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <div class="overlay" id="ov-ficha">
   <div style="display:flex;align-items:center;background:#fff;border-bottom:1px solid #e8e6e1;position:sticky;top:0;z-index:10;">
     <button class="back-btn" onclick="fecharFicha()" style="border-bottom:none;flex:1;">← Voltar</button>
-    <button onclick="forcarAtualizacao()" style="background:none;border:none;color:#bbb;font-size:12px;padding:.85rem .9rem;cursor:pointer;white-space:nowrap;font-family:inherit;" title="Forçar atualização">🔄 v2.2.16</button>
+    <button onclick="forcarAtualizacao()" style="background:none;border:none;color:#bbb;font-size:12px;padding:.85rem .9rem;cursor:pointer;white-space:nowrap;font-family:inherit;" title="Forçar atualização">🔄 v2.2.17</button>
   </div>
   <div class="ficha-pad" id="ficha-content"></div>
   <div style="padding:0 1rem;">
@@ -1547,18 +1547,23 @@ function renderFicha(l){
     <!-- DADOS (compactos) -->
     <div class="ficha-section">
       <p class="sec-title">Dados</p>
+      ${cr('Criado',(()=>{if(!l.criado)return'';const d=new Date(String(l.criado));const off=d.getTimezoneOffset();const c=new Date(d.getTime()-off*60000);return c.toISOString().slice(0,10).split('-').reverse().join('/');})())}
       ${crTel('Telemóvel',l.tel)}
       ${cr('Email',l.email)}
       ${cr('Viatura',l.carro)}
       ${cr('KOM',l.kom)}
       ${cr('Tipo',l.tipo)}
-      ${cr('Financiamento',l.financiamento)}
-      ${renderRetomaDados(l)}
-      ${cr('Criado',(()=>{if(!l.criado)return'';const d=new Date(String(l.criado));const off=d.getTimezoneOffset();const c=new Date(d.getTime()-off*60000);return c.toISOString().slice(0,10).split('-').reverse().join('/');})())}
-      ${l.cliente_existente&&l.cliente_existente!==false&&l.cliente_existente!=='false'?cr('Cliente exist.',l.cliente_existente===true||l.cliente_existente==='true'?'Sim':l.cliente_existente):''}
-      ${l.cae_rent&&l.cae_rent!==false&&l.cae_rent!=='false'?cr('CAE Rent/Auto',l.cae_rent===true||l.cae_rent==='true'?'Sim':l.cae_rent):''}
       ${l.nif?cr('NIF',l.nif):''}
-      ${l.frota?cr('Frota',l.frota):''}
+      ${(l.tipo==='Empresa'||l.tipo==='Sócio de Empresa')&&l.frota?cr('Frota',l.frota):''}
+      ${l.cae_rent&&l.cae_rent!==false&&l.cae_rent!=='false'?cr('CAE Rent/Auto',l.cae_rent===true||l.cae_rent==='true'?'Sim':l.cae_rent):''}
+      ${l.cliente_existente&&l.cliente_existente!==false&&l.cliente_existente!=='false'?cr('Cliente exist.',l.cliente_existente===true||l.cliente_existente==='true'?'Sim':l.cliente_existente):''}
+      ${cr('PP ou Financiamento',l.financiamento==='Sim'?'Financiamento':l.financiamento)}
+      ${l.financiamento==='Financiamento'||l.financiamento==='Sim'?`
+        ${l.financiamento_tipo?`<div class="drow"><span class="dlbl" style="padding-left:10px;color:#bbb;">Tipo</span><span class="dval">${l.financiamento_tipo}</span></div>`:''}
+        ${l.financiamento_gestora?`<div class="drow"><span class="dlbl" style="padding-left:10px;color:#bbb;">Gestora</span><span class="dval">${l.financiamento_gestora}</span></div>`:''}
+        ${l.financiamento_financeira?`<div class="drow"><span class="dlbl" style="padding-left:10px;color:#bbb;">Financeira</span><span class="dval">${l.financiamento_financeira}</span></div>`:''}
+      `:''}
+      ${renderRetomaDados(l)}
       ${l.negociacao_fora?cr('Negoc. fora',l.negociacao_fora):''}
       ${l.relacao_interna?cr('Referência',l.relacao_interna):''}
     </div>
@@ -1983,19 +1988,40 @@ function abrirEditar(id){
         <option ${l.tipo==='Particular'?'selected':''}>Particular</option>
         <option ${l.tipo==='Empresa'?'selected':''}>Empresa</option>
         <option ${l.tipo==='ENI'?'selected':''}>ENI</option>
+        <option ${l.tipo==='Sócio de Empresa'?'selected':''}>Sócio de Empresa</option>
       </select>
     </div>
     <div class="ffield"><label class="flabel">NIF (empresa)</label><input class="finput" id="ed-nif" value="${l.nif||''}"></div>
-    <div class="ffield"><label class="flabel">Financiamento</label>
-      <select class="finput" id="ed-financiamento">
+    <div class="ffield"><label class="flabel">PP ou Financiamento</label>
+      <select class="finput" id="ed-financiamento" onchange="toggleFinanciamento(this.value,'ed')">
         <option value="">— Selecionar —</option>
-        <option ${(l.financiamento||'')==='Sim'?'selected':''}>Sim</option>
-        <option ${(l.financiamento||'')==='Não'?'selected':''}>Não</option>
+        <option ${(l.financiamento||'')==='Pronto Pagamento'?'selected':''}>Pronto Pagamento</option>
+        <option ${(l.financiamento||'')==='Financiamento'||(l.financiamento||'')==='Sim'?'selected':''} value="Financiamento">Financiamento</option>
         <option ${(l.financiamento||'')==='Indeciso'?'selected':''}>Indeciso</option>
-        <option ${(l.financiamento||'')==='ALD'?'selected':''}>ALD</option>
-        <option ${(l.financiamento||'')==='Renting'?'selected':''}>Renting</option>
-        <option ${(l.financiamento||'')==='Leasing'?'selected':''}>Leasing</option>
       </select>
+    </div>
+    <div id="ed-fin-sub" style="display:${(l.financiamento==='Financiamento'||l.financiamento==='Sim')?'block':'none'};">
+      <div class="ffield"><label class="flabel" style="padding-left:12px;color:#aaa;">Tipo de Financiamento</label>
+        <select class="finput" id="ed-fin-tipo">
+          <option value="">— Selecionar —</option>
+          ${['Opção Vantagem','50/50','VLP Premium','Crédito','Leasing','Renting','ALD'].map(o=>`<option ${(l.financiamento_tipo||'')=== o?'selected':''}>${o}</option>`).join('')}
+        </select>
+      </div>
+      <div class="ffield"><label class="flabel" style="padding-left:12px;color:#aaa;">Gestora</label>
+        <select class="finput" id="ed-fin-gestora">
+          <option value="">— Selecionar —</option>
+          ${['Diana Sousa','Raquel Magalhães','Vera Teles','Paula Alexandra'].map(o=>`<option ${(l.financiamento_gestora||'')=== o?'selected':''}>${o}</option>`).join('')}
+        </select>
+      </div>
+      <div class="ffield"><label class="flabel" style="padding-left:12px;color:#aaa;">Financeira</label>
+        <select class="finput" id="ed-fin-financeira" onchange="toggleFinanceiraOutra(this.value,'ed')">
+          <option value="">— Selecionar —</option>
+          ${['MBF','Credibom','Santander','Montepio','Cetelem/BNP Paribas','BBVA','321 Crédito','Outra'].map(o=>`<option ${(l.financiamento_financeira||'')=== o||(l.financiamento_financeira&&!['MBF','Credibom','Santander','Montepio','Cetelem/BNP Paribas','BBVA','321 Crédito'].includes(l.financiamento_financeira)&&o==='Outra'?true:false)?'selected':''}>${o}</option>`).join('')}
+        </select>
+      </div>
+      <div id="ed-fin-outra-div" style="display:${l.financiamento_financeira&&!['MBF','Credibom','Santander','Montepio','Cetelem/BNP Paribas','BBVA','321 Crédito'].includes(l.financiamento_financeira)&&l.financiamento_financeira!==''?'block':'none'};">
+        <div class="ffield"><label class="flabel" style="padding-left:12px;color:#aaa;">Qual financeira?</label><input class="finput" id="ed-fin-outra" value="${l.financiamento_financeira&&!['MBF','Credibom','Santander','Montepio','Cetelem/BNP Paribas','BBVA','321 Crédito','Outra',''].includes(l.financiamento_financeira)?l.financiamento_financeira:''}"></div>
+      </div>
     </div>
     <div class="ffield"><label class="flabel">Retoma</label>
       <select class="finput" id="ed-retoma">
@@ -2033,6 +2059,13 @@ function guardarEditar(){
   l.tipo=g('ed-tipo').value;
   l.nif=g('ed-nif').value.trim();
   l.financiamento=g('ed-financiamento').value;
+  if(l.financiamento==='Financiamento'){
+    l.financiamento_tipo=g('ed-fin-tipo')?.value||'';
+    l.financiamento_gestora=g('ed-fin-gestora')?.value||'';
+    const finFin=g('ed-fin-financeira')?.value||'';
+    const finOutra=g('ed-fin-outra')?.value.trim()||'';
+    l.financiamento_financeira=finFin==='Outra'&&finOutra?finOutra:finFin;
+  }
   if(g('ed-retoma').value)l.retoma=g('ed-retoma').value;
   l.frota=g('ed-frota').value.trim();
   l.negociacao_fora=g('ed-neg').value.trim();
@@ -2058,7 +2091,7 @@ function abrirNova(){document.getElementById('ov-nova').classList.add('open');do
   <div class="ffield"><label class="flabel">KOM</label><input class="finput" id="nf-kom" inputmode="text"></div>
   <div class="ffield"><label class="flabel">Tipo de lead *</label><select class="finput" id="nf-tipo-lead" onchange="toggleColegas(this.value)"><option value="">— Selecionar —</option><option>Lead MBP</option><option>Opp MBP</option><option>Lead SCCS</option><option>Lead SCCS (RAC)</option><option>Recado</option><option>Telefone Boavista</option><option>Presencial Boavista</option><option>Presencial Maia</option><option>Cliente</option><option>Recomendação Cliente</option><option>Passada por Colega</option></select></div>
   <div class="ffield" id="nf-colega-div" style="display:none;"><label class="flabel">Nome do colega *</label><input class="finput" id="nf-colega" placeholder="Ex: João Silva"></div>
-  <div class="ffield"><label class="flabel">Tipo de cliente</label><select class="finput" id="nf-tipo"><option>Particular</option><option>Empresa</option><option>ENI</option></select></div>
+  <div class="ffield"><label class="flabel">Tipo de cliente</label><select class="finput" id="nf-tipo"><option>Particular</option><option>Empresa</option><option>ENI</option><option>Sócio de Empresa</option></select></div>
   <div class="ffield"><label class="flabel">NIF (empresa)</label><input class="finput" id="nf-nif"></div>
   <div class="trow"><span style="font-size:13px;">Cliente existente</span><input class="finput" id="nf-exist" placeholder="Ex: ex-cliente do João Silva" style="width:55%;font-size:12px;"></div>
   <div class="trow" style="margin-bottom:.75rem;"><span style="font-size:13px;">CAE Rent-a-car / Comércio auto</span>
@@ -2082,6 +2115,15 @@ function cpVal(el){
     el.style.opacity='1';
     setTimeout(()=>el.style.opacity='.35',800);
   });
+}
+
+function toggleFinanciamento(val,prefix){
+  const sub=document.getElementById(prefix+'-fin-sub');
+  if(sub)sub.style.display=val==='Financiamento'?'block':'none';
+}
+function toggleFinanceiraOutra(val,prefix){
+  const div=document.getElementById(prefix+'-fin-outra-div');
+  if(div)div.style.display=val==='Outra'?'block':'none';
 }
 
 function toggleColegas(val){
@@ -2113,7 +2155,7 @@ function criarLead(){
     if(!confirm(`⚠️ Possível duplicado!\n\nJá existe uma lead com o mesmo contacto:\n${nomes}\n\nContinuar mesmo assim?`))return;
   }
   const agora=new Date();const ds=agora.toLocaleDateString('pt-PT')+' '+agora.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'});
-  const nova={id:Date.now(),nome,tel,email:g('nf-email').value.trim(),opp_id:g('nf-opp').value.trim()||'(sem ID)',tipo_lead:tipoLead,carro:g('nf-carro').value.trim()||'—',kom:g('nf-kom').value.trim(),tipo:g('nf-tipo').value,nif:g('nf-nif').value.trim(),frota:'',cae_rent:g('nf-cae').value||false,cliente_existente:g('nf-exist').value.trim()||false,sector:'',estado:'contactar',notas:[{data:ds,texto:g('nf-nota').value.trim()||'Lead criada.'}],follow_data:agora.toISOString().split('T')[0],follow_nota:'Primeiro contacto',negociacao_fora:g('nf-neg').value.trim(),relacao_interna:g('nf-rel').value.trim(),td_pedido:false,td_agendado:'',td_stand:'',td_esp:'',reuniao_data:'',reuniao_local:'',reuniao_notas:'',reuniao_realizada:false,preferencias:[],propostas:[],criado:agora.toISOString().split('T')[0]};
+  const nova={id:Date.now(),nome,tel,email:g('nf-email').value.trim(),opp_id:g('nf-opp').value.trim()||'(sem ID)',tipo_lead:tipoLead,carro:g('nf-carro').value.trim()||'—',kom:g('nf-kom').value.trim(),tipo:g('nf-tipo').value,nif:g('nf-nif').value.trim(),frota:'',cae_rent:g('nf-cae').value||false,cliente_existente:g('nf-exist').value.trim()||false,sector:'',estado:'contactar',notas:[{data:ds,texto:g('nf-nota').value.trim()||'Lead criada.'}],follow_data:agora.toISOString().split('T')[0],follow_nota:'Primeiro contacto',negociacao_fora:g('nf-neg').value.trim(),relacao_interna:g('nf-rel').value.trim(),financiamento:'',financiamento_tipo:'',financiamento_gestora:'',financiamento_financeira:'',td_pedido:false,td_agendado:'',td_stand:'',td_esp:'',reuniao_data:'',reuniao_local:'',reuniao_notas:'',reuniao_realizada:false,preferencias:[],propostas:[],criado:agora.toISOString().split('T')[0]};
   guardar(nova);fecharNova();renderAtual();
 }
 
