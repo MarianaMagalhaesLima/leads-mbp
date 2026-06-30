@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Leads MBP">
-<title>Leads MBP v2.2.20</title>
+<title>Leads MBP v2.2.21</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f4f2;color:#1a1a1a;min-height:100vh;}
@@ -236,7 +236,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
 <div id="main-view">
   <div class="topbar">
-    <div class="topbar-brand"><span>Mercedes-Benz · Sociedade Comercial C. Santos</span><span class="app-version" onclick="forcarAtualizacao()" title="Toca para forçar atualização">v2.2.20 🔄</span></div>
+    <div class="topbar-brand"><span>Mercedes-Benz · Sociedade Comercial C. Santos</span><span class="app-version" onclick="forcarAtualizacao()" title="Toca para forçar atualização">v2.2.21 🔄</span></div>
     <div class="topbar-row">
       <span class="topbar-name">Mariana Magalhães</span>
       <div class="topbar-btns">
@@ -301,7 +301,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <div class="overlay" id="ov-ficha">
   <div style="display:flex;align-items:center;background:#fff;border-bottom:1px solid #e8e6e1;position:sticky;top:0;z-index:10;">
     <button class="back-btn" onclick="fecharFicha()" style="border-bottom:none;flex:1;">← Voltar</button>
-    <button onclick="forcarAtualizacao()" style="background:none;border:none;color:#bbb;font-size:12px;padding:.85rem .9rem;cursor:pointer;white-space:nowrap;font-family:inherit;" title="Forçar atualização">🔄 v2.2.20</button>
+    <button onclick="forcarAtualizacao()" style="background:none;border:none;color:#bbb;font-size:12px;padding:.85rem .9rem;cursor:pointer;white-space:nowrap;font-family:inherit;" title="Forçar atualização">🔄 v2.2.21</button>
   </div>
   <div class="ficha-pad" id="ficha-content"></div>
   <div style="padding:0 1rem;">
@@ -588,8 +588,8 @@ const TMPLS_WA_PT=[
   {label:'Lead inativo — Boa tarde', body:`Boa tarde. Há algum tempo que não nos falamos e queria saber se o seu interesse num Mercedes-Benz se mantém ou se posso ajudar de alguma forma. Estou à disposição, por favor não hesite em contactar-me.\nMariana Magalhães | Mercedes-Benz - Sociedade Comercial C. Santos`},
   {label:'Pós-visita — Bom dia', body:`Bom dia. Agradeço a visita de hoje ao nosso showroom. Fico à disposição para qualquer questão que surja e espero poder ajudar em breve. 😊\nMariana Magalhães | Mercedes-Benz - Sociedade Comercial C. Santos`},
   {label:'Pós-visita — Boa tarde', body:`Boa tarde. Agradeço a visita de hoje ao nosso showroom. Fico à disposição para qualquer questão que surja e espero poder ajudar em breve. 😊\nMariana Magalhães | Mercedes-Benz - Sociedade Comercial C. Santos`},
-  {label:'Último contacto — Bom dia', body:`Bom dia,\n\nCaro Cliente,\n\nTentei contactá-lo(a) mas não obtive resposta. Fico ao dispor caso pretenda avançar ou esclarecer alguma questão.\n\nMuito obrigada.\n\nAté breve,\n\nMariana Magalhães | Sociedade Comercial C. Santos - Mercedes-Benz`},
-  {label:'Último contacto — Boa tarde', body:`Boa tarde,\n\nCaro Cliente,\n\nTentei contactá-lo(a) mas não obtive resposta. Fico ao dispor caso pretenda avançar ou esclarecer alguma questão.\n\nMuito obrigada.\n\nAté breve,\n\nMariana Magalhães | Sociedade Comercial C. Santos - Mercedes-Benz`},
+  {label:'Último contacto — Bom dia', body:`Bom dia,\n\nUma vez que não obtive qualquer resposta, venho dar seguimento à conversa e perguntar se poderei ajudar em alguma questão.\n\nPor favor, não hesite em contactar-me.\n\nMuito obrigada.\n\nAté breve,\n\nMariana Magalhães | Sociedade Comercial C. Santos - Mercedes-Benz`},
+  {label:'Último contacto — Boa tarde', body:`Boa tarde,\n\nUma vez que não obtive qualquer resposta, venho dar seguimento à conversa e perguntar se poderei ajudar em alguma questão.\n\nPor favor, não hesite em contactar-me.\n\nMuito obrigada.\n\nAté breve,\n\nMariana Magalhães | Sociedade Comercial C. Santos - Mercedes-Benz`},
 ];
 
 // ─── TEMPLATES CONFIRMAÇÃO TEST DRIVE ───────────────────────────────────────
@@ -731,7 +731,7 @@ function buildTmplList(container, tmpls, tipo, lang){
   const items = tmpls.map(t=>`<button class="tmpl-btn" onclick="enviarTemplate('${tipo}','${encodeURIComponent(JSON.stringify(t))}')">${t.label}</button>`).join('');
   const enBtn = `<button class="tmpl-btn en-toggle" onclick="toggleTmplLang('${tipo}')">${isPT?'🌐 EN':'🌐 PT'}</button>`;
   // Blank button
-  const blankTmpl=tipo==='email'?{label:'Em branco',subject:'',body:''}:{label:'Em branco',body:''};
+  const blankTmpl=tipo==='email'?{label:'Em branco',subject:'',body:''}:{label:'Em branco',body:'\n\nMariana Magalhães | Sociedade Comercial C. Santos - Mercedes-Benz'};
   const blankBtn=`<button class="tmpl-btn" style="border-color:#ccc;color:#888;" onclick="enviarTemplate('${tipo}','${encodeURIComponent(JSON.stringify(blankTmpl))}')">📝 Em branco</button>`;
   // TD confirmation buttons (only if lead has TD scheduled)
   let tdBtns='';
