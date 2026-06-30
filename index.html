@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Leads MBP">
-<title>Leads MBP v2.2.21</title>
+<title>Leads MBP v2.2.23</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f4f2;color:#1a1a1a;min-height:100vh;}
@@ -236,7 +236,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
 <div id="main-view">
   <div class="topbar">
-    <div class="topbar-brand"><span>Mercedes-Benz · Sociedade Comercial C. Santos</span><span class="app-version" onclick="forcarAtualizacao()" title="Toca para forçar atualização">v2.2.21 🔄</span></div>
+    <div class="topbar-brand"><span>Mercedes-Benz · Sociedade Comercial C. Santos</span><span class="app-version" onclick="forcarAtualizacao()" title="Toca para forçar atualização">v2.2.23 🔄</span></div>
     <div class="topbar-row">
       <span class="topbar-name">Mariana Magalhães</span>
       <div class="topbar-btns">
@@ -301,7 +301,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <div class="overlay" id="ov-ficha">
   <div style="display:flex;align-items:center;background:#fff;border-bottom:1px solid #e8e6e1;position:sticky;top:0;z-index:10;">
     <button class="back-btn" onclick="fecharFicha()" style="border-bottom:none;flex:1;">← Voltar</button>
-    <button onclick="forcarAtualizacao()" style="background:none;border:none;color:#bbb;font-size:12px;padding:.85rem .9rem;cursor:pointer;white-space:nowrap;font-family:inherit;" title="Forçar atualização">🔄 v2.2.21</button>
+    <button onclick="forcarAtualizacao()" style="background:none;border:none;color:#bbb;font-size:12px;padding:.85rem .9rem;cursor:pointer;white-space:nowrap;font-family:inherit;" title="Forçar atualização">🔄 v2.2.23</button>
   </div>
   <div class="ficha-pad" id="ficha-content"></div>
   <div style="padding:0 1rem;">
@@ -1727,14 +1727,20 @@ async function addNota(id){
   const l=leads.find(x=>String(x.id)===String(id));const inp=document.getElementById('ni-'+id);
   const txt=inp.value.trim();if(!txt)return;
   inp.value='';
-  // Processar nota pela IA (igual à voz) para extrair dados estruturados
+  // GARANTIA: guardar a nota imediatamente, em texto simples, ANTES de qualquer chamada à IA
+  const agora=new Date();const ds=agora.toLocaleDateString('pt-PT')+' '+agora.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'});
+  if(!l.notas)l.notas=[];
+  l.notas.push({data:ds,texto:txt});
+  await guardar(l);
+  renderFicha(l);
+  setSyncStatus('ok','Nota guardada · '+ds);
+  // Processar nota pela IA (igual à voz) para extrair dados estruturados — bónus, não bloqueia a nota
   const fichaIdAntes=fichaId;
   fichaId=String(id);
-  // Mostrar indicador IA
   const ind=document.getElementById('ai-ind');if(ind)ind.style.display='block';
-  // Reutilizar o pipeline completo da voz — usarT() lê de ttext-ficha ou transcript
-  // mas aqui vamos chamar directamente o processador com o texto da nota
-  await processarTextoComIA(l, txt);
+  try{
+    await enriquecerComIA(l, txt);
+  }catch(e){console.error('Enriquecimento IA falhou (nota já estava guardada):',e);}
   fichaId=fichaIdAntes;
   if(ind)ind.style.display='none';
 }
@@ -2215,57 +2221,65 @@ function mostrarT(txt){
   const box=document.getElementById(emF?'tbox-ficha':'tbox-main');box.style.display='block';
   document.getElementById(emF?'ttext-ficha':'ttext-main').value=txt;
 }
-async function processarTextoComIA(l, txt){
+async function enriquecerComIA(l, txt){
   const agora=new Date();const ds=agora.toLocaleDateString('pt-PT')+' '+agora.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'});
   const hoje=agora.toLocaleDateString('pt-PT', {weekday:'long', year:'numeric', month:'long', day:'numeric'});
+  const resp=await fetch(SCRIPT+'?action=gemini',{method:'POST',body:JSON.stringify({action:'gemini',mensagem:`És uma assistente especializada em leads de vendas da Mercedes-Benz Portugal. Analisa o texto escrito ou falado por uma comercial e extrai informação estruturada.\n\nCONHECIMENTO DE MODELOS MERCEDES (corrige erros de transcrição de voz):\n- Modelos elétricos EQ: EQA, EQB, EQC, EQE, EQS, EQV, EQT\n- Modelos: Classe A, Classe B, Classe C, Classe E, Classe S, CLA, CLE, CLS, GLA, GLB, GLC, GLE, GLS, G-Class, AMG GT, SL, Sprinter, Vito, V-Class\n- Motorizações: 180, 200, 220, 250, 300, 350, 400, 450, 580 + sufixos d (diesel), e (híbrido), de (diesel híbrido)\n- "250+" ou "duzentos e cinquenta mais" → 250+\n- "450+" ou "quatrocentos e cinquenta mais" → 450+\n- "100% elétrico" ou "cem por cento elétrico" ou "totalmente elétrico" → 100% elétrico\n- "four mátique" ou "four matic" ou "4 matic" → 4MATIC\n- "IKEA" num contexto de carro → provavelmente EQA\n- Corrige outros erros óbvios de transcrição de modelos Mercedes\n\nEXTRACÇÃO DE DADOS FINANCEIROS (importante — extrai SEMPRE que mencionado):\n- "a pronto" / "pronto pagamento" / "paga a pronto" → financiamento: "Não"\n- "financiamento" / "crédito" / "prestações" → financiamento: "Sim"\n- "leasing" → financiamento: "Leasing"\n- "ALD" → financiamento: "ALD"\n- "renting" → financiamento: "Renting"\n- "retoma" / "tem carro para retomar" / "quer retomar" → retoma: "Sim"\n- "sem retoma" / "não tem retoma" → retoma: "Não"\n- "empresa" / "fatura empresa" → tipo: "Empresa"\n- "ENI" / "empresário em nome individual" → tipo: "ENI"\n\nEXTRACÇÃO DE PREFERÊNCIAS (muito importante — extrai TODAS sem excepção):\\n- Cores → preferencias_gosta ou preferencias_nao_gosta\\n- \"prefere X\" / \"gosta de X\" / \"quer X\" / \"interessa\" → preferencias_gosta\\n- \"não gosta de X\" / \"não quer X\" / \"detesta X\" → preferencias_nao_gosta\\n- Carroçaria (Station Wagon, Limousine, SUV, Coupé, Cabrio, etc.), cor, motorização, opcionais (teto de abrir, vidros escurecidos, interiores claros, etc.), transmissão, combustível\\n- Quando há preferência principal + alternativa: redigir como frase curta — ex: \"Station Wagon (também pode ser Limousine)\" — NUNCA separar em dois itens\\n- Cada item deve ser uma frase curta clara, não uma palavra solta\\n\\nEXTRACÇÃO DE TEST DRIVE (muito importante):\n- "test drive agendado para X" / "TD marcado para X" / "agendei TD para X" → td_pedido: true, td_data: data YYYY-MM-DD HH:MM\n- "na Boavista" / "stand Boavista" → td_stand: "Boavista"\n- "na Maia" / "stand Maia" → td_stand: "Maia"\n- Se o texto refere uma data relativa (e.g. "terça feira dia 23"), converte para a data absoluta mais próxima no futuro\n- Se menciona hora (e.g. "11h30", "11:30", "às 11 e meia"), inclui no td_data como YYYY-MM-DD HH:MM\n\nHoje é ${hoje}.\n\nTexto: "${txt}"\n\nResponde APENAS com JSON válido, sem mais nada:\n{\n  "nota_corrigida": "texto da nota com eventuais correções de transcrição, ou null se não houver correções",\n  "follow_up_dias": null ou número (0=hoje,1=amanhã,3=3dias,7=semana),\n  "follow_nota": null ou texto,\n  "preferencias_gosta": [],\n  "preferencias_nao_gosta": [],\n  "td_pedido": false,\n  "td_data": null,\n  "td_stand": null,\n  "proposta_enviada": false,\n  "proposta_modelo": null,\n  "proposta_preco": null,\n  "financiamento": null,\n  "retoma": null,\n  "retoma_veiculo": null,\n  "retoma_aval_sccs": null,\n  "retoma_avaliador": null,\n  "retoma_aguiar": null,\n  "retoma_ptf": null,\n  "retoma_andre": null,\n  "retoma_marco": null,\n  "retoma_jbras": null,\n  "retoma_entrega": null,\n  "retoma_obs": null,\n  "tipo_novo": null\n}`,maxTokens:1000})});
+  const data=await resp.json();
+  let rawText='';
+  if(typeof data==='string')rawText=data;
+  else if(data.text)rawText=data.text;
+  else if(data.content&&data.content[0])rawText=data.content[0].text||'';
+  else if(data.error)throw new Error('Erro Apps Script: '+JSON.stringify(data.error));
+  else rawText=JSON.stringify(data);
+  const jsonMatch=rawText.match(/\{[\s\S]*\}/);
+  if(!jsonMatch)throw new Error('Sem JSON: '+rawText.slice(0,200));
+  const parsed=JSON.parse(jsonMatch[0]);
+  if(!l.preferencias)l.preferencias=[];if(!l.propostas)l.propostas=[];
+  // Se a IA corrigiu erros de transcrição, actualizar o texto da última nota adicionada
+  if(parsed.nota_corrigida&&l.notas&&l.notas.length){
+    l.notas[l.notas.length-1].texto=parsed.nota_corrigida;
+  }
+  if(parsed.financiamento!==null&&parsed.financiamento!==undefined)l.financiamento=parsed.financiamento;
+  if(parsed.retoma!==null&&parsed.retoma!==undefined)l.retoma=parsed.retoma;
+  if(parsed.retoma_veiculo&&!parsed.retoma)l.retoma='Sim';
+  if(l.retoma==='Sim'||parsed.retoma_veiculo){
+    if(!l.retoma_info)l.retoma_info={};
+    if(parsed.retoma_veiculo)l.retoma_info.veiculo=parsed.retoma_veiculo;
+    if(parsed.retoma_aval_sccs)l.retoma_info.avaliacao_sccs=parsed.retoma_aval_sccs;
+    if(parsed.retoma_avaliador)l.retoma_info.avaliacao_sccs_avaliador=parsed.retoma_avaliador;
+    const com=l.retoma_info.avaliacao_comercio||{};
+    if(parsed.retoma_aguiar)com['Aguiar']=parsed.retoma_aguiar;
+    if(parsed.retoma_ptf)com['PTF']=parsed.retoma_ptf;
+    if(parsed.retoma_andre)com['André Pinto']=parsed.retoma_andre;
+    if(parsed.retoma_marco)com['Marco Almeida']=parsed.retoma_marco;
+    if(parsed.retoma_jbras)com['Jorge Brás']=parsed.retoma_jbras;
+    l.retoma_info.avaliacao_comercio=com;
+    if(parsed.retoma_entrega)l.retoma_info.entrega_prevista=parsed.retoma_entrega;
+    if(parsed.retoma_obs)l.retoma_info.notas_extra=parsed.retoma_obs;
+  }
+  if(parsed.tipo_novo)l.tipo=parsed.tipo_novo;
+  (parsed.preferencias_gosta||[]).forEach(p=>l.preferencias.push({tipo:'gosta',texto:p}));
+  (parsed.preferencias_nao_gosta||[]).forEach(p=>l.preferencias.push({tipo:'nao_gosta',texto:p}));
+  if(parsed.follow_up_dias!=null){const d=new Date();d.setDate(d.getDate()+parsed.follow_up_dias);l.follow_data=d.toISOString().split('T')[0];if(parsed.follow_nota)l.follow_nota=parsed.follow_nota;}
+  if(parsed.td_pedido){l.td_pedido=true;if(parsed.td_data)l.td_agendado=parsed.td_data;if(parsed.td_stand)l.td_stand=parsed.td_stand;}
+  if(parsed.proposta_enviada&&parsed.proposta_modelo){l.propostas.push({modelo:parsed.proposta_modelo,kom:'',preco:parsed.proposta_preco||'',validade:'',estado:'enviada',data:agora.toLocaleDateString('pt-PT')});}
+  await guardar(l);renderFicha(l);setSyncStatus('ok','✨ Processado · '+ds);
+  if(isLembreteAgora(l))sugerirProximoPasso(l,parsed.nota_corrigida||txt);
+}
+
+async function processarTextoComIA(l, txt){
+  // Usado pelo fluxo de VOZ — aqui a nota ainda não foi adicionada, por isso garantimos primeiro
+  const agora=new Date();const ds=agora.toLocaleDateString('pt-PT')+' '+agora.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'});
+  if(!l.notas)l.notas=[];
+  l.notas.push({data:ds,texto:txt});
+  await guardar(l);
+  renderFicha(l);
+  setSyncStatus('ok','Nota guardada · '+ds);
   try{
-    const resp=await fetch(SCRIPT+'?action=gemini',{method:'POST',body:JSON.stringify({action:'gemini',mensagem:`És uma assistente especializada em leads de vendas da Mercedes-Benz Portugal. Analisa o texto escrito ou falado por uma comercial e extrai informação estruturada.\n\nCONHECIMENTO DE MODELOS MERCEDES (corrige erros de transcrição de voz):\n- Modelos elétricos EQ: EQA, EQB, EQC, EQE, EQS, EQV, EQT\n- Modelos: Classe A, Classe B, Classe C, Classe E, Classe S, CLA, CLE, CLS, GLA, GLB, GLC, GLE, GLS, G-Class, AMG GT, SL, Sprinter, Vito, V-Class\n- Motorizações: 180, 200, 220, 250, 300, 350, 400, 450, 580 + sufixos d (diesel), e (híbrido), de (diesel híbrido)\n- "250+" ou "duzentos e cinquenta mais" → 250+\n- "450+" ou "quatrocentos e cinquenta mais" → 450+\n- "100% elétrico" ou "cem por cento elétrico" ou "totalmente elétrico" → 100% elétrico\n- "four mátique" ou "four matic" ou "4 matic" → 4MATIC\n- "IKEA" num contexto de carro → provavelmente EQA\n- Corrige outros erros óbvios de transcrição de modelos Mercedes\n\nEXTRACÇÃO DE DADOS FINANCEIROS (importante — extrai SEMPRE que mencionado):\n- "a pronto" / "pronto pagamento" / "paga a pronto" → financiamento: "Não"\n- "financiamento" / "crédito" / "prestações" → financiamento: "Sim"\n- "leasing" → financiamento: "Leasing"\n- "ALD" → financiamento: "ALD"\n- "renting" → financiamento: "Renting"\n- "retoma" / "tem carro para retomar" / "quer retomar" → retoma: "Sim"\n- "sem retoma" / "não tem retoma" → retoma: "Não"\n- "empresa" / "fatura empresa" → tipo: "Empresa"\n- "ENI" / "empresário em nome individual" → tipo: "ENI"\n\nEXTRACÇÃO DE PREFERÊNCIAS (muito importante — extrai TODAS sem excepção):\\n- Cores → preferencias_gosta ou preferencias_nao_gosta\\n- \"prefere X\" / \"gosta de X\" / \"quer X\" / \"interessa\" → preferencias_gosta\\n- \"não gosta de X\" / \"não quer X\" / \"detesta X\" → preferencias_nao_gosta\\n- Carroçaria (Station Wagon, Limousine, SUV, Coupé, Cabrio, etc.), cor, motorização, opcionais (teto de abrir, vidros escurecidos, interiores claros, etc.), transmissão, combustível\\n- Quando há preferência principal + alternativa: redigir como frase curta — ex: \"Station Wagon (também pode ser Limousine)\" — NUNCA separar em dois itens\\n- Cada item deve ser uma frase curta clara, não uma palavra solta\\n\\nEXTRACÇÃO DE TEST DRIVE (muito importante):\n- "test drive agendado para X" / "TD marcado para X" / "agendei TD para X" → td_pedido: true, td_data: data YYYY-MM-DD HH:MM\n- "na Boavista" / "stand Boavista" → td_stand: "Boavista"\n- "na Maia" / "stand Maia" → td_stand: "Maia"\n- Se o texto refere uma data relativa (e.g. "terça feira dia 23"), converte para a data absoluta mais próxima no futuro\n- Se menciona hora (e.g. "11h30", "11:30", "às 11 e meia"), inclui no td_data como YYYY-MM-DD HH:MM\n\nHoje é ${hoje}.\n\nTexto: "${txt}"\n\nResponde APENAS com JSON válido, sem mais nada:\n{\n  "nota": "texto da nota de contacto corrigido",\n  "follow_up_dias": null ou número (0=hoje,1=amanhã,3=3dias,7=semana),\n  "follow_nota": null ou texto,\n  "preferencias_gosta": [],\n  "preferencias_nao_gosta": [],\n  "td_pedido": false,\n  "td_data": null,\n  "td_stand": null,\n  "proposta_enviada": false,\n  "proposta_modelo": null,\n  "proposta_preco": null,\n  "financiamento": null,\n  "retoma": null,\n  "retoma_veiculo": null,\n  "retoma_aval_sccs": null,\n  "retoma_avaliador": null,\n  "retoma_aguiar": null,\n  "retoma_ptf": null,\n  "retoma_andre": null,\n  "retoma_marco": null,\n  "retoma_jbras": null,\n  "retoma_entrega": null,\n  "retoma_obs": null,\n  "tipo_novo": null\n}`,maxTokens:1000})});
-    const data=await resp.json();
-    console.log('Apps Script response:', JSON.stringify(data).slice(0,300));
-    // Suporta {content:[{text:...}]}, {text:...}, ou string directa
-    let rawText='';
-    if(typeof data==='string')rawText=data;
-    else if(data.text)rawText=data.text;
-    else if(data.content&&data.content[0])rawText=data.content[0].text||'';
-    else if(data.error)throw new Error('Erro Apps Script: '+JSON.stringify(data.error));
-    else rawText=JSON.stringify(data);
-    console.log('rawText:', rawText.slice(0,300));
-    const jsonMatch=rawText.match(/\{[\s\S]*\}/);
-    if(!jsonMatch)throw new Error('Sem JSON: '+rawText.slice(0,200));
-    const parsed=JSON.parse(jsonMatch[0]);
-    if(!l.notas)l.notas=[];if(!l.preferencias)l.preferencias=[];if(!l.propostas)l.propostas=[];
-    if(parsed.nota)l.notas.push({data:ds,texto:parsed.nota});
-    // Actualizar sempre que a IA devolver um valor (sobrescreve valor anterior)
-    if(parsed.financiamento!==null&&parsed.financiamento!==undefined)l.financiamento=parsed.financiamento;
-    if(parsed.retoma!==null&&parsed.retoma!==undefined)l.retoma=parsed.retoma;
-    // Se menciona veículo de retoma, inferir retoma=Sim automaticamente
-    if(parsed.retoma_veiculo&&!parsed.retoma)l.retoma='Sim';
-    if(l.retoma==='Sim'||parsed.retoma_veiculo){
-      if(!l.retoma_info)l.retoma_info={};
-      if(parsed.retoma_veiculo)l.retoma_info.veiculo=parsed.retoma_veiculo;
-      if(parsed.retoma_aval_sccs)l.retoma_info.avaliacao_sccs=parsed.retoma_aval_sccs;
-      if(parsed.retoma_avaliador)l.retoma_info.avaliacao_sccs_avaliador=parsed.retoma_avaliador;
-      const com=l.retoma_info.avaliacao_comercio||{};
-      if(parsed.retoma_aguiar)com['Aguiar']=parsed.retoma_aguiar;
-      if(parsed.retoma_ptf)com['PTF']=parsed.retoma_ptf;
-      if(parsed.retoma_andre)com['André Pinto']=parsed.retoma_andre;
-      if(parsed.retoma_marco)com['Marco Almeida']=parsed.retoma_marco;
-      if(parsed.retoma_jbras)com['Jorge Brás']=parsed.retoma_jbras;
-      l.retoma_info.avaliacao_comercio=com;
-      if(parsed.retoma_entrega)l.retoma_info.entrega_prevista=parsed.retoma_entrega;
-      if(parsed.retoma_obs)l.retoma_info.notas_extra=parsed.retoma_obs;
-    }
-    if(parsed.tipo_novo)l.tipo=parsed.tipo_novo;
-    (parsed.preferencias_gosta||[]).forEach(p=>l.preferencias.push({tipo:'gosta',texto:p}));
-    (parsed.preferencias_nao_gosta||[]).forEach(p=>l.preferencias.push({tipo:'nao_gosta',texto:p}));
-    if(parsed.follow_up_dias!=null){const d=new Date();d.setDate(d.getDate()+parsed.follow_up_dias);l.follow_data=d.toISOString().split('T')[0];if(parsed.follow_nota)l.follow_nota=parsed.follow_nota;}
-    if(parsed.td_pedido){l.td_pedido=true;if(parsed.td_data)l.td_agendado=parsed.td_data;if(parsed.td_stand)l.td_stand=parsed.td_stand;}
-    if(parsed.proposta_enviada&&parsed.proposta_modelo){l.propostas.push({modelo:parsed.proposta_modelo,kom:'',preco:parsed.proposta_preco||'',validade:'',estado:'enviada',data:agora.toLocaleDateString('pt-PT')});}
-    guardar(l);renderFicha(l);setSyncStatus('ok','✨ Processado · '+ds);
-    if(isLembreteAgora(l))sugerirProximoPasso(l,parsed.nota||txt);
+    await enriquecerComIA(l, txt);
   }catch(e){
-    if(!l.notas)l.notas=[];l.notas.push({data:ds,texto:txt});guardar(l);renderFicha(l);
-    setSyncStatus('error','Erro IA: '+String(e).slice(0,80));
+    setSyncStatus('error','Nota guardada · Erro IA: '+String(e).slice(0,60));
     console.error('processarTextoComIA erro:',e);
   }
 }
@@ -2440,14 +2454,27 @@ async function criarLeadPorVoz(txt){
     const data=await resp.json();
     const raw=data.content[0].text.replace(/```json|```/g,'').trim();
     const p=JSON.parse(raw);
-    if(!p.nome||!p.tel){setSyncStatus('error','Não percebi. Indica nome e número.');return;}
+    if(!p.nome||!p.tel){
+      // IA não conseguiu extrair nome/tel — guardar mesmo assim como lead de emergência para não perder o texto ditado
+      criarLeadEmergencia(txt);
+      return;
+    }
     const telClean=formatTelClean(p.tel);
     const dup=leads.find(l=>formatTelClean(l.tel)===telClean);
     if(dup&&!confirm(`Já existe uma lead com este número: ${dup.nome}. Continuar?`)){setSyncStatus('ok','Cancelado.');return;}
     const agora=new Date();
     const nova={id:Date.now(),nome:p.nome,tel:p.tel,email:p.email||'',opp_id:p.opp_id||'(sem ID)',tipo_lead:'Lead MBP',carro:p.carro||'—',kom:p.kom||'',tipo:p.tipo||'Particular',nif:'',frota:'',cae_rent:false,cliente_existente:false,sector:'',estado:'contactar',notas:[{data:dstamp(),texto:p.nota||'Lead criada por voz.'}],follow_data:agora.toISOString().split('T')[0],follow_nota:'Primeiro contacto',negociacao_fora:'',relacao_interna:'',financiamento:'',retoma:'',td_pedido:false,td_agendado:'',td_stand:'',td_esp:'',reuniao_data:'',reuniao_local:'',reuniao_notas:'',reuniao_realizada:false,preferencias:[],propostas:[],criado:agora.toISOString().split('T')[0]};
-    guardar(nova);renderAtual();setSyncStatus('ok','✨ Lead de '+p.nome+' criada!');
-  }catch(e){setSyncStatus('error','Erro ao criar. Usa o formulário.');}
+    await guardar(nova);renderAtual();setSyncStatus('ok','✨ Lead de '+p.nome+' criada!');
+  }catch(e){
+    // Falha de rede/IA — NUNCA perder o texto ditado. Criar lead de emergência com o texto bruto.
+    criarLeadEmergencia(txt);
+  }
+}
+async function criarLeadEmergencia(txt){
+  const agora=new Date();
+  const nova={id:Date.now(),nome:'⚠️ Por rever — '+txt.slice(0,40),tel:'',email:'',opp_id:'(sem ID)',tipo_lead:'Lead MBP',carro:'—',kom:'',tipo:'Particular',nif:'',frota:'',cae_rent:false,cliente_existente:false,sector:'',estado:'contactar',notas:[{data:dstamp(),texto:'⚠️ Texto ditado não processado pela IA (falha de rede ou extracção). Texto original: '+txt}],follow_data:agora.toISOString().split('T')[0],follow_nota:'Por rever e completar manualmente',negociacao_fora:'',relacao_interna:'',financiamento:'',retoma:'',td_pedido:false,td_agendado:'',td_stand:'',td_esp:'',reuniao_data:'',reuniao_local:'',reuniao_notas:'',reuniao_realizada:false,preferencias:[],propostas:[],criado:agora.toISOString().split('T')[0]};
+  await guardar(nova);renderAtual();
+  setSyncStatus('error','⚠️ Guardado para rever — não foi possível processar automaticamente');
 }
 
 // ─── BACKFILL JS PURO (sem API — Safari safe) ─────────────────────────────────
