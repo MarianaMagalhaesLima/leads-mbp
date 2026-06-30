@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Leads MBP">
-<title>Leads MBP v2.2.23</title>
+<title>Leads MBP v2.2.24</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f4f2;color:#1a1a1a;min-height:100vh;}
@@ -234,9 +234,20 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <body>
 <div class="app" id="app">
 
+<div id="loading-screen" style="position:fixed;inset:0;background:#0a2e1e;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .4s ease;">
+  <div style="width:56px;height:56px;border-radius:50%;background:rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;margin-bottom:22px;">
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.6"><circle cx="12" cy="12" r="10.2"/><path d="M12 2 L12 12 L19 16" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </div>
+  <div style="font-size:10px;letter-spacing:.18em;color:rgba(255,255,255,0.4);text-transform:uppercase;margin-bottom:6px;">Mercedes-Benz</div>
+  <div style="font-size:15px;color:rgba(255,255,255,0.85);font-weight:500;margin-bottom:28px;">Sociedade Comercial C. Santos</div>
+  <div style="width:32px;height:32px;border-radius:50%;border:2.5px solid rgba(255,255,255,0.15);border-top-color:rgba(255,255,255,0.75);animation:spin .8s linear infinite;"></div>
+  <div id="loading-msg" style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:18px;letter-spacing:.02em;">A sincronizar leads…</div>
+</div>
+<style>@keyframes spin{to{transform:rotate(360deg);}}</style>
+
 <div id="main-view">
   <div class="topbar">
-    <div class="topbar-brand"><span>Mercedes-Benz · Sociedade Comercial C. Santos</span><span class="app-version" onclick="forcarAtualizacao()" title="Toca para forçar atualização">v2.2.23 🔄</span></div>
+    <div class="topbar-brand"><span>Mercedes-Benz · Sociedade Comercial C. Santos</span><span class="app-version" onclick="forcarAtualizacao()" title="Toca para forçar atualização">v2.2.24 🔄</span></div>
     <div class="topbar-row">
       <span class="topbar-name">Mariana Magalhães</span>
       <div class="topbar-btns">
@@ -301,7 +312,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <div class="overlay" id="ov-ficha">
   <div style="display:flex;align-items:center;background:#fff;border-bottom:1px solid #e8e6e1;position:sticky;top:0;z-index:10;">
     <button class="back-btn" onclick="fecharFicha()" style="border-bottom:none;flex:1;">← Voltar</button>
-    <button onclick="forcarAtualizacao()" style="background:none;border:none;color:#bbb;font-size:12px;padding:.85rem .9rem;cursor:pointer;white-space:nowrap;font-family:inherit;" title="Forçar atualização">🔄 v2.2.23</button>
+    <button onclick="forcarAtualizacao()" style="background:none;border:none;color:#bbb;font-size:12px;padding:.85rem .9rem;cursor:pointer;white-space:nowrap;font-family:inherit;" title="Forçar atualização">🔄 v2.2.24</button>
   </div>
   <div class="ficha-pad" id="ficha-content"></div>
   <div style="padding:0 1rem;">
@@ -856,9 +867,14 @@ function setSyncStatus(s,msg){
   document.getElementById('smsg').textContent=msg;
 }
 
+function esconderLoading(){
+  const ls=document.getElementById('loading-screen');
+  if(ls){ls.style.opacity='0';setTimeout(()=>{ls.style.display='none';},400);}
+}
+
 function carregar(){
   setSyncStatus('syncing','A carregar...');
-  // Try localStorage first immediately
+  // Preparar dados locais em memória SEM renderizar (evita "flash" de dados antigos)
   try{
     const local=JSON.parse(localStorage.getItem('leads_mb')||'[]');
     if(local.length>0){
@@ -867,11 +883,7 @@ function carregar(){
       if(!l.preferencias)l.preferencias=[];
       if(!l.propostas)l.propostas=[];
       if(!l.notas)l.notas=[];
-
     });
-      setSyncStatus('ok','Local · '+new Date().toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'}));
-      renderAtual();
-      restaurarHash();
     }
   }catch(e){}
   // Then sync from server
@@ -883,9 +895,10 @@ function carregar(){
     if(!leads.length){
       try{leads=JSON.parse(localStorage.getItem('leads_mb')||'[]');}catch(e){leads=[];}
       leads.forEach(l=>{if(!l.preferencias)l.preferencias=[];if(!l.propostas)l.propostas=[];if(!l.notas)l.notas=[];});
-      renderAtual();
-      restaurarHash();
     }
+    renderAtual();
+    restaurarHash();
+    esconderLoading();
   },8000);
   window[cb]=function(data){
     clearTimeout(timer);
@@ -988,6 +1001,7 @@ function carregar(){
     setSyncStatus('ok','Sincronizado · '+new Date().toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'}));
     renderAtual();
     restaurarHash();
+    esconderLoading();
   };
   const sc=document.createElement('script');sc.id='jsonp-script';
   sc.src=SCRIPT+'?action=load&callback='+cb+'&nocache='+Date.now();
@@ -999,6 +1013,7 @@ function carregar(){
     leads.forEach(l=>{if(!l.preferencias)l.preferencias=[];if(!l.propostas)l.propostas=[];if(!l.notas)l.notas=[];});
     renderAtual();
     restaurarHash();
+    esconderLoading();
   };
   document.head.appendChild(sc);
 }
