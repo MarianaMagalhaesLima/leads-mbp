@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Leads MBP">
-<title>Leads MBP v2.2.28</title>
+<title>Leads MBP v2.2.29</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f4f2;color:#1a1a1a;min-height:100vh;}
@@ -247,7 +247,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
 <div id="main-view">
   <div class="topbar">
-    <div class="topbar-brand"><span>Mercedes-Benz · Sociedade Comercial C. Santos</span><span class="app-version" onclick="forcarAtualizacao()" title="Toca para forçar atualização">v2.2.28 🔄</span></div>
+    <div class="topbar-brand"><span>Mercedes-Benz · Sociedade Comercial C. Santos</span><span class="app-version" onclick="forcarAtualizacao()" title="Toca para forçar atualização">v2.2.29 🔄</span></div>
     <div class="topbar-row">
       <span class="topbar-name">Mariana Magalhães</span>
       <div class="topbar-btns">
@@ -312,7 +312,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <div class="overlay" id="ov-ficha">
   <div style="display:flex;align-items:center;background:#fff;border-bottom:1px solid #e8e6e1;position:sticky;top:0;z-index:10;">
     <button class="back-btn" onclick="fecharFicha()" style="border-bottom:none;flex:1;">← Voltar</button>
-    <button onclick="forcarAtualizacao()" style="background:none;border:none;color:#bbb;font-size:12px;padding:.85rem .9rem;cursor:pointer;white-space:nowrap;font-family:inherit;" title="Forçar atualização">🔄 v2.2.28</button>
+    <button onclick="forcarAtualizacao()" style="background:none;border:none;color:#bbb;font-size:12px;padding:.85rem .9rem;cursor:pointer;white-space:nowrap;font-family:inherit;" title="Forçar atualização">🔄 v2.2.29</button>
   </div>
   <div class="ficha-pad" id="ficha-content"></div>
   <div style="padding:0 1rem;">
@@ -1119,9 +1119,7 @@ function ordenar(arr){
 
 function isAtraso(l){
   if(!l.follow_data)return false;
-  const fd=new Date(l.follow_data);fd.setHours(0,0,0,0);
-  const hj=new Date();hj.setHours(0,0,0,0);
-  return fd<hj;
+  try{const fd=new Date(l.follow_data);if(isNaN(fd))return false;fd.setHours(0,0,0,0);const hj=new Date();hj.setHours(0,0,0,0);return fd<hj;}catch(e){return false;}
 }
 function cardHTML(l){
   const opp=isOpp(l);const atraso=isAtraso(l);
@@ -1589,7 +1587,7 @@ function renderFicha(l){
     <!-- DADOS (compactos) -->
     <div class="ficha-section">
       <p class="sec-title">Dados</p>
-      ${cr('Criado',(()=>{if(!l.criado)return'';const d=new Date(String(l.criado));const off=d.getTimezoneOffset();const c=new Date(d.getTime()-off*60000);return c.toISOString().slice(0,10).split('-').reverse().join('/');})())}
+      ${cr('Criado',(()=>{if(!l.criado)return'';try{const d=new Date(String(l.criado));if(isNaN(d))return l.criado;const off=d.getTimezoneOffset();const c=new Date(d.getTime()-off*60000);return c.toISOString().slice(0,10).split('-').reverse().join('/');}catch(e){return l.criado||'';}})())}
       ${crTel('Telemóvel',l.tel)}
       ${cr('Email',l.email)}
       ${cr('Viatura',l.carro)}
