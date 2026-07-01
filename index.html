@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Leads MBP">
-<title>Leads MBP v2.2.25</title>
+<title>Leads MBP v2.2.26</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f4f2;color:#1a1a1a;min-height:100vh;}
@@ -247,7 +247,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
 <div id="main-view">
   <div class="topbar">
-    <div class="topbar-brand"><span>Mercedes-Benz · Sociedade Comercial C. Santos</span><span class="app-version" onclick="forcarAtualizacao()" title="Toca para forçar atualização">v2.2.25 🔄</span></div>
+    <div class="topbar-brand"><span>Mercedes-Benz · Sociedade Comercial C. Santos</span><span class="app-version" onclick="forcarAtualizacao()" title="Toca para forçar atualização">v2.2.26 🔄</span></div>
     <div class="topbar-row">
       <span class="topbar-name">Mariana Magalhães</span>
       <div class="topbar-btns">
@@ -312,7 +312,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <div class="overlay" id="ov-ficha">
   <div style="display:flex;align-items:center;background:#fff;border-bottom:1px solid #e8e6e1;position:sticky;top:0;z-index:10;">
     <button class="back-btn" onclick="fecharFicha()" style="border-bottom:none;flex:1;">← Voltar</button>
-    <button onclick="forcarAtualizacao()" style="background:none;border:none;color:#bbb;font-size:12px;padding:.85rem .9rem;cursor:pointer;white-space:nowrap;font-family:inherit;" title="Forçar atualização">🔄 v2.2.25</button>
+    <button onclick="forcarAtualizacao()" style="background:none;border:none;color:#bbb;font-size:12px;padding:.85rem .9rem;cursor:pointer;white-space:nowrap;font-family:inherit;" title="Forçar atualização">🔄 v2.2.26</button>
   </div>
   <div class="ficha-pad" id="ficha-content"></div>
   <div style="padding:0 1rem;">
@@ -1130,7 +1130,7 @@ function cardHTML(l){
   const temProposta=l.propostas&&l.propostas.some(p=>p.estado==='enviada'||p.estado==='em_negociacao');
   const metaStr=[l.tipo,temProposta?'Proposta pendente':''].filter(Boolean).join(' · ');
   const estadoClass=l.estado==='contactar'?'estado-contactar':l.estado==='follow_up'?'estado-follow_up':l.estado==='td_agendado'?'estado-td_agendado':'';
-  return`<div class="lead-card${estadoClass?' '+estadoClass:''}${temCampanha&&!estadoClass?' campanha-ativa':''}" id="card-${l.id}" onclick="abrirFicha('${l.id}')"><div class="lead-header"><div class="avatar" style="background:${corTipoLead(l)};">${ini(l.nome)}</div><div style="flex:1;min-width:0;"><div class="lead-name">${l.nome}</div><div class="lead-car">${l.carro}${l.kom?' · '+l.kom:''}</div>${metaStr?`<div class="lead-meta">${metaStr}</div>`:''}</div>${bdg(l.estado)}</div>${atraso?`<div class="lead-follow urgent">Em atraso desde ${new Date(l.follow_data).toLocaleDateString('pt-PT')} — ${l.follow_nota||''}</div>`:`<div class="lead-follow ${isUrg(l)?'urgent':''}">${l.follow_nota||'Sem follow-up'}</div>`}${inativo&&!atraso?`<div class="inativo-badge">Sem actividade há ${diasSemNota} dias úteis</div>`:''}${temCampanha?`<div style="font-size:10px;color:#9a6510;margin-top:2px;"><span class="campanha-dot"></span>Campanha ativa</div>`:''}</div>`;}
+  return`<div class="lead-card${estadoClass?' '+estadoClass:''}${temCampanha&&!estadoClass?' campanha-ativa':''}" id="card-${l.id}" onclick="abrirFicha('${String(l.id)}')"><div class="lead-header"><div class="avatar" style="background:${corTipoLead(l)};">${ini(l.nome)}</div><div style="flex:1;min-width:0;"><div class="lead-name">${l.nome}</div><div class="lead-car">${l.carro}${l.kom?' · '+l.kom:''}</div>${metaStr?`<div class="lead-meta">${metaStr}</div>`:''}</div>${bdg(l.estado)}</div>${atraso?`<div class="lead-follow urgent">Em atraso desde ${new Date(l.follow_data).toLocaleDateString('pt-PT')} — ${l.follow_nota||''}</div>`:`<div class="lead-follow ${isUrg(l)?'urgent':''}">${l.follow_nota||'Sem follow-up'}</div>`}${inativo&&!atraso?`<div class="inativo-badge">Sem actividade há ${diasSemNota} dias úteis</div>`:''}${temCampanha?`<div style="font-size:10px;color:#9a6510;margin-top:2px;"><span class="campanha-dot"></span>Campanha ativa</div>`:''}</div>`;}
 
 function ativos(){return leads.filter(l=>l.estado!=='fechado'&&l.estado!=='sem_retorno');}
 
@@ -1298,7 +1298,22 @@ function resumo(l){
   return[`LEAD MBP: ${l.opp_id}`,`Nome: ${l.nome}`,`Tel: ${l.tel} | Email: ${l.email}`,`Viatura: ${l.carro}${l.kom?' | KOM: '+l.kom:''}`,`Tipo: ${l.tipo}${l.nif?' | NIF: '+l.nif:''}`,`Cliente existente: ${l.cliente_existente?'Sim':'Não'}`,l.negociacao_fora?`A negociar: ${l.negociacao_fora}`:'',l.relacao_interna?`Referência: ${l.relacao_interna}`:'',l.td_pedido?`TD: ${l.td_agendado||'por agendar'}${l.td_stand?' — '+l.td_stand:''}${l.td_esp?' c/ '+l.td_esp:''}`:'',l.reuniao_data?`Reunião: ${l.reuniao_data}${l.reuniao_local?' em '+l.reuniao_local:''}`:'', ...prefs,...props,'','HISTÓRICO:',...(l.notas||[]).map(n=>`[${n.data}] ${n.texto}`),'',`Estado: ${l.estado.replace('_',' ').toUpperCase()}`,l.follow_nota?`Próximo passo: ${l.follow_nota}`:''].filter(x=>x!=null&&x!=='').join('\n');
 }
 
-function abrirFicha(id){fichaId=String(id);window.location.hash='ficha-'+fichaId;document.getElementById('ov-ficha').classList.add('open');const l=leads.find(x=>String(x.id)===fichaId);if(l)renderFicha(l);atualizarVoz();}
+function abrirFicha(id){
+  fichaId=String(id);
+  window.location.hash='ficha-'+fichaId;
+  document.getElementById('ov-ficha').classList.add('open');
+  const l=leads.find(x=>String(x.id)===fichaId);
+  if(l){renderFicha(l);}
+  else{
+    // ID não encontrado — fechar e mostrar erro em vez de abrir ficha errada
+    document.getElementById('ov-ficha').classList.remove('open');
+    fichaId=null;
+    history.replaceState(null,'',window.location.pathname+window.location.search);
+    setSyncStatus('error','Lead não encontrada — a actualizar...');
+    carregar();
+  }
+  atualizarVoz();
+}
 function fecharFicha(){fichaId=null;history.replaceState(null,'',window.location.pathname+window.location.search);document.getElementById('ov-ficha').classList.remove('open');atualizarVoz();renderAtual();}
 
 // ─── ICS / OUTLOOK ───────────────────────────────────────────────────────────
