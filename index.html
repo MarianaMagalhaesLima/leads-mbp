@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Leads MBP">
-<title>Leads MBP v2.2.29</title>
+<title>Leads MBP v2.2.30</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f4f2;color:#1a1a1a;min-height:100vh;}
@@ -247,7 +247,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
 <div id="main-view">
   <div class="topbar">
-    <div class="topbar-brand"><span>Mercedes-Benz · Sociedade Comercial C. Santos</span><span class="app-version" onclick="forcarAtualizacao()" title="Toca para forçar atualização">v2.2.29 🔄</span></div>
+    <div class="topbar-brand"><span>Mercedes-Benz · Sociedade Comercial C. Santos</span><span class="app-version" onclick="forcarAtualizacao()" title="Toca para forçar atualização">v2.2.30 🔄</span></div>
     <div class="topbar-row">
       <span class="topbar-name">Mariana Magalhães</span>
       <div class="topbar-btns">
@@ -312,7 +312,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <div class="overlay" id="ov-ficha">
   <div style="display:flex;align-items:center;background:#fff;border-bottom:1px solid #e8e6e1;position:sticky;top:0;z-index:10;">
     <button class="back-btn" onclick="fecharFicha()" style="border-bottom:none;flex:1;">← Voltar</button>
-    <button onclick="forcarAtualizacao()" style="background:none;border:none;color:#bbb;font-size:12px;padding:.85rem .9rem;cursor:pointer;white-space:nowrap;font-family:inherit;" title="Forçar atualização">🔄 v2.2.29</button>
+    <button onclick="forcarAtualizacao()" style="background:none;border:none;color:#bbb;font-size:12px;padding:.85rem .9rem;cursor:pointer;white-space:nowrap;font-family:inherit;" title="Forçar atualização">🔄 v2.2.30</button>
   </div>
   <div class="ficha-pad" id="ficha-content"></div>
   <div style="padding:0 1rem;">
@@ -1136,6 +1136,21 @@ function ativos(){return leads.filter(l=>l.estado!=='fechado'&&l.estado!=='sem_r
 function pesquisar(){
   const q=normalizar(document.getElementById('search-input').value||'').trim();
   if(!q){renderAtual();return;}
+  if(tabAtual==='arquivo'){
+    const apagadas=JSON.parse(localStorage.getItem('leads_apagadas')||'[]');
+    const fechadas=leads.filter(l=>l.estado==='fechado'||l.estado==='sem_retorno');
+    const todas=[...fechadas,...apagadas];
+    const r=todas.filter(l=>{
+      const txt=normalizar([l.nome,l.carro,l.tel,l.email,l.opp_id,l.kom,l.tipo,l.nif,l.negociacao_fora,l.relacao_interna,...(l.notas||[]).map(n=>n.texto)].join(' '));
+      return txt.includes(q);
+    });
+    const apagadasIds=new Set(apagadas.map(x=>String(x.id)));
+    document.getElementById('lista-arquivo').innerHTML=r.length?r.map(l=>{
+      const isAp=apagadasIds.has(String(l.id));
+      return`<div class="lead-card" ${!isAp?`onclick="abrirFicha('${l.id}')"`:''}><div class="lead-header"><div class="avatar">${ini(l.nome)}</div><div style="flex:1;min-width:0;"><div class="lead-name">${l.nome}</div><div class="lead-car">${l.carro||'—'}</div></div>${bdg(l.estado)}</div><div class="lead-follow">${((l.notas&&l.notas.length?l.notas[l.notas.length-1].texto:'')||'').substring(0,60)}</div>${isAp?`<div style="margin-top:8px;"><button onclick="restaurarLead('${l.id}')" class="btn" style="font-size:12px;padding:5px 10px;">↩ Restaurar</button></div>`:''}</div>`;
+    }).join(''):`<div class="empty">Sem resultados para "${document.getElementById('search-input').value}"</div>`;
+    return;
+  }
   const r=ordenar(ativos()).filter(l=>{
     const txt=normalizar([l.nome,l.carro,l.tel,l.email,l.opp_id,l.kom,l.tipo,l.nif,l.negociacao_fora,l.relacao_interna,...(l.notas||[]).map(n=>n.texto)].join(' '));
     return txt.includes(q);
