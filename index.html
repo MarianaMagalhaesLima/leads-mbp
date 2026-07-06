@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Leads MBP">
-<title>Leads MBP v2.2.36</title>
+<title>Leads MBP v2.2.38</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f4f2;color:#1a1a1a;min-height:100vh;}
@@ -247,7 +247,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
 <div id="main-view">
   <div class="topbar">
-    <div class="topbar-brand"><span>Mercedes-Benz · Sociedade Comercial C. Santos</span><span class="app-version" onclick="forcarAtualizacao()" title="Toca para forçar atualização">v2.2.36 🔄</span></div>
+    <div class="topbar-brand"><span>Mercedes-Benz · Sociedade Comercial C. Santos</span><span class="app-version" onclick="forcarAtualizacao()" title="Toca para forçar atualização">v2.2.38 🔄</span></div>
     <div class="topbar-row">
       <span class="topbar-name">Mariana Magalhães</span>
       <div class="topbar-btns">
@@ -271,11 +271,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <div class="tabs">
     <button class="tab active" id="tab-btn-hoje" onclick="mudaTab(this,'hoje')">Hoje <span id="count-hoje"></span></button>
     <button class="tab" id="tab-btn-todas" onclick="mudaTab(this,'todas')">Todas <span id="count-todas"></span></button>
+    <button class="tab" id="tab-btn-tarefas" onclick="mudaTab(this,'tarefas')">Tarefas</button>
     <button class="tab" id="tab-btn-stats" onclick="mudaTab(this,'stats')">Resumo</button>
     <button class="tab" id="tab-btn-arquivo" onclick="mudaTab(this,'arquivo')">Arquivo <span id="count-arquivo"></span></button>
   </div>
   <div id="tab-hoje" class="section"><div id="lista-hoje"></div></div>
   <div id="tab-todas" class="section" style="display:none"><div id="lista-todas"></div></div>
+  <div id="tab-tarefas" class="section" style="display:none"><div id="lista-tarefas"></div></div>
   <div id="tab-stats" class="section" style="display:none">
     <div class="stat-grid" id="stat-cards"></div>
     <div class="divider"></div>
@@ -313,7 +315,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <div class="overlay" id="ov-ficha">
   <div style="display:flex;align-items:center;background:#fff;border-bottom:1px solid #e8e6e1;position:sticky;top:0;z-index:10;">
     <button class="back-btn" onclick="fecharFicha()" style="border-bottom:none;flex:1;">← Voltar</button>
-    <button onclick="forcarAtualizacao()" style="background:none;border:none;color:#bbb;font-size:12px;padding:.85rem .9rem;cursor:pointer;white-space:nowrap;font-family:inherit;" title="Forçar atualização">🔄 v2.2.36</button>
+    <button onclick="forcarAtualizacao()" style="background:none;border:none;color:#bbb;font-size:12px;padding:.85rem .9rem;cursor:pointer;white-space:nowrap;font-family:inherit;" title="Forçar atualização">🔄 v2.2.38</button>
   </div>
   <div class="ficha-pad" id="ficha-content"></div>
   <div style="padding:0 1rem;">
@@ -1191,6 +1193,7 @@ function tarefaCardHTML(l){
 function pesquisar(){
   const q=normalizar(document.getElementById('search-input').value||'').trim();
   if(!q){renderAtual();return;}
+  if(tabAtual==='tarefas'){renderTarefasConcluidas();return;}
   if(tabAtual==='arquivo'){
     const apagadas=JSON.parse(localStorage.getItem('leads_apagadas')||'[]');
     const fechadas=leads.filter(l=>l.estado==='fechado'||l.estado==='sem_retorno');
@@ -1294,9 +1297,28 @@ function renderAtual(){
   const q=(document.getElementById('search-input')?.value||'').trim();
   atualizarContadores();
   if(q){pesquisar();return;}
-  if(tabAtual==='hoje')renderHoje();else if(tabAtual==='todas')renderTodas();else if(tabAtual==='arquivo')renderArquivo();else renderStats();
+  if(tabAtual==='hoje')renderHoje();else if(tabAtual==='todas')renderTodas();else if(tabAtual==='arquivo')renderArquivo();else if(tabAtual==='tarefas')renderTarefasConcluidas();else renderStats();
 }
-function mudaTab(btn,t){tabAtual=t;localStorage.setItem('lastTab',t);document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));btn.classList.add('active');['hoje','todas','stats','arquivo'].forEach(x=>{document.getElementById('tab-'+x).style.display=x===t?'':'none';});renderAtual();}
+function mudaTab(btn,t){tabAtual=t;localStorage.setItem('lastTab',t);document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));btn.classList.add('active');['hoje','todas','tarefas','stats','arquivo'].forEach(x=>{document.getElementById('tab-'+x).style.display=x===t?'':'none';});renderAtual();}
+function renderTarefasConcluidas(){
+  const feitas=leads.filter(l=>l.tipo_lead==='Tarefa'&&l.estado==='feita').sort((a,b)=>{
+    const da=(a.follow_data||'')+' '+(a.follow_hora||'00:00');
+    const db=(b.follow_data||'')+' '+(b.follow_hora||'00:00');
+    return db.localeCompare(da);
+  });
+  document.getElementById('lista-tarefas').innerHTML=feitas.length?feitas.map(l=>`<div class="lead-card">
+    <div class="lead-header">
+      <div class="avatar" style="background:#8a8a8a;">✓</div>
+      <div style="flex:1;min-width:0;"><div class="lead-name" style="text-decoration:line-through;color:#999;">${l.nome}</div><div class="lead-car">${l.follow_data?new Date(l.follow_data).toLocaleDateString('pt-PT'):''}${l.follow_hora?' · '+l.follow_hora:''}</div></div>
+      <button onclick="reabrirTarefa('${l.id}')" class="btn sm" title="Repor como pendente">↩</button>
+    </div>
+    <div style="margin-top:6px;text-align:right;"><button onclick="apagarTarefa('${l.id}')" style="background:none;border:none;color:#ccc;cursor:pointer;font-size:11px;">Apagar</button></div>
+  </div>`).join(''):'<div class="empty">Sem tarefas concluídas</div>';
+}
+function reabrirTarefa(id){
+  const l=leads.find(x=>String(x.id)===String(id));if(!l)return;
+  l.estado='pendente';guardar(l);renderAtual();
+}
 
 function campo(label,val){return`<div class="campo"><div class="campo-label">${label}</div><div class="campo-val">${val||'—'}</div></div>`;}
 function campoTel(label,val){
@@ -2310,6 +2332,7 @@ function criarTarefaManual(){
 }
 function concluirTarefa(id){
   const l=leads.find(x=>String(x.id)===String(id));if(!l)return;
+  if(!confirm('Marcar a tarefa "'+l.nome+'" como feita?'))return;
   l.estado='feita';guardar(l);renderAtual();
 }
 async function apagarTarefa(id){
