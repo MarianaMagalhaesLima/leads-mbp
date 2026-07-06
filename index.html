@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Leads MBP">
-<title>Leads MBP v2.2.34</title>
+<title>Leads MBP v2.2.36</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f4f2;color:#1a1a1a;min-height:100vh;}
@@ -247,12 +247,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
 <div id="main-view">
   <div class="topbar">
-    <div class="topbar-brand"><span>Mercedes-Benz · Sociedade Comercial C. Santos</span><span class="app-version" onclick="forcarAtualizacao()" title="Toca para forçar atualização">v2.2.34 🔄</span></div>
+    <div class="topbar-brand"><span>Mercedes-Benz · Sociedade Comercial C. Santos</span><span class="app-version" onclick="forcarAtualizacao()" title="Toca para forçar atualização">v2.2.36 🔄</span></div>
     <div class="topbar-row">
       <span class="topbar-name">Mariana Magalhães</span>
       <div class="topbar-btns">
         <button class="btn" onclick="abrirCampanhas()" title="Campanhas">📢</button>
         <button class="btn" onclick="abrirImport()" title="Importar">⬇</button>
+        <button class="btn" onclick="abrirModalTarefa()" title="Nova Tarefa">✓ Tarefa</button>
         <button class="btn primary" onclick="abrirNova()">+ Nova</button>
       </div>
     </div>
@@ -312,7 +313,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <div class="overlay" id="ov-ficha">
   <div style="display:flex;align-items:center;background:#fff;border-bottom:1px solid #e8e6e1;position:sticky;top:0;z-index:10;">
     <button class="back-btn" onclick="fecharFicha()" style="border-bottom:none;flex:1;">← Voltar</button>
-    <button onclick="forcarAtualizacao()" style="background:none;border:none;color:#bbb;font-size:12px;padding:.85rem .9rem;cursor:pointer;white-space:nowrap;font-family:inherit;" title="Forçar atualização">🔄 v2.2.34</button>
+    <button onclick="forcarAtualizacao()" style="background:none;border:none;color:#bbb;font-size:12px;padding:.85rem .9rem;cursor:pointer;white-space:nowrap;font-family:inherit;" title="Forçar atualização">🔄 v2.2.36</button>
   </div>
   <div class="ficha-pad" id="ficha-content"></div>
   <div style="padding:0 1rem;">
@@ -338,6 +339,18 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <div style="padding:0 1rem 6rem;">
     <p class="stitle" style="margin-bottom:1rem;">Nova lead</p>
     <div id="nova-form"></div>
+  </div>
+</div>
+
+<!-- NOVA TAREFA -->
+<div class="overlay" id="ov-tarefa">
+  <button class="back-btn" onclick="fecharModalTarefa()">← Cancelar</button>
+  <div style="padding:0 1rem 6rem;">
+    <p class="stitle" style="margin-bottom:1rem;">Nova tarefa</p>
+    <div class="ffield"><label class="flabel">Texto *</label><textarea class="finput" id="tf-texto" style="height:80px;" placeholder="Ex: Ligar ao fornecedor de peças"></textarea></div>
+    <div class="ffield"><label class="flabel">Data</label><input class="finput" id="tf-data" type="date"></div>
+    <div class="ffield"><label class="flabel">Hora (opcional)</label><input class="finput" id="tf-hora" type="time"></div>
+    <button class="btn primary full" onclick="criarTarefaManual()" style="margin-bottom:2rem;">✓ Criar tarefa</button>
   </div>
 </div>
 
@@ -1115,21 +1128,37 @@ async function eliminarNoSheets(id){
 }
 
 function ini(n){return n.split(' ').slice(0,2).map(x=>x[0]).join('').toUpperCase();}
-function isUrg(l){return l.estado==='contactar'||(l.follow_data&&new Date(l.follow_data)<=HOJE);}
+// ─── PARSER SEGURO DE DATAS — nunca troca dia/mês ────────────────────────────
+// new Date("06/07/2026") é ambíguo em JS (assume mês/dia americano). Esta função
+// desambigua explicitamente: ISO (AAAA-MM-DD...) vs português (DD/MM/AAAA).
+function parseDataSegura(v){
+  if(!v)return null;
+  if(v instanceof Date)return isNaN(v)?null:v;
+  const s=String(v).trim();
+  // ISO: AAAA-MM-DD ou AAAA-MM-DDTHH:MM:SS...
+  const iso=s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if(iso){const d=new Date(s);return isNaN(d)?null:d;}
+  // Português: D/M/AAAA ou DD/MM/AAAA (dia sempre primeiro)
+  const pt=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if(pt){const dia=+pt[1],mes=+pt[2],ano=+pt[3];const d=new Date(ano,mes-1,dia);return isNaN(d)?null:d;}
+  // Fallback — outros formatos (raro)
+  const d=new Date(s);return isNaN(d)?null:d;
+}
+function isUrg(l){return l.estado==='contactar'||(l.follow_data&&parseDataSegura(l.follow_data)<=HOJE);}
 function bdg(e){return{contactar:'<span class="badge badge-hot">Contactar</span>',follow_up:'<span class="badge badge-warm">Follow-up</span>',td_agendado:'<span class="badge badge-done">TD Agendado</span>',fechado:'<span class="badge badge-cold">Fechado ✅</span>',sem_retorno:'<span class="badge badge-cold">Sem sucesso ❌</span>'}[e]||e;}
 
 function ordenar(arr){
   const v=(document.getElementById('sort-select')||{}).value||'recente';
   return[...arr].sort((a,b)=>{
     if(v==='nome')return a.nome.localeCompare(b.nome,'pt');
-    const da=new Date(a.criado||0),db=new Date(b.criado||0);
+    const da=parseDataSegura(a.criado)||new Date(0),db=parseDataSegura(b.criado)||new Date(0);
     return v==='antiga'?da-db:db-da;
   });
 }
 
 function isAtraso(l){
   if(!l.follow_data)return false;
-  try{const fd=new Date(l.follow_data);if(isNaN(fd))return false;fd.setHours(0,0,0,0);const hj=new Date();hj.setHours(0,0,0,0);return fd<hj;}catch(e){return false;}
+  try{const fd=parseDataSegura(l.follow_data);if(!fd)return false;fd.setHours(0,0,0,0);const hj=new Date();hj.setHours(0,0,0,0);return fd<hj;}catch(e){return false;}
 }
 function cardHTML(l){
   const opp=isOpp(l);const atraso=isAtraso(l);
@@ -1138,9 +1167,25 @@ function cardHTML(l){
   const temProposta=l.propostas&&l.propostas.some(p=>p.estado==='enviada'||p.estado==='em_negociacao');
   const metaStr=[l.tipo,temProposta?'Proposta pendente':''].filter(Boolean).join(' · ');
   const estadoClass=l.estado==='contactar'?'estado-contactar':l.estado==='follow_up'?'estado-follow_up':l.estado==='td_agendado'?'estado-td_agendado':'';
-  return`<div class="lead-card${estadoClass?' '+estadoClass:''}${temCampanha&&!estadoClass?' campanha-ativa':''}" id="card-${l.id}" onclick="abrirFicha('${String(l.id)}')"><div class="lead-header"><div class="avatar" style="background:${corTipoLead(l)};">${ini(l.nome)}</div><div style="flex:1;min-width:0;"><div class="lead-name">${l.nome}</div><div class="lead-car">${l.carro}${l.kom?' · '+l.kom:''}</div>${metaStr?`<div class="lead-meta">${metaStr}</div>`:''}</div>${bdg(l.estado)}</div>${atraso?`<div class="lead-follow urgent">Em atraso desde ${new Date(l.follow_data).toLocaleDateString('pt-PT')} — ${l.follow_nota||''}</div>`:`<div class="lead-follow ${isUrg(l)?'urgent':''}">${l.follow_nota||'Sem follow-up'}</div>`}${inativo&&!atraso?`<div class="inativo-badge">Sem actividade há ${diasSemNota} dias úteis</div>`:''}${temCampanha?`<div style="font-size:10px;color:#9a6510;margin-top:2px;"><span class="campanha-dot"></span>Campanha ativa</div>`:''}</div>`;}
+  return`<div class="lead-card${estadoClass?' '+estadoClass:''}${temCampanha&&!estadoClass?' campanha-ativa':''}" id="card-${l.id}" onclick="abrirFicha('${String(l.id)}')"><div class="lead-header"><div class="avatar" style="background:${corTipoLead(l)};">${ini(l.nome)}</div><div style="flex:1;min-width:0;"><div class="lead-name">${l.nome}</div><div class="lead-car">${l.carro}${l.kom?' · '+l.kom:''}</div>${metaStr?`<div class="lead-meta">${metaStr}</div>`:''}</div>${bdg(l.estado)}</div>${atraso?`<div class="lead-follow urgent">Em atraso desde ${(parseDataSegura(l.follow_data)||'').toLocaleDateString?parseDataSegura(l.follow_data).toLocaleDateString('pt-PT'):l.follow_data} — ${l.follow_nota||''}</div>`:`<div class="lead-follow ${isUrg(l)?'urgent':''}">${l.follow_nota||'Sem follow-up'}</div>`}${inativo&&!atraso?`<div class="inativo-badge">Sem actividade há ${diasSemNota} dias úteis</div>`:''}${temCampanha?`<div style="font-size:10px;color:#9a6510;margin-top:2px;"><span class="campanha-dot"></span>Campanha ativa</div>`:''}</div>`;}
 
-function ativos(){return leads.filter(l=>l.estado!=='fechado'&&l.estado!=='sem_retorno');}
+function ativos(){return leads.filter(l=>l.estado!=='fechado'&&l.estado!=='sem_retorno'&&l.tipo_lead!=='Tarefa');}
+function tarefasAtivas(){return leads.filter(l=>l.tipo_lead==='Tarefa'&&l.estado!=='feita').sort((a,b)=>{
+  const da=(a.follow_data||'')+' '+(a.follow_hora||'00:00');
+  const db=(b.follow_data||'')+' '+(b.follow_hora||'00:00');
+  return da.localeCompare(db);
+});}
+function tarefaCardHTML(l){
+  const atraso=isAtraso(l);
+  return`<div class="lead-card" id="card-${l.id}" style="${atraso?'border-left:3px solid #c0392b;':''}">
+    <div class="lead-header">
+      <div class="avatar" style="background:#8a8a8a;">✓</div>
+      <div style="flex:1;min-width:0;"><div class="lead-name">${l.nome}</div><div class="lead-car">${l.follow_data?new Date(l.follow_data).toLocaleDateString('pt-PT'):''}${l.follow_hora?' · '+l.follow_hora:''}</div></div>
+      <button onclick="concluirTarefa('${l.id}')" class="btn sm" title="Marcar como feita">✓</button>
+    </div>
+    <div style="margin-top:6px;text-align:right;"><button onclick="apagarTarefa('${l.id}')" style="background:none;border:none;color:#ccc;cursor:pointer;font-size:11px;">Apagar</button></div>
+  </div>`;
+}
 
 // ─── PESQUISA (insensível a acentos) ─────────────────────────────────────────
 function pesquisar(){
@@ -1180,11 +1225,13 @@ function isLembreteAgora(l){
   return diff>=-5; // -5min antes ou depois
 }
 function renderHoje(){
+  const tarefas=tarefasAtivas();
   const agora=ativos().filter(isLembreteAgora);
   // Primeiro contacto — mais antigas no topo (criado ASC)
-  const contactar=ativos().filter(l=>!isLembreteAgora(l)&&l.estado==='contactar').sort((a,b)=>new Date(a.criado||0)-new Date(b.criado||0));
+  const contactar=ativos().filter(l=>!isLembreteAgora(l)&&l.estado==='contactar').sort((a,b)=>(parseDataSegura(a.criado)||new Date(0))-(parseDataSegura(b.criado)||new Date(0)));
   const followup=ordenar(ativos().filter(l=>!isLembreteAgora(l)&&l.estado!=='contactar'&&isUrg(l)));
   let html='';
+  if(tarefas.length){html+=`<div class="hoje-sep" style="background:#eef0f2;color:#333;margin-bottom:0;">✓ TAREFAS</div>`+tarefas.map(tarefaCardHTML).join('');}
   if(agora.length){html+=`<div class="hoje-sep" style="background:#e8e4f8;color:#4a2d7a;margin-bottom:0;">⏰ Agora</div>`+agora.map(cardHTML).join('');}
   if(contactar.length){html+=`<div class="hoje-sep contactar-sep">Contactar hoje</div>`+contactar.map(cardHTML).join('');}
   if(followup.length){html+=`<div class="hoje-sep followup-sep" style="margin-top:.2rem;">Follow-up</div>`+followup.map(cardHTML).join('');}
@@ -1234,7 +1281,7 @@ function renderArquivo(){
     </div>`;}).join(''):'<div class="empty">Sem leads nesta categoria</div>';
 }
 function atualizarContadores(){
-  const hojeCount=ativos().filter(l=>isLembreteAgora(l)||l.estado==='contactar'||isUrg(l)).length;
+  const hojeCount=ativos().filter(l=>isLembreteAgora(l)||l.estado==='contactar'||isUrg(l)).length+tarefasAtivas().length;
   const todasCount=ativos().length;
   const apagadas=JSON.parse(localStorage.getItem('leads_apagadas')||'[]');
   const fechadas=leads.filter(l=>l.estado==='fechado'||l.estado==='sem_retorno');
@@ -2232,6 +2279,46 @@ function criarLead(){
 }
 
 function abrirImport(){document.getElementById('ov-import').classList.add('open');}
+
+function criarTarefaObjeto(texto,data,hora){
+  const agora=new Date();
+  const nova={id:Date.now(),nome:texto,tel:'',email:'',carro:'',kom:'',tipo:'',nif:'',frota:'',cae_rent:false,cliente_existente:false,
+    opp_id:'',tipo_lead:'Tarefa',estado:'pendente',
+    follow_data:data,follow_hora:hora||'',follow_nota:'',
+    negociacao_fora:'',relacao_interna:'',td_pedido:false,td_agendado:'',td_stand:'',td_esp:'',
+    reuniao:'',sector:'',criado:agora.toISOString().split('T')[0],
+    notas:[],preferencias:[],propostas:[],
+    reuniao_data:'',reuniao_local:'',reuniao_notas:'',reuniao_realizada:false,
+    bitrix_ok:false,financiamento:'',retoma:'',retoma_info:{},
+    financiamento_tipo:'',financiamento_gestora:'',financiamento_financeira:'',data_apagada:''};
+  guardar(nova);renderAtual();
+}
+function abrirModalTarefa(){
+  document.getElementById('tf-texto').value='';
+  document.getElementById('tf-data').value=new Date().toISOString().split('T')[0];
+  document.getElementById('tf-hora').value='';
+  document.getElementById('ov-tarefa').classList.add('open');
+}
+function fecharModalTarefa(){document.getElementById('ov-tarefa').classList.remove('open');}
+function criarTarefaManual(){
+  const texto=document.getElementById('tf-texto').value.trim();
+  const data=document.getElementById('tf-data').value||new Date().toISOString().split('T')[0];
+  const hora=document.getElementById('tf-hora').value||'';
+  if(!texto){alert('Escreve o texto da tarefa.');return;}
+  criarTarefaObjeto(texto,data,hora);
+  fecharModalTarefa();
+}
+function concluirTarefa(id){
+  const l=leads.find(x=>String(x.id)===String(id));if(!l)return;
+  l.estado='feita';guardar(l);renderAtual();
+}
+async function apagarTarefa(id){
+  if(!confirm('Apagar esta tarefa?'))return;
+  await eliminarNoSheets(id);
+  leads=leads.filter(x=>String(x.id)!==String(id));
+  localStorage.setItem('leads_mb',JSON.stringify(leads));
+  renderAtual();
+}
 function fecharImport(){document.getElementById('ov-import').classList.remove('open');document.getElementById('import-input').value='';}
 function importarLead(){
   const txt=document.getElementById('import-input').value.trim();if(!txt){alert('Cola o código primeiro');return;}
@@ -2355,7 +2442,14 @@ async function usarT(){
   const txt=editado||transcript.trim();
   ['tbox-main','tbox-ficha'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
   transcript='';
-  if(!fichaId||!txt)return;
+  if(!txt)return;
+  if(!fichaId){
+    // Fora de uma ficha: decide se é uma nova lead ou uma tarefa/lembrete pessoal
+    const ind=document.getElementById('ai-ind');if(ind)ind.style.display='block';
+    await processarTextoLivre(txt);
+    if(ind)ind.style.display='none';
+    return;
+  }
   const l=leads.find(x=>String(x.id)===fichaId);if(!l)return;
   const ind=document.getElementById('ai-ind');if(ind)ind.style.display='block';
   await processarTextoComIA(l, txt);
@@ -2508,6 +2602,41 @@ async function resumirNotas(id){
     if(col)col.style.display='block';
     setSyncStatus('ok','✨ Resumo atualizado');
   }catch(e){setSyncStatus('error','Erro ao resumir');}
+}
+
+// ─── DECIDIR LEAD OU TAREFA (ditado fora de uma ficha) ────────────────────────
+async function processarTextoLivre(txt){
+  if(!txt)return;
+  setSyncStatus('syncing','A processar...');
+  try{
+    const resp=await fetch(SCRIPT+'?action=gemini',{method:'POST',body:JSON.stringify({action:'gemini',mensagem:`Classifica o texto ditado por uma comercial de vendas Mercedes-Benz.\n\nResponde "lead" se o texto descreve um cliente novo (nome de pessoa, contacto, ou interesse num carro).\nResponde "tarefa" se o texto é um lembrete ou tarefa pessoal da comercial, sem cliente associado (ex: ligar a um fornecedor, marcar reunião interna, enviar um relatório).\n\nTexto: "${txt}"\n\nResponde APENAS com uma palavra: lead ou tarefa.`,maxTokens:10})});
+    const data=await resp.json();
+    const raw=(data.content[0].text||'').toLowerCase();
+    if(raw.includes('tarefa')){
+      await criarTarefaPorVoz(txt);
+    }else{
+      await criarLeadPorVoz(txt);
+    }
+  }catch(e){
+    // Falha de rede/IA — NUNCA perder o texto ditado. Guardar como lead de emergência para rever.
+    criarLeadEmergencia(txt);
+  }
+}
+async function criarTarefaPorVoz(txt){
+  setSyncStatus('syncing','A criar tarefa...');
+  try{
+    const hoje=new Date().toLocaleDateString('pt-PT',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+    const resp=await fetch(SCRIPT+'?action=gemini',{method:'POST',body:JSON.stringify({action:'gemini',mensagem:`Extrai uma tarefa/lembrete a partir de texto ditado por uma comercial. Devolve APENAS JSON válido, sem mais nada.\n\nHoje é ${hoje}.\n\nTexto: "${txt}"\n\n{"texto":null,"data":null,"hora":null}\n\nRegras: "texto" é a descrição curta e clara da tarefa; "data" no formato YYYY-MM-DD (converte datas relativas como "amanhã" ou "sexta-feira" para a data absoluta futura mais próxima; se não houver data mencionada, usa hoje); "hora" no formato HH:MM ou null se não for mencionada.`,maxTokens:300})});
+    const data=await resp.json();
+    const raw=data.content[0].text.replace(/```json|```/g,'').trim();
+    const p=JSON.parse(raw);
+    criarTarefaObjeto(p.texto||txt,p.data||new Date().toISOString().split('T')[0],p.hora||'');
+    setSyncStatus('ok','✨ Tarefa criada!');
+  }catch(e){
+    // Falha de rede/IA — NUNCA perder o texto ditado
+    criarTarefaObjeto(txt,new Date().toISOString().split('T')[0],'');
+    setSyncStatus('error','Tarefa guardada sem processamento IA');
+  }
 }
 
 // ─── CRIAR LEAD POR VOZ ───────────────────────────────────────────────────────
