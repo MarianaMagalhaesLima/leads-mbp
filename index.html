@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Leads MBP">
-<title>Leads MBP v2.2.38</title>
+<title>Leads MBP v2.2.41</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f4f2;color:#1a1a1a;min-height:100vh;}
@@ -247,7 +247,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
 <div id="main-view">
   <div class="topbar">
-    <div class="topbar-brand"><span>Mercedes-Benz · Sociedade Comercial C. Santos</span><span class="app-version" onclick="forcarAtualizacao()" title="Toca para forçar atualização">v2.2.38 🔄</span></div>
+    <div class="topbar-brand"><span>Mercedes-Benz · Sociedade Comercial C. Santos</span><span class="app-version" onclick="forcarAtualizacao()" title="Toca para forçar atualização">v2.2.41 🔄</span></div>
     <div class="topbar-row">
       <span class="topbar-name">Mariana Magalhães</span>
       <div class="topbar-btns">
@@ -315,7 +315,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <div class="overlay" id="ov-ficha">
   <div style="display:flex;align-items:center;background:#fff;border-bottom:1px solid #e8e6e1;position:sticky;top:0;z-index:10;">
     <button class="back-btn" onclick="fecharFicha()" style="border-bottom:none;flex:1;">← Voltar</button>
-    <button onclick="forcarAtualizacao()" style="background:none;border:none;color:#bbb;font-size:12px;padding:.85rem .9rem;cursor:pointer;white-space:nowrap;font-family:inherit;" title="Forçar atualização">🔄 v2.2.38</button>
+    <button onclick="forcarAtualizacao()" style="background:none;border:none;color:#bbb;font-size:12px;padding:.85rem .9rem;cursor:pointer;white-space:nowrap;font-family:inherit;" title="Forçar atualização">🔄 v2.2.41</button>
   </div>
   <div class="ficha-pad" id="ficha-content"></div>
   <div style="padding:0 1rem;">
@@ -1280,8 +1280,15 @@ function renderArquivo(){
       </div>
       <div class="lead-follow">${((l.notas&&l.notas.length?l.notas[l.notas.length-1].texto:'')||'').substring(0,60)}</div>
       ${!isAp&&!l.bitrix_ok?'<div style="margin-top:6px;font-size:11px;font-weight:600;color:#b7770d;">⚠️ Bitrix pendente</div>':''}
-      ${isAp?`<div style="margin-top:8px;"><button onclick="restaurarLead('${l.id}')" class="btn" style="font-size:12px;padding:5px 10px;">↩ Restaurar</button></div>`:''}
+      ${isAp?`<div style="margin-top:8px;" onclick="event.stopPropagation();"><button onclick="restaurarLead('${l.id}')" class="btn" style="font-size:12px;padding:5px 10px;">↩ Restaurar</button></div>`:''}
+      ${!isAp?`<div style="margin-top:8px;" onclick="event.stopPropagation();"><button onclick="reabrirLead('${l.id}')" class="btn" style="font-size:12px;padding:5px 10px;">↩ Reabrir</button></div>`:''}
     </div>`;}).join(''):'<div class="empty">Sem leads nesta categoria</div>';
+}
+function reabrirLead(id){
+  const l=leads.find(x=>String(x.id)===String(id));if(!l)return;
+  if(!confirm('Tem a certeza que quer reabrir a lead de '+l.nome+'? Volta ao estado "Contactar".'))return;
+  l.estado='contactar';
+  guardar(l);renderAtual();alert('Lead de '+l.nome+' reaberta!');
 }
 function atualizarContadores(){
   const hojeCount=ativos().filter(l=>isLembreteAgora(l)||l.estado==='contactar'||isUrg(l)).length+tarefasAtivas().length;
@@ -2483,6 +2490,11 @@ function descartarT(){['tbox-main','tbox-ficha'].forEach(id=>{const el=document.
 
 function limparHora(id){
   const l=leads.find(x=>String(x.id)===String(id));if(!l)return;
+  // Manter sempre a data (mesmo que estivesse guardada com hora embutida "YYYY-MM-DDTHH:MM")
+  // e nunca tocar em follow_nota — só a hora é removida.
+  if(l.follow_data){
+    l.follow_data=String(l.follow_data).slice(0,10);
+  }
   l.follow_hora='';
   guardar(l);renderFicha(l);
 }
