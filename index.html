@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Leads MBP">
-<title>Leads MBP v2.2.44</title>
+<title>Leads MBP v2.2.45</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f4f2;color:#1a1a1a;min-height:100vh;}
@@ -247,7 +247,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
 <div id="main-view">
   <div class="topbar">
-    <div class="topbar-brand"><span>Mercedes-Benz · Sociedade Comercial C. Santos</span><span class="app-version" onclick="forcarAtualizacao()" title="Toca para forçar atualização">v2.2.44 🔄</span></div>
+    <div class="topbar-brand"><span>Mercedes-Benz · Sociedade Comercial C. Santos</span><span class="app-version" onclick="forcarAtualizacao()" title="Toca para forçar atualização">v2.2.45 🔄</span></div>
     <div class="topbar-row">
       <span class="topbar-name">Mariana Magalhães</span>
       <div class="topbar-btns">
@@ -315,7 +315,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <div class="overlay" id="ov-ficha">
   <div style="display:flex;align-items:center;background:#fff;border-bottom:1px solid #e8e6e1;position:sticky;top:0;z-index:10;">
     <button class="back-btn" onclick="fecharFicha()" style="border-bottom:none;flex:1;">← Voltar</button>
-    <button onclick="forcarAtualizacao()" style="background:none;border:none;color:#bbb;font-size:12px;padding:.85rem .9rem;cursor:pointer;white-space:nowrap;font-family:inherit;" title="Forçar atualização">🔄 v2.2.44</button>
+    <button onclick="forcarAtualizacao()" style="background:none;border:none;color:#bbb;font-size:12px;padding:.85rem .9rem;cursor:pointer;white-space:nowrap;font-family:inherit;" title="Forçar atualização">🔄 v2.2.45</button>
   </div>
   <div class="ficha-pad" id="ficha-content"></div>
   <div style="padding:0 1rem;">
@@ -1200,11 +1200,14 @@ function cardHTML(l){
   return`<div class="lead-card${estadoClass?' '+estadoClass:''}${temCampanha&&!estadoClass?' campanha-ativa':''}" id="card-${l.id}" onclick="abrirFicha('${String(l.id)}')"><div class="lead-header"><div class="avatar" style="background:${corTipoLead(l)};">${ini(l.nome)}</div><div style="flex:1;min-width:0;"><div class="lead-name">${l.nome}</div><div class="lead-car">${l.carro}${l.kom?' · '+l.kom:''}</div>${metaStr?`<div class="lead-meta">${metaStr}</div>`:''}</div>${bdg(l.estado)}</div>${atraso?`<div class="lead-follow urgent">Em atraso desde ${(parseDataSegura(l.follow_data)||'').toLocaleDateString?parseDataSegura(l.follow_data).toLocaleDateString('pt-PT'):l.follow_data} — ${l.follow_nota||''}</div>`:`<div class="lead-follow ${isUrg(l)?'urgent':''}">${l.follow_nota||'Sem follow-up'}</div>`}${inativo&&!atraso?`<div class="inativo-badge">Sem actividade há ${diasSemNota} dias úteis</div>`:''}${temCampanha?`<div style="font-size:10px;color:#9a6510;margin-top:2px;"><span class="campanha-dot"></span>Campanha ativa</div>`:''}</div>`;}
 
 function ativos(){return leads.filter(l=>l.estado!=='fechado'&&l.estado!=='sem_retorno'&&l.tipo_lead!=='Tarefa');}
-function tarefasAtivas(){return leads.filter(l=>l.tipo_lead==='Tarefa'&&l.estado!=='feita').sort((a,b)=>{
-  const da=(a.follow_data||'')+' '+(a.follow_hora||'00:00');
-  const db=(b.follow_data||'')+' '+(b.follow_hora||'00:00');
-  return da.localeCompare(db);
-});}
+function tarefasAtivas(){
+  const hojeStr=HOJE.getFullYear()+'-'+String(HOJE.getMonth()+1).padStart(2,'0')+'-'+String(HOJE.getDate()).padStart(2,'0');
+  return leads.filter(l=>l.tipo_lead==='Tarefa'&&l.estado!=='feita'&&(!l.follow_data||l.follow_data<=hojeStr)).sort((a,b)=>{
+    const da=(a.follow_data||'')+' '+(a.follow_hora||'00:00');
+    const db=(b.follow_data||'')+' '+(b.follow_hora||'00:00');
+    return da.localeCompare(db);
+  });
+}
 function tarefaCardHTML(l){
   const atraso=isAtraso(l);
   return`<div class="lead-card" id="card-${l.id}" style="${atraso?'border-left:3px solid #c0392b;':''}">
@@ -1336,12 +1339,29 @@ function renderAtual(){
 }
 function mudaTab(btn,t){tabAtual=t;localStorage.setItem('lastTab',t);document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));btn.classList.add('active');['hoje','todas','tarefas','stats','arquivo'].forEach(x=>{document.getElementById('tab-'+x).style.display=x===t?'':'none';});renderAtual();}
 function renderTarefasConcluidas(){
+  const hojeStr=HOJE.getFullYear()+'-'+String(HOJE.getMonth()+1).padStart(2,'0')+'-'+String(HOJE.getDate()).padStart(2,'0');
+  const agendadas=leads.filter(l=>l.tipo_lead==='Tarefa'&&l.estado!=='feita'&&l.follow_data&&l.follow_data>hojeStr).sort((a,b)=>{
+    const da=(a.follow_data||'')+' '+(a.follow_hora||'00:00');
+    const db=(b.follow_data||'')+' '+(b.follow_hora||'00:00');
+    return da.localeCompare(db);
+  });
   const feitas=leads.filter(l=>l.tipo_lead==='Tarefa'&&l.estado==='feita').sort((a,b)=>{
     const da=(a.follow_data||'')+' '+(a.follow_hora||'00:00');
     const db=(b.follow_data||'')+' '+(b.follow_hora||'00:00');
     return db.localeCompare(da);
   });
-  document.getElementById('lista-tarefas').innerHTML=feitas.length?feitas.map(l=>`<div class="lead-card">
+  let html='';
+  if(agendadas.length){
+    html+=`<div class="hoje-sep" style="background:#e8e4f8;color:#4a2d7a;margin-bottom:0;">🗓 AGENDADAS (futuro)</div>`+agendadas.map(l=>`<div class="lead-card">
+      <div class="lead-header">
+        <div class="avatar" style="background:#8a8a8a;">✓</div>
+        <div style="flex:1;min-width:0;"><div class="lead-name">${l.nome}</div><div class="lead-car">${l.follow_data?new Date(l.follow_data).toLocaleDateString('pt-PT'):''}${l.follow_hora?' · '+l.follow_hora:''}</div></div>
+      </div>
+      <div style="margin-top:6px;text-align:right;"><button onclick="apagarTarefa('${l.id}')" style="background:none;border:none;color:#ccc;cursor:pointer;font-size:11px;">Apagar</button></div>
+    </div>`).join('');
+  }
+  html+=`<div class="hoje-sep" style="margin-bottom:0;">✓ CONCLUÍDAS</div>`;
+  html+=feitas.length?feitas.map(l=>`<div class="lead-card">
     <div class="lead-header">
       <div class="avatar" style="background:#8a8a8a;">✓</div>
       <div style="flex:1;min-width:0;"><div class="lead-name" style="text-decoration:line-through;color:#999;">${l.nome}</div><div class="lead-car">${l.follow_data?new Date(l.follow_data).toLocaleDateString('pt-PT'):''}${l.follow_hora?' · '+l.follow_hora:''}</div></div>
@@ -1349,6 +1369,7 @@ function renderTarefasConcluidas(){
     </div>
     <div style="margin-top:6px;text-align:right;"><button onclick="apagarTarefa('${l.id}')" style="background:none;border:none;color:#ccc;cursor:pointer;font-size:11px;">Apagar</button></div>
   </div>`).join(''):'<div class="empty">Sem tarefas concluídas</div>';
+  document.getElementById('lista-tarefas').innerHTML=html;
 }
 function reabrirTarefa(id){
   const l=leads.find(x=>String(x.id)===String(id));if(!l)return;
