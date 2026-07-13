@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Leads MBP">
-<title>Leads MBP v2.2.50</title>
+<title>Leads MBP v2.2.51</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f4f2;color:#1a1a1a;min-height:100vh;}
@@ -247,7 +247,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
 <div id="main-view">
   <div class="topbar">
-    <div class="topbar-brand"><span>Mercedes-Benz · Sociedade Comercial C. Santos</span><span class="app-version" onclick="forcarAtualizacao()" title="Toca para forçar atualização">v2.2.50 🔄</span></div>
+    <div class="topbar-brand"><span>Mercedes-Benz · Sociedade Comercial C. Santos</span><span class="app-version" onclick="forcarAtualizacao()" title="Toca para forçar atualização">v2.2.51 🔄</span></div>
     <div class="topbar-row">
       <span class="topbar-name">Mariana Magalhães</span>
       <div class="topbar-btns">
@@ -315,7 +315,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <div class="overlay" id="ov-ficha">
   <div style="display:flex;align-items:center;background:#fff;border-bottom:1px solid #e8e6e1;position:sticky;top:0;z-index:10;">
     <button class="back-btn" onclick="fecharFicha()" style="border-bottom:none;flex:1;">← Voltar</button>
-    <button onclick="forcarAtualizacao()" style="background:none;border:none;color:#bbb;font-size:12px;padding:.85rem .9rem;cursor:pointer;white-space:nowrap;font-family:inherit;" title="Forçar atualização">🔄 v2.2.50</button>
+    <button onclick="forcarAtualizacao()" style="background:none;border:none;color:#bbb;font-size:12px;padding:.85rem .9rem;cursor:pointer;white-space:nowrap;font-family:inherit;" title="Forçar atualização">🔄 v2.2.51</button>
   </div>
   <div class="ficha-pad" id="ficha-content"></div>
   <div style="padding:0 1rem;">
@@ -1693,7 +1693,7 @@ function renderFicha(l){
   const followBox=`<div id="follow-box-${l.id}" style="background:${fData?'#e6f4ea':'#f5f4f2'};border-radius:10px;padding:.65rem;border:${fData?'1.5px solid #2e7d32':'1px solid #e8e6e1'};">
     <div style="font-size:12px;color:${fData?'#276b2f':'#999'};font-weight:600;margin-bottom:5px;">${fLabel}</div>
     <div style="display:flex;align-items:center;gap:6px;margin-bottom:5px;">
-      <input class="finput" type="date" id="fdt-${l.id}" value="${fData}" style="flex:1;margin-bottom:0;" onclick="if(this.showPicker)this.showPicker();">
+      <input class="finput" type="date" id="fdt-${l.id}" value="${fData}" style="flex:1;margin-bottom:0;" onfocus="const el=this;setTimeout(()=>{if(el.showPicker)el.showPicker();},0);">
       <input class="finput" type="time" id="fhora-${l.id}" value="${fHora}" style="width:100px;flex-shrink:0;padding:.35rem .5rem;font-size:13px;margin-bottom:0;">
       <button onclick="limparHora('${l.id}')" style="background:none;border:none;color:#ccc;cursor:pointer;font-size:16px;padding:0;flex-shrink:0;display:${fTemHora?'inline':'none'};" title="Remover hora">✕</button>
     </div>
