@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Leads MBP">
-<title>Leads MBP v2.2.49</title>
+<title>Leads MBP v2.2.50</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f4f2;color:#1a1a1a;min-height:100vh;}
@@ -247,7 +247,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
 <div id="main-view">
   <div class="topbar">
-    <div class="topbar-brand"><span>Mercedes-Benz · Sociedade Comercial C. Santos</span><span class="app-version" onclick="forcarAtualizacao()" title="Toca para forçar atualização">v2.2.49 🔄</span></div>
+    <div class="topbar-brand"><span>Mercedes-Benz · Sociedade Comercial C. Santos</span><span class="app-version" onclick="forcarAtualizacao()" title="Toca para forçar atualização">v2.2.50 🔄</span></div>
     <div class="topbar-row">
       <span class="topbar-name">Mariana Magalhães</span>
       <div class="topbar-btns">
@@ -315,7 +315,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <div class="overlay" id="ov-ficha">
   <div style="display:flex;align-items:center;background:#fff;border-bottom:1px solid #e8e6e1;position:sticky;top:0;z-index:10;">
     <button class="back-btn" onclick="fecharFicha()" style="border-bottom:none;flex:1;">← Voltar</button>
-    <button onclick="forcarAtualizacao()" style="background:none;border:none;color:#bbb;font-size:12px;padding:.85rem .9rem;cursor:pointer;white-space:nowrap;font-family:inherit;" title="Forçar atualização">🔄 v2.2.49</button>
+    <button onclick="forcarAtualizacao()" style="background:none;border:none;color:#bbb;font-size:12px;padding:.85rem .9rem;cursor:pointer;white-space:nowrap;font-family:inherit;" title="Forçar atualização">🔄 v2.2.50</button>
   </div>
   <div class="ficha-pad" id="ficha-content"></div>
   <div style="padding:0 1rem;">
@@ -348,11 +348,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <div class="overlay" id="ov-tarefa">
   <button class="back-btn" onclick="fecharModalTarefa()">← Cancelar</button>
   <div style="padding:0 1rem 6rem;">
-    <p class="stitle" style="margin-bottom:1rem;">Nova tarefa</p>
+    <p class="stitle" id="tarefa-modal-title" style="margin-bottom:1rem;">Nova tarefa</p>
     <div class="ffield"><label class="flabel">Texto *</label><textarea class="finput" id="tf-texto" style="height:80px;" placeholder="Ex: Ligar ao fornecedor de peças"></textarea></div>
     <div class="ffield"><label class="flabel">Data</label><input class="finput" id="tf-data" type="date"></div>
     <div class="ffield"><label class="flabel">Hora (opcional)</label><input class="finput" id="tf-hora" type="time"></div>
-    <button class="btn primary full" onclick="criarTarefaManual()" style="margin-bottom:2rem;">✓ Criar tarefa</button>
+    <button class="btn primary full" id="tarefa-modal-btn" onclick="criarTarefaManual()" style="margin-bottom:2rem;">✓ Criar tarefa</button>
   </div>
 </div>
 
@@ -1213,7 +1213,8 @@ function tarefaCardHTML(l){
   return`<div class="lead-card" id="card-${l.id}" style="${atraso?'border-left:3px solid #c0392b;':''}">
     <div class="lead-header">
       <div class="avatar" style="background:#8a8a8a;">✓</div>
-      <div style="flex:1;min-width:0;"><div class="lead-name">${l.nome}</div><div class="lead-car">${l.follow_data?new Date(l.follow_data).toLocaleDateString('pt-PT'):''}${l.follow_hora?' · '+l.follow_hora:''}</div></div>
+      <div style="flex:1;min-width:0;"><div class="lead-name" style="user-select:text;-webkit-user-select:text;">${l.nome}</div><div class="lead-car">${l.follow_data?new Date(l.follow_data).toLocaleDateString('pt-PT'):''}${l.follow_hora?' · '+l.follow_hora:''}</div></div>
+      <button onclick="abrirModalTarefa('${l.id}')" class="btn sm" title="Editar">✏️</button>
       <button onclick="concluirTarefa('${l.id}')" class="btn sm" title="Marcar como feita">✓</button>
     </div>
     <div style="margin-top:6px;text-align:right;"><button onclick="apagarTarefa('${l.id}')" style="background:none;border:none;color:#ccc;cursor:pointer;font-size:11px;">Apagar</button></div>
@@ -1357,7 +1358,8 @@ function renderTarefasConcluidas(){
     html+=`<div class="hoje-sep" style="background:#e8e4f8;color:#4a2d7a;margin-bottom:0;">🗓 AGENDADAS (futuro)</div>`+agendadas.map(l=>`<div class="lead-card">
       <div class="lead-header">
         <div class="avatar" style="background:#8a8a8a;">✓</div>
-        <div style="flex:1;min-width:0;"><div class="lead-name">${l.nome}</div><div class="lead-car">${l.follow_data?new Date(l.follow_data).toLocaleDateString('pt-PT'):''}${l.follow_hora?' · '+l.follow_hora:''}</div></div>
+        <div style="flex:1;min-width:0;"><div class="lead-name" style="user-select:text;-webkit-user-select:text;">${l.nome}</div><div class="lead-car">${l.follow_data?new Date(l.follow_data).toLocaleDateString('pt-PT'):''}${l.follow_hora?' · '+l.follow_hora:''}</div></div>
+        <button onclick="abrirModalTarefa('${l.id}')" class="btn sm" title="Editar">✏️</button>
       </div>
       <div style="margin-top:6px;text-align:right;"><button onclick="apagarTarefa('${l.id}')" style="background:none;border:none;color:#ccc;cursor:pointer;font-size:11px;">Apagar</button></div>
     </div>`).join('');
@@ -1366,7 +1368,7 @@ function renderTarefasConcluidas(){
   html+=feitas.length?feitas.map(l=>`<div class="lead-card">
     <div class="lead-header">
       <div class="avatar" style="background:#8a8a8a;">✓</div>
-      <div style="flex:1;min-width:0;"><div class="lead-name" style="text-decoration:line-through;color:#999;">${l.nome}</div><div class="lead-car">${l.follow_data?new Date(l.follow_data).toLocaleDateString('pt-PT'):''}${l.follow_hora?' · '+l.follow_hora:''}</div></div>
+      <div style="flex:1;min-width:0;"><div class="lead-name" style="text-decoration:line-through;color:#999;user-select:text;-webkit-user-select:text;">${l.nome}</div><div class="lead-car">${l.follow_data?new Date(l.follow_data).toLocaleDateString('pt-PT'):''}${l.follow_hora?' · '+l.follow_hora:''}</div></div>
       <button onclick="reabrirTarefa('${l.id}')" class="btn sm" title="Repor como pendente">↩</button>
     </div>
     <div style="margin-top:6px;text-align:right;"><button onclick="apagarTarefa('${l.id}')" style="background:none;border:none;color:#ccc;cursor:pointer;font-size:11px;">Apagar</button></div>
@@ -1691,7 +1693,7 @@ function renderFicha(l){
   const followBox=`<div id="follow-box-${l.id}" style="background:${fData?'#e6f4ea':'#f5f4f2'};border-radius:10px;padding:.65rem;border:${fData?'1.5px solid #2e7d32':'1px solid #e8e6e1'};">
     <div style="font-size:12px;color:${fData?'#276b2f':'#999'};font-weight:600;margin-bottom:5px;">${fLabel}</div>
     <div style="display:flex;align-items:center;gap:6px;margin-bottom:5px;">
-      <input class="finput" type="date" id="fdt-${l.id}" value="${fData}" style="flex:1;margin-bottom:0;">
+      <input class="finput" type="date" id="fdt-${l.id}" value="${fData}" style="flex:1;margin-bottom:0;" onclick="if(this.showPicker)this.showPicker();">
       <input class="finput" type="time" id="fhora-${l.id}" value="${fHora}" style="width:100px;flex-shrink:0;padding:.35rem .5rem;font-size:13px;margin-bottom:0;">
       <button onclick="limparHora('${l.id}')" style="background:none;border:none;color:#ccc;cursor:pointer;font-size:16px;padding:0;flex-shrink:0;display:${fTemHora?'inline':'none'};" title="Remover hora">✕</button>
     </div>
@@ -2414,19 +2416,29 @@ function criarTarefaObjeto(texto,data,hora){
     financiamento_tipo:'',financiamento_gestora:'',financiamento_financeira:'',data_apagada:''};
   guardar(nova);renderAtual();
 }
-function abrirModalTarefa(){
-  document.getElementById('tf-texto').value='';
-  document.getElementById('tf-data').value=new Date().toISOString().split('T')[0];
-  document.getElementById('tf-hora').value='';
+let editandoTarefaId=null;
+function abrirModalTarefa(id){
+  editandoTarefaId=id?String(id):null;
+  const l=editandoTarefaId?leads.find(x=>String(x.id)===editandoTarefaId):null;
+  document.getElementById('tf-texto').value=l?l.nome:'';
+  document.getElementById('tf-data').value=l?(l.follow_data||new Date().toISOString().split('T')[0]):new Date().toISOString().split('T')[0];
+  document.getElementById('tf-hora').value=l?(l.follow_hora||''):'';
+  document.getElementById('tarefa-modal-title').textContent=l?'Editar tarefa':'Nova tarefa';
+  document.getElementById('tarefa-modal-btn').textContent=l?'✓ Guardar alterações':'✓ Criar tarefa';
   document.getElementById('ov-tarefa').classList.add('open');
 }
-function fecharModalTarefa(){document.getElementById('ov-tarefa').classList.remove('open');}
+function fecharModalTarefa(){document.getElementById('ov-tarefa').classList.remove('open');editandoTarefaId=null;}
 function criarTarefaManual(){
   const texto=document.getElementById('tf-texto').value.trim();
   const data=document.getElementById('tf-data').value||new Date().toISOString().split('T')[0];
   const hora=document.getElementById('tf-hora').value||'';
   if(!texto){alert('Escreve o texto da tarefa.');return;}
-  criarTarefaObjeto(texto,data,hora);
+  if(editandoTarefaId){
+    const l=leads.find(x=>String(x.id)===editandoTarefaId);
+    if(l){l.nome=texto;l.follow_data=data;l.follow_hora=hora;guardar(l);renderAtual();}
+  }else{
+    criarTarefaObjeto(texto,data,hora);
+  }
   fecharModalTarefa();
 }
 function concluirTarefa(id){
