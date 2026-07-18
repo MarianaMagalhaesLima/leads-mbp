@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Leads MBP">
-<title>Leads MBP v2.2.55</title>
+<title>Leads MBP v2.2.57</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f4f2;color:#1a1a1a;min-height:100vh;}
@@ -247,7 +247,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
 <div id="main-view">
   <div class="topbar">
-    <div class="topbar-brand"><span>Mercedes-Benz · Sociedade Comercial C. Santos</span><span class="app-version" onclick="forcarAtualizacao()" title="Toca para forçar atualização">v2.2.55 🔄</span></div>
+    <div class="topbar-brand"><span>Mercedes-Benz · Sociedade Comercial C. Santos</span><span class="app-version" onclick="forcarAtualizacao()" title="Toca para forçar atualização">v2.2.57 🔄</span></div>
     <div class="topbar-row">
       <span class="topbar-name">Mariana Magalhães</span>
       <div class="topbar-btns">
@@ -315,7 +315,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <div class="overlay" id="ov-ficha">
   <div style="display:flex;align-items:center;background:#fff;border-bottom:1px solid #e8e6e1;position:sticky;top:0;z-index:10;">
     <button class="back-btn" onclick="fecharFicha()" style="border-bottom:none;flex:1;">← Voltar</button>
-    <button onclick="forcarAtualizacao()" style="background:none;border:none;color:#bbb;font-size:12px;padding:.85rem .9rem;cursor:pointer;white-space:nowrap;font-family:inherit;" title="Forçar atualização">🔄 v2.2.55</button>
+    <button onclick="forcarAtualizacao()" style="background:none;border:none;color:#bbb;font-size:12px;padding:.85rem .9rem;cursor:pointer;white-space:nowrap;font-family:inherit;" title="Forçar atualização">🔄 v2.2.57</button>
   </div>
   <div class="ficha-pad" id="ficha-content"></div>
   <div style="padding:0 1rem;">
@@ -406,6 +406,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <div class="modal-title">✅ Fechar com sucesso</div>
     <div class="modal-sub">O que comprou o cliente?</div>
     <textarea class="finput" id="sucesso-texto" style="height:100px;margin-bottom:1rem;" placeholder="Ex: GLC EQ 300e, financiamento 48 meses..."></textarea>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:1rem;background:#f5f4f2;border-radius:10px;padding:.65rem .75rem;">
+      <input type="checkbox" id="sucesso-bitrix" style="width:20px;height:20px;flex-shrink:0;cursor:pointer;">
+      <label for="sucesso-bitrix" style="font-size:13px;font-weight:600;cursor:pointer;">Já inserida no Bitrix?</label>
+    </div>
     <div style="display:flex;gap:8px;">
       <button class="btn primary full" onclick="fecharComSucesso()">Confirmar</button>
       <button class="btn full" onclick="fecharModalSucesso()">Cancelar</button>
@@ -431,6 +435,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <button class="btn full opcao-btn" onclick="selInsucesso(this,'Outro')">Outro</button>
     </div>
     <textarea class="finput" id="insucesso-texto" style="height:70px;margin-bottom:.75rem;" placeholder="Notas adicionais (opcional)..."></textarea>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:.75rem;background:#f5f4f2;border-radius:10px;padding:.65rem .75rem;">
+      <input type="checkbox" id="insucesso-bitrix" style="width:20px;height:20px;flex-shrink:0;cursor:pointer;">
+      <label for="insucesso-bitrix" style="font-size:13px;font-weight:600;cursor:pointer;">Já inserida no Bitrix?</label>
+    </div>
     <div style="display:flex;gap:8px;">
       <button class="btn primary full" id="btn-conf-insucesso" onclick="fecharComInsucesso()" disabled style="opacity:.4;">Confirmar</button>
       <button class="btn full" onclick="fecharModalInsucesso()">Cancelar</button>
@@ -1224,6 +1232,19 @@ function tarefaCardHTML(l){
 }
 
 // ─── PESQUISA (insensível a acentos) ─────────────────────────────────────────
+function textoPesquisavel(l){
+  const ri=l.retoma_info||{};
+  const comerciantes=Object.keys(ri.avaliacao_comercio||{});
+  return normalizar([
+    l.nome,l.carro,l.tel,l.email,l.opp_id,l.kom,l.tipo,l.nif,l.negociacao_fora,l.relacao_interna,
+    l.follow_nota,l.cliente_existente,l.financiamento_tipo,l.financiamento_gestora,l.financiamento_financeira,
+    ri.veiculo,ri.avaliacao_sccs_avaliador,ri.entrega_prevista,ri.notas_extra,comerciantes.join(' '),
+    l.reuniao_notas,l.reuniao_local,
+    ...(l.notas||[]).map(n=>n.texto),
+    ...(l.preferencias||[]).map(p=>p.texto),
+    ...(l.propostas||[]).map(p=>p.modelo+' '+(p.kom||''))
+  ].join(' '));
+}
 function pesquisar(){
   const q=normalizar(document.getElementById('search-input').value||'').trim();
   if(!q){renderAtual();return;}
@@ -1232,10 +1253,7 @@ function pesquisar(){
     const apagadas=JSON.parse(localStorage.getItem('leads_apagadas')||'[]');
     const fechadas=leads.filter(l=>l.estado==='fechado'||l.estado==='sem_retorno');
     const todas=[...fechadas,...apagadas];
-    const r=todas.filter(l=>{
-      const txt=normalizar([l.nome,l.carro,l.tel,l.email,l.opp_id,l.kom,l.tipo,l.nif,l.negociacao_fora,l.relacao_interna,...(l.notas||[]).map(n=>n.texto)].join(' '));
-      return txt.includes(q);
-    });
+    const r=todas.filter(l=>textoPesquisavel(l).includes(q));
     const apagadasIds=new Set(apagadas.map(x=>String(x.id)));
     document.getElementById('lista-arquivo').innerHTML=r.length?r.map(l=>{
       const isAp=apagadasIds.has(String(l.id));
@@ -1243,10 +1261,7 @@ function pesquisar(){
     }).join(''):`<div class="empty">Sem resultados para "${document.getElementById('search-input').value}"</div>`;
     return;
   }
-  const r=ordenar(ativos()).filter(l=>{
-    const txt=normalizar([l.nome,l.carro,l.tel,l.email,l.opp_id,l.kom,l.tipo,l.nif,l.negociacao_fora,l.relacao_interna,...(l.notas||[]).map(n=>n.texto)].join(' '));
-    return txt.includes(q);
-  });
+  const r=ordenar(ativos()).filter(l=>textoPesquisavel(l).includes(q));
   const dest=tabAtual==='hoje'?'lista-hoje':'lista-todas';
   document.getElementById(dest).innerHTML=r.length?r.map(cardHTML).join(''):`<div class="empty">Sem resultados para "${document.getElementById('search-input').value}"</div>`;
 }
@@ -2019,18 +2034,20 @@ function restaurarLead(id){
   renderAtual();alert('Lead de '+l.nome+' restaurada!');
 }
 
-function abrirModalSucesso(id){modalLeadId=String(id);document.getElementById('sucesso-texto').value='';document.getElementById('modal-sucesso').classList.add('open');}
+function abrirModalSucesso(id){modalLeadId=String(id);document.getElementById('sucesso-texto').value='';document.getElementById('sucesso-bitrix').checked=false;document.getElementById('modal-sucesso').classList.add('open');}
 function fecharModalSucesso(){document.getElementById('modal-sucesso').classList.remove('open');}
 function fecharComSucesso(){
   const txt=document.getElementById('sucesso-texto').value.trim();if(!txt){alert('Indica o que o cliente comprou.');return;}
   const l=leads.find(x=>String(x.id)===String(modalLeadId));if(!l)return;
   const agora=new Date();const ds=agora.toLocaleDateString('pt-PT')+' '+agora.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'});
   l.estado='fechado';if(!l.notas)l.notas=[];l.notas.push({data:ds,texto:'✅ Fechado com sucesso — '+txt});l.follow_nota='Fechado com sucesso';
-  guardar(l);fecharModalSucesso();fecharFicha();
+  l.bitrix_ok=document.getElementById('sucesso-bitrix').checked;
+  guardar(l);fecharModalSucesso();renderFicha(l);renderAtual();
 }
 function abrirModalInsucesso(id){
   modalLeadId=String(id);insucessoSel=null;
   document.getElementById('insucesso-texto').value='';
+  document.getElementById('insucesso-bitrix').checked=false;
   document.getElementById('btn-conf-insucesso').disabled=true;document.getElementById('btn-conf-insucesso').style.opacity='.4';
   document.querySelectorAll('.opcao-btn').forEach(b=>b.classList.remove('selected'));
   document.getElementById('modal-insucesso').classList.add('open');
@@ -2047,7 +2064,8 @@ function fecharComInsucesso(){
   const extra=document.getElementById('insucesso-texto').value.trim();
   l.estado='sem_retorno';if(!l.notas)l.notas=[];
   l.notas.push({data:ds,texto:'❌ Fechado sem sucesso — '+insucessoSel+(extra?' | '+extra:'')});l.follow_nota='Fechado: '+insucessoSel;
-  guardar(l);fecharModalInsucesso();fecharFicha();
+  l.bitrix_ok=document.getElementById('insucesso-bitrix').checked;
+  guardar(l);fecharModalInsucesso();renderFicha(l);renderAtual();
 }
 
 function abrirModalReuniao(id){
