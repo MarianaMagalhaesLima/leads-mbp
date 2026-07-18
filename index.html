@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Leads MBP">
-<title>Leads MBP v2.2.53</title>
+<title>Leads MBP v2.2.55</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f4f2;color:#1a1a1a;min-height:100vh;}
@@ -247,7 +247,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
 <div id="main-view">
   <div class="topbar">
-    <div class="topbar-brand"><span>Mercedes-Benz · Sociedade Comercial C. Santos</span><span class="app-version" onclick="forcarAtualizacao()" title="Toca para forçar atualização">v2.2.53 🔄</span></div>
+    <div class="topbar-brand"><span>Mercedes-Benz · Sociedade Comercial C. Santos</span><span class="app-version" onclick="forcarAtualizacao()" title="Toca para forçar atualização">v2.2.55 🔄</span></div>
     <div class="topbar-row">
       <span class="topbar-name">Mariana Magalhães</span>
       <div class="topbar-btns">
@@ -315,7 +315,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <div class="overlay" id="ov-ficha">
   <div style="display:flex;align-items:center;background:#fff;border-bottom:1px solid #e8e6e1;position:sticky;top:0;z-index:10;">
     <button class="back-btn" onclick="fecharFicha()" style="border-bottom:none;flex:1;">← Voltar</button>
-    <button onclick="forcarAtualizacao()" style="background:none;border:none;color:#bbb;font-size:12px;padding:.85rem .9rem;cursor:pointer;white-space:nowrap;font-family:inherit;" title="Forçar atualização">🔄 v2.2.53</button>
+    <button onclick="forcarAtualizacao()" style="background:none;border:none;color:#bbb;font-size:12px;padding:.85rem .9rem;cursor:pointer;white-space:nowrap;font-family:inherit;" title="Forçar atualização">🔄 v2.2.55</button>
   </div>
   <div class="ficha-pad" id="ficha-content"></div>
   <div style="padding:0 1rem;">
@@ -2456,7 +2456,9 @@ async function apagarTarefa(id){
   renderAtual();
 }
 function fecharImport(){document.getElementById('ov-import').classList.remove('open');document.getElementById('import-input').value='';}
+let _importandoAgora=false;
 async function importarLead(){
+  if(_importandoAgora)return; // impede duplo-toque enviar dois pedidos
   const txt=document.getElementById('import-input').value.trim();if(!txt){alert('Cola o código primeiro');return;}
   let lead;
   try{ lead=JSON.parse(txt); }catch(e){ alert('Código inválido — não é um JSON válido.'); return; }
@@ -2469,13 +2471,20 @@ async function importarLead(){
     const substituir=confirm('⚠️ ATENÇÃO — COLISÃO DE ID DETECTADA\n\nJá existe uma lead DIFERENTE guardada com este mesmo ID:\n"'+existente.nome+'" ('+existente.tel+')\n\nCarregar OK vai SUBSTITUIR essa lead pelos dados de "'+lead.nome+'" — os dados antigos de "'+existente.nome+'" perdem-se.\n\nCarrega CANCELAR para, em vez disso, atribuir um ID novo a "'+lead.nome+'" e manter as duas leads separadas (recomendado).');
     if(!substituir){lead.id=Date.now()+Math.floor(Math.random()*1000);}
   }
-  await guardar(lead);
-  fecharImport();renderAtual();
-  const emFila=getSyncQueue().find(x=>String(x.id)===String(lead.id));
-  if(emFila){
-    alert('⚠️ Lead de '+lead.nome+' guardada neste dispositivo, mas AINDA NÃO chegou ao servidor (sem ligação). Vai ser enviada automaticamente assim que houver rede — não apagues os dados do browser até veres "Guardado" no topo.');
-  }else{
-    alert('✅ Lead de '+lead.nome+' importada e confirmada no servidor!');
+  _importandoAgora=true;
+  const btnImp=document.querySelector('#ov-import button.primary');if(btnImp){btnImp.disabled=true;btnImp.style.opacity='.5';}
+  try{
+    await guardar(lead);
+    fecharImport();renderAtual();
+    const emFila=getSyncQueue().find(x=>String(x.id)===String(lead.id));
+    if(emFila){
+      alert('⚠️ Lead de '+lead.nome+' guardada neste dispositivo, mas AINDA NÃO chegou ao servidor (sem ligação). Vai ser enviada automaticamente assim que houver rede — não apagues os dados do browser até veres "Guardado" no topo.');
+    }else{
+      alert('✅ Lead de '+lead.nome+' importada e confirmada no servidor!');
+    }
+  }finally{
+    _importandoAgora=false;
+    if(btnImp){btnImp.disabled=false;btnImp.style.opacity='1';}
   }
 }
 
@@ -2809,8 +2818,20 @@ async function criarLeadPorVoz(txt){
       return;
     }
     const telClean=formatTelClean(p.tel);
-    const dup=leads.find(l=>formatTelClean(l.tel)===telClean);
-    if(dup&&!confirm(`Já existe uma lead com este número: ${dup.nome}. Continuar?`)){setSyncStatus('ok','Cancelado.');return;}
+    const nomeNorm=(p.nome||'').trim().toLowerCase();
+    const dup=leads.find(l=>l.tipo_lead!=='Tarefa'&&((telClean&&formatTelClean(l.tel)===telClean)||(l.nome||'').trim().toLowerCase()===nomeNorm));
+    if(dup){
+      const usarExistente=confirm('Já existe uma lead de "'+dup.nome+'" ('+(dup.tel||'sem telemóvel')+').\n\nOK = Adicionar esta informação a essa lead existente (recomendado)\nCancelar = Criar mesmo assim uma lead nova e separada');
+      if(usarExistente){
+        if(!dup.notas)dup.notas=[];
+        dup.notas.push({data:dstamp(),texto:p.nota||txt});
+        await guardar(dup);
+        if(fichaId===String(dup.id))renderFicha(dup);
+        renderAtual();
+        setSyncStatus('ok','✅ Nota adicionada a '+dup.nome);
+        return;
+      }
+    }
     const agora=new Date();
     const nova={id:Date.now(),nome:p.nome,tel:p.tel,email:p.email||'',opp_id:p.opp_id||'(sem ID)',tipo_lead:'Lead MBP',carro:p.carro||'—',kom:p.kom||'',tipo:p.tipo||'Particular',nif:'',frota:'',cae_rent:false,cliente_existente:false,sector:'',estado:'contactar',notas:[{data:dstamp(),texto:p.nota||'Lead criada por voz.'}],follow_data:agora.toISOString().split('T')[0],follow_nota:'Primeiro contacto',negociacao_fora:'',relacao_interna:'',financiamento:'',retoma:'',td_pedido:false,td_agendado:'',td_stand:'',td_esp:'',reuniao_data:'',reuniao_local:'',reuniao_notas:'',reuniao_realizada:false,preferencias:[],propostas:[],criado:agora.toISOString().split('T')[0]};
     await guardar(nova);renderAtual();setSyncStatus('ok','✨ Lead de '+p.nome+' criada!');
