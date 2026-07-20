@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Leads MBP">
-<title>Leads MBP v2.2.62</title>
+<title>Leads MBP v2.2.63</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f4f2;color:#1a1a1a;min-height:100vh;}
@@ -247,7 +247,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
 <div id="main-view">
   <div class="topbar">
-    <div class="topbar-brand"><span>Mercedes-Benz · Sociedade Comercial C. Santos</span><span class="app-version" onclick="forcarAtualizacao()" title="Toca para forçar atualização">v2.2.62 🔄</span></div>
+    <div class="topbar-brand"><span>Mercedes-Benz · Sociedade Comercial C. Santos</span><span class="app-version" onclick="forcarAtualizacao()" title="Toca para forçar atualização">v2.2.63 🔄</span></div>
     <div class="topbar-row">
       <span class="topbar-name">Mariana Magalhães</span>
       <div class="topbar-btns">
@@ -315,7 +315,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <div class="overlay" id="ov-ficha">
   <div style="display:flex;align-items:center;background:#fff;border-bottom:1px solid #e8e6e1;position:sticky;top:0;z-index:10;">
     <button class="back-btn" onclick="fecharFicha()" style="border-bottom:none;flex:1;">← Voltar</button>
-    <button onclick="forcarAtualizacao()" style="background:none;border:none;color:#bbb;font-size:12px;padding:.85rem .9rem;cursor:pointer;white-space:nowrap;font-family:inherit;" title="Forçar atualização">🔄 v2.2.62</button>
+    <button onclick="forcarAtualizacao()" style="background:none;border:none;color:#bbb;font-size:12px;padding:.85rem .9rem;cursor:pointer;white-space:nowrap;font-family:inherit;" title="Forçar atualização">🔄 v2.2.63</button>
   </div>
   <div class="ficha-pad" id="ficha-content"></div>
   <div style="padding:0 1rem;">
@@ -606,6 +606,13 @@ function formatDataHora(iso){
     if(isNaN(d))return 'N/A';
     return d.toLocaleDateString('pt-PT')+' '+d.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'});
   }catch(e){return 'N/A';}
+}
+// Repõe o zero inicial de um KOM se vier como número (JSON não permite zeros à esquerda em números)
+function normalizarKOM(kom){
+  if(kom===undefined||kom===null||kom==='')return '';
+  let s=String(kom).trim();
+  if(/^\d{8}$/.test(s))s='0'+s;
+  return s;
 }
 function pushNota(l,nota){
   if(!l.notas)l.notas=[];
@@ -2336,7 +2343,7 @@ function guardarEditar(){
   l.email=g('ed-email').value.trim();
   l.opp_id=g('ed-opp').value.trim()||l.opp_id;
   l.carro=g('ed-carro').value.trim()||l.carro;
-  l.kom=g('ed-kom').value.trim();
+  l.kom=normalizarKOM(g('ed-kom').value.trim());
   l.tipo=g('ed-tipo').value;
   l.nif=g('ed-nif').value.trim();
   l.empresa_nome=g('ed-empresa-nome').value.trim();
@@ -2443,7 +2450,7 @@ function criarLead(){
     if(!confirm(`⚠️ Possível duplicado!\n\nJá existe uma lead com o mesmo contacto:\n${nomes}\n\nContinuar mesmo assim?`))return;
   }
   const agora=new Date();const ds=agora.toLocaleDateString('pt-PT')+' '+agora.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'});
-  const nova={id:Date.now(),nome,tel,email:g('nf-email').value.trim(),opp_id:g('nf-opp').value.trim()||'(sem ID)',tipo_lead:tipoLead,carro:g('nf-carro').value.trim()||'—',kom:g('nf-kom').value.trim(),tipo:g('nf-tipo').value,nif:g('nf-nif').value.trim(),frota:'',cae_rent:g('nf-cae').value||false,cliente_existente:g('nf-exist').value.trim()||false,sector:'',estado:'contactar',notas:[{data:ds,texto:g('nf-nota').value.trim()||'Lead criada.'}],follow_data:agora.toISOString().split('T')[0],follow_nota:'Primeiro contacto',negociacao_fora:g('nf-neg').value.trim(),relacao_interna:g('nf-rel').value.trim(),financiamento:'',financiamento_tipo:'',financiamento_gestora:'',financiamento_financeira:'',td_pedido:false,td_agendado:'',td_stand:'',td_esp:'',reuniao_data:'',reuniao_local:'',reuniao_notas:'',reuniao_realizada:false,preferencias:[],propostas:[],criado:agora.toISOString().split('T')[0],criado_app:agora.toISOString(),primeiro_contacto:agora.toISOString()};
+  const nova={id:Date.now(),nome,tel,email:g('nf-email').value.trim(),opp_id:g('nf-opp').value.trim()||'(sem ID)',tipo_lead:tipoLead,carro:g('nf-carro').value.trim()||'—',kom:normalizarKOM(g('nf-kom').value.trim()),tipo:g('nf-tipo').value,nif:g('nf-nif').value.trim(),frota:'',cae_rent:g('nf-cae').value||false,cliente_existente:g('nf-exist').value.trim()||false,sector:'',estado:'contactar',notas:[{data:ds,texto:g('nf-nota').value.trim()||'Lead criada.'}],follow_data:agora.toISOString().split('T')[0],follow_nota:'Primeiro contacto',negociacao_fora:g('nf-neg').value.trim(),relacao_interna:g('nf-rel').value.trim(),financiamento:'',financiamento_tipo:'',financiamento_gestora:'',financiamento_financeira:'',td_pedido:false,td_agendado:'',td_stand:'',td_esp:'',reuniao_data:'',reuniao_local:'',reuniao_notas:'',reuniao_realizada:false,preferencias:[],propostas:[],criado:agora.toISOString().split('T')[0],criado_app:agora.toISOString(),primeiro_contacto:agora.toISOString()};
   guardar(nova);fecharNova();renderAtual();
 }
 
@@ -2509,6 +2516,7 @@ async function importarLead(){
   // Aceitar nomes de campos alternativos, caso o código venha noutro formato
   if(!lead.tel&&lead.telefone)lead.tel=lead.telefone;
   if(!lead.carro&&lead.modelo)lead.carro=lead.modelo;
+  lead.kom=normalizarKOM(lead.kom);
   if(!lead.nome||!lead.tel){alert('Código inválido — falta nome ou telefone.');return;}
   if(!lead.preferencias)lead.preferencias=[];if(!lead.propostas)lead.propostas=[];if(!lead.notas)lead.notas=[];
   lead.criado_app=new Date().toISOString();
@@ -2907,7 +2915,7 @@ async function criarLeadPorVoz(txt){
       }
     }
     const agora=new Date();
-    const nova={id:Date.now(),nome:p.nome,tel:p.tel,email:p.email||'',opp_id:p.opp_id||'(sem ID)',tipo_lead:'Lead MBP',carro:p.carro||'—',kom:p.kom||'',tipo:p.tipo||'Particular',nif:'',frota:'',cae_rent:false,cliente_existente:false,sector:'',estado:'contactar',notas:[{data:dstamp(),texto:p.nota||'Lead criada por voz.'}],follow_data:agora.toISOString().split('T')[0],follow_nota:'Primeiro contacto',negociacao_fora:'',relacao_interna:'',financiamento:'',retoma:'',td_pedido:false,td_agendado:'',td_stand:'',td_esp:'',reuniao_data:'',reuniao_local:'',reuniao_notas:'',reuniao_realizada:false,preferencias:[],propostas:[],criado:agora.toISOString().split('T')[0],criado_app:agora.toISOString(),primeiro_contacto:agora.toISOString()};
+    const nova={id:Date.now(),nome:p.nome,tel:p.tel,email:p.email||'',opp_id:p.opp_id||'(sem ID)',tipo_lead:'Lead MBP',carro:p.carro||'—',kom:normalizarKOM(p.kom),tipo:p.tipo||'Particular',nif:'',frota:'',cae_rent:false,cliente_existente:false,sector:'',estado:'contactar',notas:[{data:dstamp(),texto:p.nota||'Lead criada por voz.'}],follow_data:agora.toISOString().split('T')[0],follow_nota:'Primeiro contacto',negociacao_fora:'',relacao_interna:'',financiamento:'',retoma:'',td_pedido:false,td_agendado:'',td_stand:'',td_esp:'',reuniao_data:'',reuniao_local:'',reuniao_notas:'',reuniao_realizada:false,preferencias:[],propostas:[],criado:agora.toISOString().split('T')[0],criado_app:agora.toISOString(),primeiro_contacto:agora.toISOString()};
     await guardar(nova);renderAtual();setSyncStatus('ok','✨ Lead de '+p.nome+' criada!');
   }catch(e){
     // Falha de rede/IA — NUNCA perder o texto ditado. Criar lead de emergência com o texto bruto.
