@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Leads MBP">
-<title>Leads MBP v2.2.59</title>
+<title>Leads MBP v2.2.60</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f4f2;color:#1a1a1a;min-height:100vh;}
@@ -247,7 +247,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
 <div id="main-view">
   <div class="topbar">
-    <div class="topbar-brand"><span>Mercedes-Benz · Sociedade Comercial C. Santos</span><span class="app-version" onclick="forcarAtualizacao()" title="Toca para forçar atualização">v2.2.59 🔄</span></div>
+    <div class="topbar-brand"><span>Mercedes-Benz · Sociedade Comercial C. Santos</span><span class="app-version" onclick="forcarAtualizacao()" title="Toca para forçar atualização">v2.2.60 🔄</span></div>
     <div class="topbar-row">
       <span class="topbar-name">Mariana Magalhães</span>
       <div class="topbar-btns">
@@ -315,7 +315,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <div class="overlay" id="ov-ficha">
   <div style="display:flex;align-items:center;background:#fff;border-bottom:1px solid #e8e6e1;position:sticky;top:0;z-index:10;">
     <button class="back-btn" onclick="fecharFicha()" style="border-bottom:none;flex:1;">← Voltar</button>
-    <button onclick="forcarAtualizacao()" style="background:none;border:none;color:#bbb;font-size:12px;padding:.85rem .9rem;cursor:pointer;white-space:nowrap;font-family:inherit;" title="Forçar atualização">🔄 v2.2.59</button>
+    <button onclick="forcarAtualizacao()" style="background:none;border:none;color:#bbb;font-size:12px;padding:.85rem .9rem;cursor:pointer;white-space:nowrap;font-family:inherit;" title="Forçar atualização">🔄 v2.2.60</button>
   </div>
   <div class="ficha-pad" id="ficha-content"></div>
   <div style="padding:0 1rem;">
@@ -596,6 +596,22 @@ let postCallTimer=null;
 let tmplLang='pt'; // 'pt' or 'en'
 
 // ─── PESQUISA INSENSÍVEL A ACENTOS ───────────────────────────────────────────
+// Adiciona uma nota a uma lead e marca automaticamente a data/hora do
+// primeiro contacto, se ainda não estiver definida (qualquer nota conta,
+// incluindo as automáticas como TD agendado, reunião, fecho, etc.)
+function formatDataHora(iso){
+  if(!iso)return 'N/A';
+  try{
+    const d=new Date(iso);
+    if(isNaN(d))return 'N/A';
+    return d.toLocaleDateString('pt-PT')+' '+d.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'});
+  }catch(e){return 'N/A';}
+}
+function pushNota(l,nota){
+  if(!l.notas)l.notas=[];
+  if(!l.primeiro_contacto)l.primeiro_contacto=new Date().toISOString();
+  l.notas.push(nota);
+}
 function normalizar(str){
   return String(str||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
 }
@@ -1573,7 +1589,7 @@ function guardarTD(id){
   if(btn){btn.style.opacity='1';btn.style.pointerEvents='auto';}
   const agora=new Date();const ds=agora.toLocaleDateString('pt-PT')+' '+agora.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'});
   if(!l.notas)l.notas=[];
-  l.notas.push({data:ds,texto:'🚗 TD agendado: '+dt+(stand?' — '+stand:'')});
+  pushNota(l,{data:ds,texto:'🚗 TD agendado: '+dt+(stand?' — '+stand:'')});
   guardar(l);
   // Re-renderizar para que a persiana TD suba para o topo (posição condicional)
   renderFicha(l);
@@ -1589,7 +1605,7 @@ function cancelarTD(id){
   l.td_agendado='';l.td_pedido=false;l.td_stand='';l.td_esp='';
   if(l.estado==='td_agendado')l.estado='follow_up';
   const agora=new Date();const ds=agora.toLocaleDateString('pt-PT')+' '+agora.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'});
-  if(!l.notas)l.notas=[];l.notas.push({data:ds,texto:'🚗 Test Drive removido/cancelado.'});
+  pushNota(l,{data:ds,texto:'🚗 Test Drive removido/cancelado.'});
   guardar(l);renderFicha(l);
 }
 function outlookTD(id){
@@ -1772,7 +1788,14 @@ function renderFicha(l){
     <!-- DADOS (compactos) -->
     <div class="ficha-section">
       <p class="sec-title">Dados</p>
-      ${cr('Criado',(()=>{if(!l.criado)return'';try{const d=new Date(String(l.criado));if(isNaN(d))return l.criado;const off=d.getTimezoneOffset();const c=new Date(d.getTime()-off*60000);return c.toISOString().slice(0,10).split('-').reverse().join('/');}catch(e){return l.criado||'';}})())}
+      <div class="drow" style="cursor:pointer;" onclick="const el=document.getElementById('extra-datas-${l.id}');const ab=el.style.display!=='none';el.style.display=ab?'none':'block';this.querySelector('.seta-extra').textContent=ab?'▾':'▴';">
+        <span class="dlbl">Criado <span class="seta-extra" style="font-size:10px;color:#bbb;">▾</span></span>
+        <span class="dval">${(()=>{if(!l.criado)return'';try{const d=new Date(String(l.criado));if(isNaN(d))return l.criado;const off=d.getTimezoneOffset();const c=new Date(d.getTime()-off*60000);return c.toISOString().slice(0,10).split('-').reverse().join('/');}catch(e){return l.criado||'';}})()}</span>
+      </div>
+      <div id="extra-datas-${l.id}" style="display:none;">
+        <div class="drow"><span class="dlbl" style="padding-left:10px;color:#bbb;">Criado na app</span><span class="dval">${formatDataHora(l.criado_app)}</span></div>
+        <div class="drow"><span class="dlbl" style="padding-left:10px;color:#bbb;">Primeiro contacto</span><span class="dval">${formatDataHora(l.primeiro_contacto)}</span></div>
+      </div>
       ${crTel('Telemóvel',l.tel)}
       ${cr('Email',l.email)}
       ${cr('Viatura',l.carro)}
@@ -1957,7 +1980,7 @@ async function addNota(id){
   // GARANTIA: guardar a nota imediatamente, em texto simples, ANTES de qualquer chamada à IA
   const agora=new Date();const ds=agora.toLocaleDateString('pt-PT')+' '+agora.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'});
   if(!l.notas)l.notas=[];
-  l.notas.push({data:ds,texto:txt});
+  pushNota(l,{data:ds,texto:txt});
   await guardar(l);
   renderFicha(l);
   setSyncStatus('ok','Nota guardada · '+ds);
@@ -2041,7 +2064,7 @@ function fecharComSucesso(){
   const txt=document.getElementById('sucesso-texto').value.trim();if(!txt){alert('Indica o que o cliente comprou.');return;}
   const l=leads.find(x=>String(x.id)===String(modalLeadId));if(!l)return;
   const agora=new Date();const ds=agora.toLocaleDateString('pt-PT')+' '+agora.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'});
-  l.estado='fechado';if(!l.notas)l.notas=[];l.notas.push({data:ds,texto:'✅ Fechado com sucesso — '+txt});l.follow_nota='Fechado com sucesso';
+  l.estado='fechado';pushNota(l,{data:ds,texto:'✅ Fechado com sucesso — '+txt});l.follow_nota='Fechado com sucesso';
   l.bitrix_ok=document.getElementById('sucesso-bitrix').checked;
   guardar(l);fecharModalSucesso();renderFicha(l);renderAtual();
 }
@@ -2064,7 +2087,7 @@ function fecharComInsucesso(){
   const agora=new Date();const ds=agora.toLocaleDateString('pt-PT')+' '+agora.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'});
   const extra=document.getElementById('insucesso-texto').value.trim();
   l.estado='sem_retorno';if(!l.notas)l.notas=[];
-  l.notas.push({data:ds,texto:'❌ Fechado sem sucesso — '+insucessoSel+(extra?' | '+extra:'')});l.follow_nota='Fechado: '+insucessoSel;
+  pushNota(l,{data:ds,texto:'❌ Fechado sem sucesso — '+insucessoSel+(extra?' | '+extra:'')});l.follow_nota='Fechado: '+insucessoSel;
   l.bitrix_ok=document.getElementById('insucesso-bitrix').checked;
   guardar(l);fecharModalInsucesso();renderFicha(l);renderAtual();
 }
@@ -2083,7 +2106,7 @@ function guardarReuniao(){
   l.reuniao_local=document.getElementById('reuniao-local').value;
   l.reuniao_notas=document.getElementById('reuniao-notas').value;l.reuniao_realizada=false;
   const agora=new Date();const ds=agora.toLocaleDateString('pt-PT')+' '+agora.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'});
-  if(!l.notas)l.notas=[];l.notas.push({data:ds,texto:'📅 Reunião agendada: '+l.reuniao_data+(l.reuniao_local?' em '+l.reuniao_local:'')});
+  pushNota(l,{data:ds,texto:'📅 Reunião agendada: '+l.reuniao_data+(l.reuniao_local?' em '+l.reuniao_local:'')});
   guardar(l);fecharModalReuniao();renderFicha(l);
   if(l.reuniao_data&&confirm('Reunião agendada para '+l.reuniao_data.replace('T',' ')+(l.reuniao_local?' em '+l.reuniao_local:'')+'.\n\nQueres adicionar ao Outlook agora?')){
     outlookReuniao(l.id);
@@ -2092,7 +2115,7 @@ function guardarReuniao(){
 function confirmarReuniao(id){
   const l=leads.find(x=>String(x.id)===String(id));if(!l)return;
   l.reuniao_realizada=true;const agora=new Date();const ds=agora.toLocaleDateString('pt-PT')+' '+agora.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'});
-  if(!l.notas)l.notas=[];l.notas.push({data:ds,texto:'✅ Reunião realizada'});guardar(l);renderFicha(l);
+  pushNota(l,{data:ds,texto:'✅ Reunião realizada'});guardar(l);renderFicha(l);
 }
 
 const COMERCIANTES_DEFAULT=['Aguiar','PTF','André Pinto','Marco Almeida','Jorge Brás'];
@@ -2199,7 +2222,7 @@ function guardarProposta(){
   const agora=new Date();const ds=agora.toLocaleDateString('pt-PT')+' '+agora.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'});
   const modelo=document.getElementById('prop-modelo').value;const preco=document.getElementById('prop-preco').value;
   l.propostas.push({modelo,kom:document.getElementById('prop-kom').value,preco,validade:document.getElementById('prop-validade').value,estado:document.getElementById('prop-estado').value,data:agora.toLocaleDateString('pt-PT')});
-  if(!l.notas)l.notas=[];l.notas.push({data:ds,texto:'📄 Proposta enviada: '+modelo+(preco?' — '+Number(preco).toLocaleString('pt-PT')+'€':'')});
+  pushNota(l,{data:ds,texto:'📄 Proposta enviada: '+modelo+(preco?' — '+Number(preco).toLocaleString('pt-PT')+'€':'')});
   guardar(l);fecharModalProposta();renderFicha(l);
 }
 
@@ -2420,7 +2443,7 @@ function criarLead(){
     if(!confirm(`⚠️ Possível duplicado!\n\nJá existe uma lead com o mesmo contacto:\n${nomes}\n\nContinuar mesmo assim?`))return;
   }
   const agora=new Date();const ds=agora.toLocaleDateString('pt-PT')+' '+agora.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'});
-  const nova={id:Date.now(),nome,tel,email:g('nf-email').value.trim(),opp_id:g('nf-opp').value.trim()||'(sem ID)',tipo_lead:tipoLead,carro:g('nf-carro').value.trim()||'—',kom:g('nf-kom').value.trim(),tipo:g('nf-tipo').value,nif:g('nf-nif').value.trim(),frota:'',cae_rent:g('nf-cae').value||false,cliente_existente:g('nf-exist').value.trim()||false,sector:'',estado:'contactar',notas:[{data:ds,texto:g('nf-nota').value.trim()||'Lead criada.'}],follow_data:agora.toISOString().split('T')[0],follow_nota:'Primeiro contacto',negociacao_fora:g('nf-neg').value.trim(),relacao_interna:g('nf-rel').value.trim(),financiamento:'',financiamento_tipo:'',financiamento_gestora:'',financiamento_financeira:'',td_pedido:false,td_agendado:'',td_stand:'',td_esp:'',reuniao_data:'',reuniao_local:'',reuniao_notas:'',reuniao_realizada:false,preferencias:[],propostas:[],criado:agora.toISOString().split('T')[0]};
+  const nova={id:Date.now(),nome,tel,email:g('nf-email').value.trim(),opp_id:g('nf-opp').value.trim()||'(sem ID)',tipo_lead:tipoLead,carro:g('nf-carro').value.trim()||'—',kom:g('nf-kom').value.trim(),tipo:g('nf-tipo').value,nif:g('nf-nif').value.trim(),frota:'',cae_rent:g('nf-cae').value||false,cliente_existente:g('nf-exist').value.trim()||false,sector:'',estado:'contactar',notas:[{data:ds,texto:g('nf-nota').value.trim()||'Lead criada.'}],follow_data:agora.toISOString().split('T')[0],follow_nota:'Primeiro contacto',negociacao_fora:g('nf-neg').value.trim(),relacao_interna:g('nf-rel').value.trim(),financiamento:'',financiamento_tipo:'',financiamento_gestora:'',financiamento_financeira:'',td_pedido:false,td_agendado:'',td_stand:'',td_esp:'',reuniao_data:'',reuniao_local:'',reuniao_notas:'',reuniao_realizada:false,preferencias:[],propostas:[],criado:agora.toISOString().split('T')[0],criado_app:agora.toISOString(),primeiro_contacto:agora.toISOString()};
   guardar(nova);fecharNova();renderAtual();
 }
 
@@ -2488,6 +2511,8 @@ async function importarLead(){
   if(!lead.carro&&lead.modelo)lead.carro=lead.modelo;
   if(!lead.nome||!lead.tel){alert('Código inválido — falta nome ou telefone.');return;}
   if(!lead.preferencias)lead.preferencias=[];if(!lead.propostas)lead.propostas=[];if(!lead.notas)lead.notas=[];
+  lead.criado_app=new Date().toISOString();
+  if(lead.notas.length>0)lead.primeiro_contacto=new Date().toISOString();
   // PROTECÇÃO CRÍTICA: nunca substituir silenciosamente uma lead diferente que já tenha o mesmo ID
   // (pode acontecer se dois códigos JSON foram gerados a partir de timestamps de imagem coincidentes)
   const existente=leads.find(x=>String(x.id)===String(lead.id));
@@ -2607,7 +2632,7 @@ async function processarTextoComIA(l, txt){
   // Usado pelo fluxo de VOZ — aqui a nota ainda não foi adicionada, por isso garantimos primeiro
   const agora=new Date();const ds=agora.toLocaleDateString('pt-PT')+' '+agora.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'});
   if(!l.notas)l.notas=[];
-  l.notas.push({data:ds,texto:txt});
+  pushNota(l,{data:ds,texto:txt});
   await guardar(l);
   renderFicha(l);
   setSyncStatus('ok','Nota guardada · '+ds);
@@ -2673,7 +2698,7 @@ function marcarBitrix(id,checked){
   l.bitrix_ok=checked;
   l._savedAt=Date.now();
   const agora=new Date();const ds=agora.toLocaleDateString('pt-PT')+' '+agora.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'});
-  if(checked){if(!l.notas)l.notas=[];l.notas.push({data:ds,texto:'✅ Inserida no Bitrix'});}
+  if(checked){pushNota(l,{data:ds,texto:'✅ Inserida no Bitrix'});}
   guardar(l);renderFicha(l);
 }
 
@@ -2761,7 +2786,7 @@ function renderChart(){
 function naoAtendeu(id){
   const l=leads.find(x=>String(x.id)===String(id));if(!l)return;
   if(!l.notas)l.notas=[];
-  l.notas.push({data:dstamp(),texto:'Tentei ligar, não atendeu.'});
+  pushNota(l,{data:dstamp(),texto:'Tentei ligar, não atendeu.'});
   const d=new Date();d.setDate(d.getDate()+1);d.setHours(9,0,0,0);
   l.follow_data=d.toISOString().split('T')[0];
   l.follow_nota='Tentar novamente';
@@ -2848,7 +2873,7 @@ async function criarLeadPorVoz(txt){
       const usarExistente=confirm('Já existe uma lead de "'+dup.nome+'" ('+(dup.tel||'sem telemóvel')+').\n\nOK = Adicionar esta informação a essa lead existente (recomendado)\nCancelar = Criar mesmo assim uma lead nova e separada');
       if(usarExistente){
         if(!dup.notas)dup.notas=[];
-        dup.notas.push({data:dstamp(),texto:p.nota||txt});
+        pushNota(dup,{data:dstamp(),texto:p.nota||txt});
         await guardar(dup);
         if(fichaId===String(dup.id))renderFicha(dup);
         renderAtual();
@@ -2857,7 +2882,7 @@ async function criarLeadPorVoz(txt){
       }
     }
     const agora=new Date();
-    const nova={id:Date.now(),nome:p.nome,tel:p.tel,email:p.email||'',opp_id:p.opp_id||'(sem ID)',tipo_lead:'Lead MBP',carro:p.carro||'—',kom:p.kom||'',tipo:p.tipo||'Particular',nif:'',frota:'',cae_rent:false,cliente_existente:false,sector:'',estado:'contactar',notas:[{data:dstamp(),texto:p.nota||'Lead criada por voz.'}],follow_data:agora.toISOString().split('T')[0],follow_nota:'Primeiro contacto',negociacao_fora:'',relacao_interna:'',financiamento:'',retoma:'',td_pedido:false,td_agendado:'',td_stand:'',td_esp:'',reuniao_data:'',reuniao_local:'',reuniao_notas:'',reuniao_realizada:false,preferencias:[],propostas:[],criado:agora.toISOString().split('T')[0]};
+    const nova={id:Date.now(),nome:p.nome,tel:p.tel,email:p.email||'',opp_id:p.opp_id||'(sem ID)',tipo_lead:'Lead MBP',carro:p.carro||'—',kom:p.kom||'',tipo:p.tipo||'Particular',nif:'',frota:'',cae_rent:false,cliente_existente:false,sector:'',estado:'contactar',notas:[{data:dstamp(),texto:p.nota||'Lead criada por voz.'}],follow_data:agora.toISOString().split('T')[0],follow_nota:'Primeiro contacto',negociacao_fora:'',relacao_interna:'',financiamento:'',retoma:'',td_pedido:false,td_agendado:'',td_stand:'',td_esp:'',reuniao_data:'',reuniao_local:'',reuniao_notas:'',reuniao_realizada:false,preferencias:[],propostas:[],criado:agora.toISOString().split('T')[0],criado_app:agora.toISOString(),primeiro_contacto:agora.toISOString()};
     await guardar(nova);renderAtual();setSyncStatus('ok','✨ Lead de '+p.nome+' criada!');
   }catch(e){
     // Falha de rede/IA — NUNCA perder o texto ditado. Criar lead de emergência com o texto bruto.
@@ -2866,7 +2891,7 @@ async function criarLeadPorVoz(txt){
 }
 async function criarLeadEmergencia(txt){
   const agora=new Date();
-  const nova={id:Date.now(),nome:'⚠️ Por rever — '+txt.slice(0,40),tel:'',email:'',opp_id:'(sem ID)',tipo_lead:'Lead MBP',carro:'—',kom:'',tipo:'Particular',nif:'',frota:'',cae_rent:false,cliente_existente:false,sector:'',estado:'contactar',notas:[{data:dstamp(),texto:'⚠️ Texto ditado não processado pela IA (falha de rede ou extracção). Texto original: '+txt}],follow_data:agora.toISOString().split('T')[0],follow_nota:'Por rever e completar manualmente',negociacao_fora:'',relacao_interna:'',financiamento:'',retoma:'',td_pedido:false,td_agendado:'',td_stand:'',td_esp:'',reuniao_data:'',reuniao_local:'',reuniao_notas:'',reuniao_realizada:false,preferencias:[],propostas:[],criado:agora.toISOString().split('T')[0]};
+  const nova={id:Date.now(),nome:'⚠️ Por rever — '+txt.slice(0,40),tel:'',email:'',opp_id:'(sem ID)',tipo_lead:'Lead MBP',carro:'—',kom:'',tipo:'Particular',nif:'',frota:'',cae_rent:false,cliente_existente:false,sector:'',estado:'contactar',notas:[{data:dstamp(),texto:'⚠️ Texto ditado não processado pela IA (falha de rede ou extracção). Texto original: '+txt}],follow_data:agora.toISOString().split('T')[0],follow_nota:'Por rever e completar manualmente',negociacao_fora:'',relacao_interna:'',financiamento:'',retoma:'',td_pedido:false,td_agendado:'',td_stand:'',td_esp:'',reuniao_data:'',reuniao_local:'',reuniao_notas:'',reuniao_realizada:false,preferencias:[],propostas:[],criado:agora.toISOString().split('T')[0],criado_app:agora.toISOString(),primeiro_contacto:agora.toISOString()};
   await guardar(nova);renderAtual();
   setSyncStatus('error','⚠️ Guardado para rever — não foi possível processar automaticamente');
 }
