@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Leads MBP">
-<title>Leads MBP v2.2.60</title>
+<title>Leads MBP v2.2.62</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f4f2;color:#1a1a1a;min-height:100vh;}
@@ -247,7 +247,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
 <div id="main-view">
   <div class="topbar">
-    <div class="topbar-brand"><span>Mercedes-Benz · Sociedade Comercial C. Santos</span><span class="app-version" onclick="forcarAtualizacao()" title="Toca para forçar atualização">v2.2.60 🔄</span></div>
+    <div class="topbar-brand"><span>Mercedes-Benz · Sociedade Comercial C. Santos</span><span class="app-version" onclick="forcarAtualizacao()" title="Toca para forçar atualização">v2.2.62 🔄</span></div>
     <div class="topbar-row">
       <span class="topbar-name">Mariana Magalhães</span>
       <div class="topbar-btns">
@@ -315,7 +315,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <div class="overlay" id="ov-ficha">
   <div style="display:flex;align-items:center;background:#fff;border-bottom:1px solid #e8e6e1;position:sticky;top:0;z-index:10;">
     <button class="back-btn" onclick="fecharFicha()" style="border-bottom:none;flex:1;">← Voltar</button>
-    <button onclick="forcarAtualizacao()" style="background:none;border:none;color:#bbb;font-size:12px;padding:.85rem .9rem;cursor:pointer;white-space:nowrap;font-family:inherit;" title="Forçar atualização">🔄 v2.2.60</button>
+    <button onclick="forcarAtualizacao()" style="background:none;border:none;color:#bbb;font-size:12px;padding:.85rem .9rem;cursor:pointer;white-space:nowrap;font-family:inherit;" title="Forçar atualização">🔄 v2.2.62</button>
   </div>
   <div class="ficha-pad" id="ficha-content"></div>
   <div style="padding:0 1rem;">
@@ -1434,7 +1434,7 @@ function renderRetomaDados(l){
     return`<div class="drow"><span class="dlbl">Retoma</span><span class="dval" style="display:flex;align-items:center;gap:6px;"><span style="color:#ccc;">—</span><button onclick="abrirRetoma('${l.id}')" style="background:none;border:none;color:#aaa;cursor:pointer;font-size:11px;padding:0;" title="Editar retoma">✏️</button></span></div>`;
   }
   // Tem retoma — mostra bloco estruturado
-  let html=`<div class="drow"><span class="dlbl">Retoma</span><span class="dval" style="display:flex;align-items:center;gap:6px;">Sim<button onclick="abrirRetoma('${l.id}')" style="background:none;border:none;color:#aaa;cursor:pointer;font-size:11px;padding:0;" title="Editar retoma">✏️</button></span></div>`;
+  let html=`<div class="drow"><span class="dlbl">Retoma</span><span class="dval" style="display:flex;align-items:center;gap:6px;">${l.retoma}<button onclick="abrirRetoma('${l.id}')" style="background:none;border:none;color:#aaa;cursor:pointer;font-size:11px;padding:0;" title="Editar retoma">✏️</button></span></div>`;
   if(ri.veiculo)html+=`<div class="drow"><span class="dlbl" style="padding-left:8px;color:#bbb;">Viatura</span><span class="dval">${ri.veiculo}</span></div>`;
   // Avaliação SCCS
   const avaliador=ri.avaliacao_sccs_avaliador||'Reis';
@@ -2271,6 +2271,14 @@ function abrirEditar(id){
     </div>
     <div class="ffield"><label class="flabel">NIF (empresa)</label><input class="finput" id="ed-nif" value="${l.nif||''}"></div>
     <div class="ffield"><label class="flabel">Nome da empresa</label><input class="finput" id="ed-empresa-nome" value="${l.empresa_nome||''}"></div>
+    <div class="trow" style="margin-bottom:.75rem;"><span style="font-size:13px;">CAE Rent-a-car / Comércio auto</span>
+      <select class="finput" id="ed-cae" style="width:40%;font-size:12px;">
+        <option value="">—</option>
+        <option ${l.cae_rent===true||l.cae_rent==='Sim'?'selected':''} value="Sim">Sim</option>
+        <option ${l.cae_rent===false||l.cae_rent==='Não'?'selected':''} value="Não">Não</option>
+        <option ${l.cae_rent==='Por confirmar'?'selected':''} value="Por confirmar">Por confirmar</option>
+      </select>
+    </div>
     <div class="ffield"><label class="flabel">Frota</label><input class="finput" id="ed-frota" value="${l.frota||''}"></div>
     <div class="ffield"><label class="flabel">PP ou Financiamento</label>
       <select class="finput" id="ed-financiamento" onchange="toggleFinanciamento(this.value,'ed')">
@@ -2316,14 +2324,6 @@ function abrirEditar(id){
     </div>
     <div class="ffield"><label class="flabel">Negociação fora / concorrência</label><input class="finput" id="ed-neg" value="${l.negociacao_fora||''}"></div>
     <div class="ffield"><label class="flabel">Relação / referência</label><input class="finput" id="ed-rel" value="${l.relacao_interna||''}"></div>
-    <div class="trow" style="margin-bottom:.75rem;"><span style="font-size:13px;">CAE Rent-a-car / Comércio auto</span>
-      <select class="finput" id="ed-cae" style="width:40%;font-size:12px;">
-        <option value="">—</option>
-        <option ${l.cae_rent===true||l.cae_rent==='Sim'?'selected':''} value="Sim">Sim</option>
-        <option ${l.cae_rent===false||l.cae_rent==='Não'?'selected':''} value="Não">Não</option>
-        <option ${l.cae_rent==='Por confirmar'?'selected':''} value="Por confirmar">Por confirmar</option>
-      </select>
-    </div>
     <button class="btn primary full" onclick="guardarEditar()" style="margin-top:1rem;margin-bottom:2rem;">✓ Guardar alterações</button>
   `;
 }
@@ -2513,6 +2513,31 @@ async function importarLead(){
   if(!lead.preferencias)lead.preferencias=[];if(!lead.propostas)lead.propostas=[];if(!lead.notas)lead.notas=[];
   lead.criado_app=new Date().toISOString();
   if(lead.notas.length>0)lead.primeiro_contacto=new Date().toISOString();
+  // ─── PROTECÇÃO: mesma pessoa, ID diferente ───────────────────────────────────
+  // Acontece quando o código JSON é gerado outra vez (ex: para "adicionar uma nota")
+  // e vem com um ID novo, diferente do que já tínhamos para a mesma pessoa.
+  const telCleanNovo=formatTelClean(lead.tel);
+  const nomeNovoNorm=(lead.nome||'').trim().toLowerCase();
+  const mesmaPessoaOutroId=leads.find(x=>String(x.id)!==String(lead.id)&&x.tipo_lead!=='Tarefa'&&((telCleanNovo&&formatTelClean(x.tel)===telCleanNovo)||(x.nome||'').trim().toLowerCase()===nomeNovoNorm));
+  if(mesmaPessoaOutroId){
+    const juntar=confirm('Já existe uma lead de "'+mesmaPessoaOutroId.nome+'" ('+(mesmaPessoaOutroId.tel||'sem telemóvel')+'), guardada com um ID diferente.\n\nOK = Juntar as notas deste código a essa lead existente (recomendado — evita duplicados)\nCancelar = Importar mesmo assim como lead nova e separada');
+    if(juntar){
+      if(lead.notas&&lead.notas.length){
+        if(!mesmaPessoaOutroId.notas)mesmaPessoaOutroId.notas=[];
+        lead.notas.forEach(n=>{
+          const jaExiste=mesmaPessoaOutroId.notas.some(en=>en.texto===n.texto&&en.data===n.data);
+          if(!jaExiste)pushNota(mesmaPessoaOutroId,n);
+        });
+      }
+      ['email','carro','kom','opp_id','tipo','nif'].forEach(campo=>{
+        if(!mesmaPessoaOutroId[campo]&&lead[campo])mesmaPessoaOutroId[campo]=lead[campo];
+      });
+      await guardar(mesmaPessoaOutroId);
+      fecharImport();renderAtual();
+      alert('✅ Informação juntada à lead existente de '+mesmaPessoaOutroId.nome+'. Nenhuma lead nova foi criada.');
+      return;
+    }
+  }
   // PROTECÇÃO CRÍTICA: nunca substituir silenciosamente uma lead diferente que já tenha o mesmo ID
   // (pode acontecer se dois códigos JSON foram gerados a partir de timestamps de imagem coincidentes)
   const existente=leads.find(x=>String(x.id)===String(lead.id));
