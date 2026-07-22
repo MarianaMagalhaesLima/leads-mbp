@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Leads MBP">
-<title>Leads MBP v2.2.66</title>
+<title>Leads MBP v2.2.69</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f4f2;color:#1a1a1a;min-height:100vh;}
@@ -248,7 +248,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
 <div id="main-view">
   <div class="topbar">
-    <div class="topbar-brand"><span>Mercedes-Benz · Sociedade Comercial C. Santos</span><span class="app-version" onclick="forcarAtualizacao()" title="Toca para forçar atualização">v2.2.66 🔄</span></div>
+    <div class="topbar-brand"><span>Mercedes-Benz · Sociedade Comercial C. Santos</span><span class="app-version" onclick="forcarAtualizacao()" title="Toca para forçar atualização">v2.2.69 🔄</span></div>
     <div class="topbar-row">
       <span class="topbar-name">Mariana Magalhães</span>
       <div class="topbar-btns">
@@ -273,12 +273,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <button class="tab active" id="tab-btn-hoje" onclick="mudaTab(this,'hoje')">Hoje <span id="count-hoje"></span></button>
     <button class="tab" id="tab-btn-todas" onclick="mudaTab(this,'todas')">Todas <span id="count-todas"></span></button>
     <button class="tab" id="tab-btn-tarefas" onclick="mudaTab(this,'tarefas')">Tarefas</button>
+    <button class="tab" id="tab-btn-entregas" onclick="mudaTab(this,'entregas')">Entregas <span id="count-entregas"></span></button>
     <button class="tab" id="tab-btn-stats" onclick="mudaTab(this,'stats')">Resumo</button>
     <button class="tab" id="tab-btn-arquivo" onclick="mudaTab(this,'arquivo')">Arquivo <span id="count-arquivo"></span></button>
   </div>
   <div id="tab-hoje" class="section"><div id="lista-hoje"></div></div>
   <div id="tab-todas" class="section" style="display:none"><div id="lista-todas"></div></div>
   <div id="tab-tarefas" class="section" style="display:none"><div id="lista-tarefas"></div></div>
+  <div id="tab-entregas" class="section" style="display:none"><div id="lista-entregas"></div></div>
   <div id="tab-stats" class="section" style="display:none">
     <div class="stat-grid" id="stat-cards"></div>
     <div class="divider"></div>
@@ -316,7 +318,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <div class="overlay" id="ov-ficha">
   <div style="display:flex;align-items:center;background:#fff;border-bottom:1px solid #e8e6e1;position:sticky;top:0;z-index:10;">
     <button class="back-btn" onclick="fecharFicha()" style="border-bottom:none;flex:1;">← Voltar</button>
-    <button onclick="forcarAtualizacao()" style="background:none;border:none;color:#bbb;font-size:12px;padding:.85rem .9rem;cursor:pointer;white-space:nowrap;font-family:inherit;" title="Forçar atualização">🔄 v2.2.66</button>
+    <button onclick="forcarAtualizacao()" style="background:none;border:none;color:#bbb;font-size:12px;padding:.85rem .9rem;cursor:pointer;white-space:nowrap;font-family:inherit;" title="Forçar atualização">🔄 v2.2.69</button>
   </div>
   <div class="ficha-pad" id="ficha-content"></div>
   <div style="padding:0 1rem;">
@@ -354,6 +356,15 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <div class="ffield"><label class="flabel">Data</label><input class="finput" id="tf-data" type="date"></div>
     <div class="ffield"><label class="flabel">Hora (opcional)</label><input class="finput" id="tf-hora" type="time"></div>
     <button class="btn primary full" id="tarefa-modal-btn" onclick="criarTarefaManual()" style="margin-bottom:2rem;">✓ Criar tarefa</button>
+  </div>
+</div>
+
+<!-- ENTREGA -->
+<div class="overlay" id="ov-entrega">
+  <button class="back-btn" onclick="fecharModalEntrega()">← Cancelar</button>
+  <div style="padding:0 1rem 6rem;">
+    <p class="stitle" style="margin-bottom:1rem;">Entrega</p>
+    <div id="entrega-form"></div>
   </div>
 </div>
 
@@ -649,6 +660,8 @@ const TMPLS_WA_PT=[
   {label:'Pós-visita — Boa tarde', body:`Boa tarde. Agradeço a visita de hoje ao nosso showroom. Fico à disposição para qualquer questão que surja e espero poder ajudar em breve. 😊\nMariana Magalhães | Mercedes-Benz - Sociedade Comercial C. Santos`},
   {label:'Último contacto — Bom dia', body:`Bom dia,\n\nUma vez que não obtive qualquer resposta, venho dar seguimento à conversa e perguntar se poderei ajudar em alguma questão.\n\nPor favor, não hesite em contactar-me.\n\nMuito obrigada.\n\nAté breve,\n\nMariana Magalhães | Sociedade Comercial C. Santos - Mercedes-Benz`},
   {label:'Último contacto — Boa tarde', body:`Boa tarde,\n\nUma vez que não obtive qualquer resposta, venho dar seguimento à conversa e perguntar se poderei ajudar em alguma questão.\n\nPor favor, não hesite em contactar-me.\n\nMuito obrigada.\n\nAté breve,\n\nMariana Magalhães | Sociedade Comercial C. Santos - Mercedes-Benz`},
+  {label:'Envio de contactos — Bom dia', body:`Bom dia,\n\nTal como combinado, seguem os meus contactos:\n\nMariana Magalhães | Mercedes-Benz - Sociedade Comercial C. Santos\nTelemóvel: 918 080 238\n\nFico à disposição para o que precisar.`},
+  {label:'Envio de contactos — Boa tarde', body:`Boa tarde,\n\nTal como combinado, seguem os meus contactos:\n\nMariana Magalhães | Mercedes-Benz - Sociedade Comercial C. Santos\nTelemóvel: 918 080 238\n\nFico à disposição para o que precisar.`},
 ];
 
 // ─── TEMPLATES CONFIRMAÇÃO TEST DRIVE ───────────────────────────────────────
@@ -737,6 +750,8 @@ const TMPLS_EMAIL_PT=[
   {label:'Apresentação — Boa tarde', subject:'Mercedes-Benz | Sociedade Comercial C. Santos – Mariana Magalhães', body:`Boa tarde,\n\nTentei entrar em contacto por telefone mas não consegui estabelecer ligação, pelo que aproveito para me apresentar por esta via.\nO meu nome é Mariana Magalhães e sou consultora comercial Mercedes-Benz na Sociedade Comercial C. Santos. Recebi o seu interesse num dos nossos modelos e gostaria de me colocar à sua disposição para ajudar no que precisar — seja esclarecer dúvidas, apresentar opções ou agendar uma visita ao stand.\nPode contactar-me a qualquer momento por resposta a este email ou diretamente pelo 918 080 238.\nObrigada.`},
   {label:'N.º incorreto — Bom dia', subject:'Mercedes-Benz | Sociedade Comercial C. Santos – Mariana Magalhães', body:`Bom dia,\n\nO meu nome é Mariana Magalhães e sou consultora comercial Mercedes-Benz na Sociedade Comercial C. Santos. Tentei entrar em contacto por telefone a propósito do seu interesse num dos nossos modelos, mas o número que temos em sistema não está correto.\nCaso pretenda, pode responder a este email ou contactar-me diretamente através do 918 080 238 — terei todo o gosto em ajudar e dar seguimento ao seu pedido.\nObrigada.`},
   {label:'N.º incorreto — Boa tarde', subject:'Mercedes-Benz | Sociedade Comercial C. Santos – Mariana Magalhães', body:`Boa tarde,\n\nO meu nome é Mariana Magalhães e sou consultora comercial Mercedes-Benz na Sociedade Comercial C. Santos. Tentei entrar em contacto por telefone a propósito do seu interesse num dos nossos modelos, mas o número que temos em sistema não está correto.\nCaso pretenda, pode responder a este email ou contactar-me diretamente através do 918 080 238 — terei todo o gosto em ajudar e dar seguimento ao seu pedido.\nObrigada.`},
+  {label:'Envio de contactos — Bom dia', subject:'Os meus contactos | Mercedes-Benz - Sociedade Comercial C. Santos', body:`Bom dia,\n\nTal como combinado, seguem os meus contactos:\n\nMariana Magalhães | Mercedes-Benz - Sociedade Comercial C. Santos\nTelemóvel: 918 080 238\n\nFico à disposição para o que precisar.`},
+  {label:'Envio de contactos — Boa tarde', subject:'Os meus contactos | Mercedes-Benz - Sociedade Comercial C. Santos', body:`Boa tarde,\n\nTal como combinado, seguem os meus contactos:\n\nMariana Magalhães | Mercedes-Benz - Sociedade Comercial C. Santos\nTelemóvel: 918 080 238\n\nFico à disposição para o que precisar.`},
   {label:'Envio de proposta — Bom dia', subject:'Proposta Mercedes-Benz | Sociedade Comercial C. Santos', body:`Bom dia,\n\nAntes de mais, permita-me agradecer-lhe o contacto, bem como o interesse demonstrado na Sociedade Comercial C. Santos e na Mercedes-Benz.\nConforme acordado, remeto, em anexo, a proposta referente ao modelo do seu interesse. Estou à sua inteira disposição para esclarecer qualquer dúvida ou ajustar a proposta de acordo com as suas necessidades.\nMuito obrigada.`},
   {label:'Envio de proposta — Boa tarde', subject:'Proposta Mercedes-Benz | Sociedade Comercial C. Santos', body:`Boa tarde,\n\nAntes de mais, permita-me agradecer-lhe o contacto, bem como o interesse demonstrado na Sociedade Comercial C. Santos e na Mercedes-Benz.\nConforme acordado, remeto, em anexo, a proposta referente ao modelo do seu interesse. Estou à sua inteira disposição para esclarecer qualquer dúvida ou ajustar a proposta de acordo com as suas necessidades.\nMuito obrigada.`},
   {label:'Follow-up proposta — Bom dia', subject:'Proposta Mercedes-Benz | Sociedade Comercial C. Santos', body:`Bom dia,\n\nGostaria de saber se teve oportunidade de analisar a proposta que lhe enviei e se existe alguma questão em que eu possa ajudar.\nMuito obrigada.`},
@@ -1365,23 +1380,26 @@ function reabrirLead(id){
   if(fichaId===String(id))renderFicha(l);
   renderAtual();
 }
+function entregasPendentes(){return leads.filter(l=>l.estado==='fechado'&&!(l.entrega_info&&l.entrega_info.entregue));}
 function atualizarContadores(){
   const hojeCount=ativos().filter(l=>isLembreteAgora(l)||l.estado==='contactar'||isUrg(l)).length+tarefasAtivas().length;
   const todasCount=ativos().length;
   const apagadas=JSON.parse(localStorage.getItem('leads_apagadas')||'[]');
   const fechadas=leads.filter(l=>l.estado==='fechado'||l.estado==='sem_retorno');
   const arquivoCount=fechadas.length+apagadas.length;
+  const entregasCount=entregasPendentes().length;
   const ch=document.getElementById('count-hoje');if(ch)ch.textContent=hojeCount?'('+hojeCount+')':'';
   const ct=document.getElementById('count-todas');if(ct)ct.textContent=todasCount?'('+todasCount+')':'';
   const ca=document.getElementById('count-arquivo');if(ca)ca.textContent=arquivoCount?'('+arquivoCount+')':'';
+  const ce=document.getElementById('count-entregas');if(ce)ce.textContent=entregasCount?'('+entregasCount+')':'';
 }
 function renderAtual(){
   const q=(document.getElementById('search-input')?.value||'').trim();
   atualizarContadores();
   if(q){pesquisar();return;}
-  if(tabAtual==='hoje')renderHoje();else if(tabAtual==='todas')renderTodas();else if(tabAtual==='arquivo')renderArquivo();else if(tabAtual==='tarefas')renderTarefasConcluidas();else renderStats();
+  if(tabAtual==='hoje')renderHoje();else if(tabAtual==='todas')renderTodas();else if(tabAtual==='arquivo')renderArquivo();else if(tabAtual==='tarefas')renderTarefasConcluidas();else if(tabAtual==='entregas')renderEntregas();else renderStats();
 }
-function mudaTab(btn,t){tabAtual=t;localStorage.setItem('lastTab',t);document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));btn.classList.add('active');['hoje','todas','tarefas','stats','arquivo'].forEach(x=>{document.getElementById('tab-'+x).style.display=x===t?'':'none';});renderAtual();}
+function mudaTab(btn,t){tabAtual=t;localStorage.setItem('lastTab',t);document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));btn.classList.add('active');['hoje','todas','tarefas','entregas','stats','arquivo'].forEach(x=>{document.getElementById('tab-'+x).style.display=x===t?'':'none';});renderAtual();}
 function renderTarefasConcluidas(){
   const hojeStr=HOJE.getFullYear()+'-'+String(HOJE.getMonth()+1).padStart(2,'0')+'-'+String(HOJE.getDate()).padStart(2,'0');
   const agendadas=leads.filter(l=>l.tipo_lead==='Tarefa'&&l.estado!=='feita'&&l.follow_data&&l.follow_data>hojeStr).sort((a,b)=>{
@@ -1419,6 +1437,220 @@ function renderTarefasConcluidas(){
 function reabrirTarefa(id){
   const l=leads.find(x=>String(x.id)===String(id));if(!l)return;
   l.estado='pendente';guardar(l);renderAtual();
+}
+
+// ─── ENTREGAS ─────────────────────────────────────────────────────────────────
+function renderEntregas(){
+  const hojeStr=HOJE.getFullYear()+'-'+String(HOJE.getMonth()+1).padStart(2,'0')+'-'+String(HOJE.getDate()).padStart(2,'0');
+  const lista=entregasPendentes().sort((a,b)=>{
+    const da=(a.entrega_info&&a.entrega_info.data)||'9999-99-99';
+    const db=(b.entrega_info&&b.entrega_info.data)||'9999-99-99';
+    return da.localeCompare(db);
+  });
+  document.getElementById('lista-entregas').innerHTML=lista.length?lista.map(l=>{
+    const ei=l.entrega_info||{};
+    const atrasada=ei.data&&ei.data<hojeStr;
+    return `<div class="lead-card" onclick="abrirModalEntrega('${l.id}')" style="${atrasada?'border-left:3px solid #c0392b;':''}">
+      <div class="lead-header">
+        <div class="avatar" style="background:${corTipoLead(l)};">${ini(l.nome)}</div>
+        <div style="flex:1;min-width:0;"><div class="lead-name">${l.nome}</div><div class="lead-car">${l.carro||'—'}</div></div>
+        ${ei.tipo_entrega?`<span class="badge badge-warm">${ei.tipo_entrega}</span>`:'<span class="badge">Por definir</span>'}
+      </div>
+      <div class="lead-follow" style="${atrasada?'color:#c0392b;font-weight:600;':''}">
+        ${ei.data?('Entrega: '+new Date(ei.data).toLocaleDateString('pt-PT')+(ei.hora?' às '+ei.hora:'')+(atrasada?' — EM ATRASO':'')):'Data por agendar'}
+      </div>
+    </div>`;
+  }).join(''):'<div class="empty">Sem entregas pendentes</div>';
+}
+function subtrairDiasUteis(dataStr,dias){
+  const [y,m,d]=dataStr.split('-').map(Number);
+  let dt=new Date(y,m-1,d);
+  let restantes=dias;
+  while(restantes>0){
+    dt.setDate(dt.getDate()-1);
+    const dow=dt.getDay();
+    if(dow!==0&&dow!==6)restantes--;
+  }
+  return dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0');
+}
+function toggleTipoEntrega(val){
+  const isUsado=val==='Usado';
+  const especDiv=document.getElementById('en-especialista-div');if(especDiv)especDiv.style.display=isUsado?'none':'block';
+  const frotaDiv=document.getElementById('en-frota-div');if(frotaDiv)frotaDiv.style.display=isUsado?'none':'block';
+  const matUsadoDiv=document.getElementById('en-matricula-usado-div');if(matUsadoDiv)matUsadoDiv.style.display=isUsado?'block':'none';
+}
+function abrirModalEntrega(id){
+  modalLeadId=String(id);
+  const l=leads.find(x=>String(x.id)===String(id));if(!l)return;
+  const ei=l.entrega_info||{};
+  document.getElementById('ov-entrega').classList.add('open');
+  document.getElementById('entrega-form').innerHTML=`
+    <div class="ffield"><label class="flabel">Tipo de entrega *</label>
+      <select class="finput" id="en-tipo" onchange="toggleTipoEntrega(this.value)">
+        <option value="">— Selecionar —</option>
+        <option ${ei.tipo_entrega==='Novo'?'selected':''}>Novo</option>
+        <option ${ei.tipo_entrega==='Serviço'?'selected':''}>Serviço</option>
+        <option ${ei.tipo_entrega==='Usado'?'selected':''}>Usado</option>
+      </select>
+    </div>
+    <div class="ffield"><label class="flabel">Gestora da entrega</label>
+      <select class="finput" id="en-gestora">
+        <option value="">— Selecionar —</option>
+        <option value="N/A" ${ei.gestora_entrega==='N/A'?'selected':''}>N/A</option>
+        ${Object.keys(EMAIL_GESTORAS).map(n=>`<option ${ei.gestora_entrega===n?'selected':''}>${n}</option>`).join('')}
+      </select>
+    </div>
+    <div class="ffield"><label class="flabel">PP ou Financiamento</label>
+      <select class="finput" id="en-fin-modo" onchange="document.getElementById('en-fin-sub').style.display=this.value==='Financiamento'?'block':'none';">
+        <option value="">— Selecionar —</option>
+        <option ${ei.financiamento_modo==='Pronto Pagamento'?'selected':''}>Pronto Pagamento</option>
+        <option value="Financiamento" ${ei.financiamento_modo==='Financiamento'?'selected':''}>Financiamento</option>
+      </select>
+    </div>
+    <div id="en-fin-sub" style="display:${ei.financiamento_modo==='Financiamento'?'block':'none'};">
+      <div class="ffield"><label class="flabel" style="padding-left:12px;color:#aaa;">Tipo de Financiamento</label>
+        <select class="finput" id="en-fin-tipo">
+          <option value="">— Selecionar —</option>
+          ${['Opção Vantagem','50/50','VLP Premium','Crédito','Leasing','Renting','ALD','Indeciso'].map(o=>`<option ${ei.financiamento_tipo===o?'selected':''}>${o}</option>`).join('')}
+        </select>
+      </div>
+      <div class="ffield"><label class="flabel" style="padding-left:12px;color:#aaa;">Aprovado?</label>
+        <select class="finput" id="en-fin-aprovado">
+          <option value="">— Selecionar —</option>
+          <option ${ei.financiamento_aprovado==='Sim'?'selected':''}>Sim</option>
+          <option ${ei.financiamento_aprovado==='Não'?'selected':''}>Não</option>
+          <option ${ei.financiamento_aprovado==='Pendente'?'selected':''}>Pendente</option>
+        </select>
+      </div>
+      <div class="ffield"><label class="flabel" style="padding-left:12px;color:#aaa;">Financiamento externo?</label>
+        <select class="finput" id="en-fin-externo">
+          <option value="">— Selecionar —</option>
+          <option ${ei.financiamento_externo==='Sim'?'selected':''}>Sim</option>
+          <option ${ei.financiamento_externo==='Não'?'selected':''}>Não</option>
+        </select>
+      </div>
+    </div>
+    <div class="ffield"><label class="flabel">Observações</label><textarea class="finput" id="en-obs" style="height:70px;">${ei.observacoes||''}</textarea></div>
+    <div class="ffield"><label class="flabel">Local da entrega</label><input class="finput" id="en-local" value="${ei.local||''}"></div>
+    <div class="ffield" id="en-especialista-div" style="display:${ei.tipo_entrega==='Usado'?'none':'block'};">
+      <label class="flabel">Especialista de produto</label>
+      <select class="finput" id="en-especialista">
+        <option value="">— Selecionar —</option>
+        ${Object.keys(EMAIL_ESPECIALISTAS_VLP).map(n=>`<option ${ei.especialista===n?'selected':''}>${n}</option>`).join('')}
+      </select>
+    </div>
+    <div class="ffield"><label class="flabel">Data da entrega</label><input class="finput" type="date" id="en-data" value="${ei.data||''}"></div>
+    <div class="ffield"><label class="flabel">Hora</label><input class="finput" type="time" id="en-hora" value="${ei.hora||''}"></div>
+    <div style="background:#f5f4f2;border-radius:10px;padding:.75rem;margin-bottom:1rem;">
+      <div style="font-size:12px;font-weight:700;color:#888;margin-bottom:8px;">CHECKLIST</div>
+      <label style="display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:13px;"><input type="checkbox" id="en-seguro" ${ei.seguro_tratado?'checked':''} style="width:18px;height:18px;">Seguro tratado</label>
+      <div id="en-frota-div" style="display:${ei.tipo_entrega==='Usado'?'none':'block'};">
+        <div class="ffield"><label class="flabel">Tipo de frota</label><input class="finput" id="en-frota-tipo" value="${ei.frota_tipo||''}"></div>
+        <label style="display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:13px;"><input type="checkbox" id="en-frota-carregada" ${ei.frota_carregada_pasta?'checked':''} style="width:18px;height:18px;">Carregada na pasta</label>
+        <label style="display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:13px;"><input type="checkbox" id="en-frota-validada" ${ei.frota_validada?'checked':''} style="width:18px;height:18px;">Validada pela secretaria comercial</label>
+        <label style="display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:13px;"><input type="checkbox" id="en-mat-atribuida" ${ei.matricula_atribuida?'checked':''} style="width:18px;height:18px;">Matrícula atribuída</label>
+        <div class="ffield"><label class="flabel">Matrícula</label><input class="finput" id="en-matricula" value="${ei.matricula||''}"></div>
+      </div>
+      <div id="en-matricula-usado-div" style="display:${ei.tipo_entrega==='Usado'?'block':'none'};">
+        <div class="ffield"><label class="flabel">Matrícula (já existente)</label><input class="finput" id="en-matricula-usado" value="${ei.matricula||''}"></div>
+      </div>
+    </div>
+    <button class="btn primary full" onclick="guardarEntrega('${l.id}')" style="margin-bottom:.5rem;">✓ Guardar</button>
+    <button class="btn full" style="color:#1e7a4a;margin-bottom:2rem;" onclick="marcarEntregue('${l.id}')">✓ Marcar como Entregue</button>
+  `;
+}
+function fecharModalEntrega(){document.getElementById('ov-entrega').classList.remove('open');}
+async function guardarEntrega(id){
+  const l=leads.find(x=>String(x.id)===String(id));if(!l)return;
+  const g=x=>document.getElementById(x);
+  if(!g('en-tipo').value){alert('Escolhe o tipo de entrega.');return;}
+  const ei=l.entrega_info||{};
+  const dataAntes=ei.data;
+  const tipoEntrega=g('en-tipo').value;
+  const finModo=g('en-fin-modo').value;
+  const novoEi={
+    tipo_entrega:tipoEntrega,
+    gestora_entrega:g('en-gestora').value,
+    financiamento_modo:finModo,
+    financiamento_tipo:finModo==='Financiamento'?(g('en-fin-tipo')?.value||''):'',
+    financiamento_aprovado:finModo==='Financiamento'?(g('en-fin-aprovado')?.value||''):'',
+    financiamento_externo:finModo==='Financiamento'?(g('en-fin-externo')?.value||''):'',
+    observacoes:g('en-obs').value.trim(),
+    local:g('en-local').value.trim(),
+    especialista:tipoEntrega==='Usado'?'':(g('en-especialista')?.value||''),
+    data:g('en-data').value,
+    hora:g('en-hora').value,
+    seguro_tratado:g('en-seguro').checked,
+    frota_tipo:tipoEntrega==='Usado'?'':(g('en-frota-tipo')?.value.trim()||''),
+    frota_carregada_pasta:tipoEntrega==='Usado'?false:(g('en-frota-carregada')?.checked||false),
+    frota_validada:tipoEntrega==='Usado'?false:(g('en-frota-validada')?.checked||false),
+    matricula_atribuida:tipoEntrega==='Usado'?false:(g('en-mat-atribuida')?.checked||false),
+    matricula:tipoEntrega==='Usado'?(g('en-matricula-usado')?.value.trim()||''):(g('en-matricula')?.value.trim()||''),
+    entregue:ei.entregue||false,
+    entregue_data:ei.entregue_data||'',
+    tarefa_id:ei.tarefa_id||''
+  };
+  l.entrega_info=novoEi;
+  const dataMudou=novoEi.data&&novoEi.data!==dataAntes;
+  if(dataMudou){
+    // Remover tarefa antiga associada, se existir, para não duplicar ao mudar a data
+    if(novoEi.tarefa_id){
+      leads=leads.filter(x=>String(x.id)!==String(novoEi.tarefa_id));
+      eliminarNoSheets(novoEi.tarefa_id).catch(()=>{});
+    }
+    const dataAviso=subtrairDiasUteis(novoEi.data,2);
+    const idTarefa=Date.now()+1;
+    const tarefaObj={id:idTarefa,nome:'Verificar pagamento e documentação para a entrega de '+l.nome+' ('+(l.carro||'')+')',tel:'',email:'',carro:'',kom:'',tipo:'',nif:'',frota:'',cae_rent:false,cliente_existente:false,
+      opp_id:'',tipo_lead:'Tarefa',estado:'pendente',
+      follow_data:dataAviso,follow_hora:'',follow_nota:'',
+      negociacao_fora:'',relacao_interna:'',td_pedido:false,td_agendado:'',td_stand:'',td_esp:'',
+      reuniao:'',sector:'',criado:new Date().toISOString().split('T')[0],
+      notas:[],preferencias:[],propostas:[],
+      reuniao_data:'',reuniao_local:'',reuniao_notas:'',reuniao_realizada:false,
+      bitrix_ok:false,financiamento:'',retoma:'',retoma_info:{},
+      financiamento_tipo:'',financiamento_gestora:'',financiamento_financeira:'',data_apagada:''};
+    guardar(tarefaObj);
+    l.entrega_info.tarefa_id=String(idTarefa);
+  }
+  await guardar(l);
+  fecharModalEntrega();renderAtual();
+  if(dataMudou&&confirm('Queres gerar o Outlook (.ics) para esta entrega agora?')){
+    outlookEntrega(l.id);
+  }
+}
+function marcarEntregue(id){
+  const l=leads.find(x=>String(x.id)===String(id));if(!l)return;
+  if(!confirm('Tens a certeza que queres marcar esta entrega como concluída?'))return;
+  if(!l.entrega_info)l.entrega_info={};
+  l.entrega_info.entregue=true;
+  l.entrega_info.entregue_data=new Date().toISOString();
+  guardar(l);fecharModalEntrega();renderAtual();
+}
+function outlookEntrega(id){
+  const l=leads.find(x=>String(x.id)===String(id));if(!l||!l.entrega_info||!l.entrega_info.data)return;
+  const ei=l.entrega_info;
+  const inicio=icsDateLocal(ei.data,ei.hora||'10:00');
+  let attReq=[],attOpt=[];
+  const gestoraEmail=ei.gestora_entrega&&ei.gestora_entrega!=='N/A'?EMAIL_GESTORAS[ei.gestora_entrega]:null;
+  if(ei.tipo_entrega==='Usado'){
+    attReq=[EMAIL_RICARDO_MENDES,EMAIL_DEP_USADOS,EMAIL_MARIO_ARAUJO,EMAIL_LILIA_MORAIS];
+    if(gestoraEmail)attReq.push({nome:ei.gestora_entrega,email:gestoraEmail});
+    attOpt=EMAIL_RECECIONISTAS_VLP.slice();
+  }else{
+    attReq=[EMAIL_PREPARADORES,EMAIL_SECRETARIA_VLP,...EMAIL_RECECIONISTAS_VLP];
+    if(ei.especialista&&EMAIL_ESPECIALISTAS_VLP[ei.especialista])attReq.push({nome:ei.especialista,email:EMAIL_ESPECIALISTAS_VLP[ei.especialista]});
+    if(gestoraEmail)attReq.push({nome:ei.gestora_entrega,email:gestoraEmail});
+    attOpt=Object.keys(EMAIL_ESPECIALISTAS_VLP).filter(n=>n!==ei.especialista).map(n=>({nome:n,email:EMAIL_ESPECIALISTAS_VLP[n]}));
+  }
+  const modeloSemMarca=(l.carro||'').replace(/^Mercedes-Benz\s*/i,'').trim();
+  const desc=[l.nome+' — '+modeloSemMarca,ei.observacoes?('Obs: '+ei.observacoes):''].filter(x=>x).join('\n');
+  const ics=buildIcs({
+    titulo:'Entrega '+(ei.tipo_entrega||'')+' — '+modeloSemMarca+' — '+l.nome,
+    inicio,duracaoMin:60,local:ei.local||'',
+    descricao:desc,lembretes:[1440,60],
+    attReq,attOpt
+  });
+  downloadIcs('entrega-'+l.nome.replace(/\s/g,'-')+'.ics',ics);
 }
 
 function campo(label,val){return`<div class="campo"><div class="campo-label">${label}</div><div class="campo-val">${val||'—'}</div></div>`;}
@@ -1525,6 +1757,17 @@ function pad2(n){return String(n).padStart(2,'0');}
 function icsDate(dt){
   return dt.getUTCFullYear()+pad2(dt.getUTCMonth()+1)+pad2(dt.getUTCDate())+'T'+pad2(dt.getUTCHours())+pad2(dt.getUTCMinutes())+'00Z';
 }
+// ─── EMAILS PARA CONVITES DE ENTREGA ─────────────────────────────────────────
+const EMAIL_PREPARADORES={nome:'Preparadores VLP',email:'preparadores_vlp@soccsantos.pt'};
+const EMAIL_SECRETARIA_VLP={nome:'Secretaria Comercial VLP',email:'secretaria_vlp@soccsantos.pt'};
+const EMAIL_RECECIONISTAS_VLP=[{nome:'Vânia Duarte',email:'vania.duarte@soccsantos.pt'},{nome:'Débora Guedes',email:'debora.guedes@soccsantos.pt'}];
+const EMAIL_ESPECIALISTAS_VLP={'Abílio Costa':'abilio.costa@soccsantos.pt','Nuno Oliveira':'nuno.oliveira@soccsantos.pt','Rui Sousa':'rui.sousa@soccsantos.pt'};
+const EMAIL_GESTORAS={'Diana Sousa':'diana.sousa@soccsantos.pt','Paula Alexandra':'paula.alexandra@soccsantos.pt','Raquel Magalhães':'raquel.magalhaes@soccsantos.pt','Vera Teles':'vera.teles@soccsantos.pt'};
+const EMAIL_RICARDO_MENDES={nome:'Ricardo Mendes',email:'ricardo.mendes@soccsantos.pt'};
+const EMAIL_DEP_USADOS={nome:'Departamento de Usados',email:'dep_bo_usados@soccsantos.pt'};
+const EMAIL_MARIO_ARAUJO={nome:'Mário Araújo',email:'mario.araujo@soccsantos.pt'};
+const EMAIL_LILIA_MORAIS={nome:'Lília Morais',email:'lilia.morais@soccsantos.pt'};
+
 function icsDateLocal(dateStr,horaStr){
   // dateStr: "2026-06-20", horaStr: "16:00"
   const [y,m,d]=dateStr.split('-').map(Number);
@@ -1541,7 +1784,7 @@ function downloadIcs(filename,icsContent){
 }
 function gerarUID(){return Date.now()+'-'+Math.random().toString(36).slice(2)+'@leads-mbp';}
 
-function buildIcs({titulo,inicio,duracaoMin,local,descricao,lembretes}){
+function buildIcs({titulo,inicio,duracaoMin,local,descricao,lembretes,attReq,attOpt}){
   const fim=new Date(inicio.getTime()+duracaoMin*60000);
   const linhas=[
     'BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Leads MBP//PT',
@@ -1554,6 +1797,8 @@ function buildIcs({titulo,inicio,duracaoMin,local,descricao,lembretes}){
   ];
   if(local)linhas.push('LOCATION:'+escapaIcs(local));
   if(descricao)linhas.push('DESCRIPTION:'+escapaIcs(descricao));
+  (attReq||[]).forEach(a=>{if(a&&a.email)linhas.push('ATTENDEE;ROLE=REQ-PARTICIPANT;CN='+escapaIcs(a.nome||a.email)+':mailto:'+a.email);});
+  (attOpt||[]).forEach(a=>{if(a&&a.email)linhas.push('ATTENDEE;ROLE=OPT-PARTICIPANT;CN='+escapaIcs(a.nome||a.email)+':mailto:'+a.email);});
   (lembretes||[]).forEach(min=>{
     linhas.push('BEGIN:VALARM','TRIGGER:-PT'+min+'M','ACTION:DISPLAY','DESCRIPTION:Lembrete','END:VALARM');
   });
@@ -2396,15 +2641,60 @@ function abrirNova(){document.getElementById('ov-nova').classList.add('open');do
   <div class="ffield"><label class="flabel">KOM</label><input class="finput" id="nf-kom" inputmode="text"></div>
   <div class="ffield"><label class="flabel">Tipo de lead *</label><select class="finput" id="nf-tipo-lead" onchange="toggleColegas(this.value)"><option value="">— Selecionar —</option><option>Lead MBP</option><option>Opp MBP</option><option>Lead SCCS</option><option>Lead SCCS (RAC)</option><option>Recado</option><option>Telefone Boavista</option><option>Presencial Boavista</option><option>Presencial Maia</option><option>Cliente</option><option>Recomendação Cliente</option><option>Passada por Colega</option></select></div>
   <div class="ffield" id="nf-colega-div" style="display:none;"><label class="flabel">Nome do colega *</label><input class="finput" id="nf-colega" placeholder="Ex: João Silva"></div>
+  <div class="ffield"><label class="flabel">Cliente existente</label>
+    <select class="finput" id="nf-exist-sel">
+      <option value="">— Selecionar —</option>
+      <option>Sim</option><option>Não</option><option>Apenas Oficina</option><option>Vendedor Antigo</option><option>Outro</option>
+    </select>
+    <input class="finput" id="nf-exist-texto" placeholder="Detalhe / justificação (opcional)" style="margin-top:6px;font-size:12px;">
+  </div>
   <div class="ffield"><label class="flabel">Tipo de cliente</label><select class="finput" id="nf-tipo"><option>Particular</option><option>Empresa</option><option>ENI</option><option>Sócio de Empresa</option></select></div>
   <div class="ffield"><label class="flabel">NIF (empresa)</label><input class="finput" id="nf-nif"></div>
-  <div class="trow"><span style="font-size:13px;">Cliente existente</span><input class="finput" id="nf-exist" placeholder="Ex: ex-cliente do João Silva" style="width:55%;font-size:12px;"></div>
+  <div class="ffield"><label class="flabel">Nome da empresa</label><input class="finput" id="nf-empresa-nome"></div>
   <div class="trow" style="margin-bottom:.75rem;"><span style="font-size:13px;">CAE Rent-a-car / Comércio auto</span>
     <select class="finput" id="nf-cae" style="width:40%;font-size:12px;">
       <option value="">—</option>
       <option value="Sim">Sim</option>
       <option value="Não">Não</option>
       <option value="Por confirmar">Por confirmar</option>
+    </select>
+  </div>
+  <div class="ffield"><label class="flabel">Frota</label><input class="finput" id="nf-frota"></div>
+  <div class="ffield"><label class="flabel">PP ou Financiamento</label>
+    <select class="finput" id="nf-financiamento" onchange="toggleFinanciamento(this.value,'nf')">
+      <option value="">— Selecionar —</option>
+      <option>Pronto Pagamento</option>
+      <option value="Financiamento">Financiamento</option>
+      <option>Indeciso</option>
+    </select>
+  </div>
+  <div id="nf-fin-sub" style="display:none;">
+    <div class="ffield"><label class="flabel" style="padding-left:12px;color:#aaa;">Tipo de Financiamento</label>
+      <select class="finput" id="nf-fin-tipo">
+        <option value="">— Selecionar —</option>
+        ${['Opção Vantagem','50/50','VLP Premium','Crédito','Leasing','Renting','ALD','Indeciso'].map(o=>`<option>${o}</option>`).join('')}
+      </select>
+    </div>
+    <div class="ffield"><label class="flabel" style="padding-left:12px;color:#aaa;">Gestora</label>
+      <select class="finput" id="nf-fin-gestora">
+        <option value="">— Selecionar —</option>
+        ${['Diana Sousa','Raquel Magalhães','Vera Teles','Paula Alexandra'].map(o=>`<option>${o}</option>`).join('')}
+      </select>
+    </div>
+    <div class="ffield"><label class="flabel" style="padding-left:12px;color:#aaa;">Financeira</label>
+      <select class="finput" id="nf-fin-financeira" onchange="toggleFinanceiraOutra(this.value,'nf')">
+        <option value="">— Selecionar —</option>
+        ${['MBF','Credibom','Santander','Montepio','Cetelem/BNP Paribas','BBVA','321 Crédito','Outra'].map(o=>`<option>${o}</option>`).join('')}
+      </select>
+    </div>
+    <div id="nf-fin-outra-div" style="display:none;">
+      <div class="ffield"><label class="flabel" style="padding-left:12px;color:#aaa;">Qual financeira?</label><input class="finput" id="nf-fin-outra"></div>
+    </div>
+  </div>
+  <div class="ffield"><label class="flabel">Retoma</label>
+    <select class="finput" id="nf-retoma">
+      <option value="">— Selecionar —</option>
+      <option>Sim</option><option>Não</option><option>Indeciso</option>
     </select>
   </div>
   <div class="ffield"><label class="flabel">Negociação fora</label><input class="finput" id="nf-neg"></div>
@@ -2464,7 +2754,13 @@ function criarLead(){
     if(!confirm(`⚠️ Possível duplicado!\n\nJá existe uma lead com o mesmo contacto:\n${nomes}\n\nContinuar mesmo assim?`))return;
   }
   const agora=new Date();const ds=agora.toLocaleDateString('pt-PT')+' '+agora.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'});
-  const nova={id:Date.now(),nome,tel,email:g('nf-email').value.trim(),opp_id:g('nf-opp').value.trim()||'(sem ID)',tipo_lead:tipoLead,carro:g('nf-carro').value.trim()||'—',kom:normalizarKOM(g('nf-kom').value.trim()),tipo:g('nf-tipo').value,nif:g('nf-nif').value.trim(),frota:'',cae_rent:g('nf-cae').value||false,cliente_existente:g('nf-exist').value.trim()||false,sector:'',estado:'contactar',notas:[{data:ds,texto:g('nf-nota').value.trim()||'Lead criada.'}],follow_data:agora.toISOString().split('T')[0],follow_nota:'Primeiro contacto',negociacao_fora:g('nf-neg').value.trim(),relacao_interna:g('nf-rel').value.trim(),financiamento:'',financiamento_tipo:'',financiamento_gestora:'',financiamento_financeira:'',td_pedido:false,td_agendado:'',td_stand:'',td_esp:'',reuniao_data:'',reuniao_local:'',reuniao_notas:'',reuniao_realizada:false,preferencias:[],propostas:[],criado:agora.toISOString().split('T')[0],criado_app:agora.toISOString(),primeiro_contacto:agora.toISOString()};
+  const existSel=g('nf-exist-sel').value;
+  const existTexto=g('nf-exist-texto').value.trim();
+  const clienteExistente=existSel?(existTexto?existSel+' — '+existTexto:existSel):false;
+  const finanValor=g('nf-financiamento').value;
+  const finFin=g('nf-fin-financeira')?.value||'';
+  const finOutra=g('nf-fin-outra')?.value.trim()||'';
+  const nova={id:Date.now(),nome,tel,email:g('nf-email').value.trim(),opp_id:g('nf-opp').value.trim()||'(sem ID)',tipo_lead:tipoLead,carro:g('nf-carro').value.trim()||'—',kom:normalizarKOM(g('nf-kom').value.trim()),tipo:g('nf-tipo').value,nif:g('nf-nif').value.trim(),empresa_nome:g('nf-empresa-nome').value.trim(),frota:g('nf-frota').value.trim(),cae_rent:g('nf-cae').value||false,cliente_existente:clienteExistente,sector:'',estado:'contactar',notas:[{data:ds,texto:g('nf-nota').value.trim()||'Lead criada.'}],follow_data:agora.toISOString().split('T')[0],follow_nota:'Primeiro contacto',negociacao_fora:g('nf-neg').value.trim(),relacao_interna:g('nf-rel').value.trim(),financiamento:finanValor,financiamento_tipo:finanValor==='Financiamento'?(g('nf-fin-tipo')?.value||''):'',financiamento_gestora:finanValor==='Financiamento'?(g('nf-fin-gestora')?.value||''):'',financiamento_financeira:finanValor==='Financiamento'?(finFin==='Outra'&&finOutra?finOutra:finFin):'',retoma:g('nf-retoma').value,td_pedido:false,td_agendado:'',td_stand:'',td_esp:'',reuniao_data:'',reuniao_local:'',reuniao_notas:'',reuniao_realizada:false,preferencias:[],propostas:[],criado:agora.toISOString().split('T')[0],criado_app:agora.toISOString(),primeiro_contacto:agora.toISOString()};
   guardar(nova);fecharNova();renderAtual();
 }
 
