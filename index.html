@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Leads MBP">
-<title>Leads MBP v2.2.69</title>
+<title>Leads MBP v2.2.71</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f4f2;color:#1a1a1a;min-height:100vh;}
@@ -90,10 +90,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .ficha-pad{padding:0 0 2rem;}
 
 /* ── FICHA HEADER (colored) ── */
-.ficha-hero{padding:1.1rem 1rem 1rem;display:flex;align-items:center;gap:12px;position:sticky;top:44px;z-index:9;transition:padding .1s linear;}
+.ficha-hero{padding:1.1rem 1rem 1rem;display:flex;align-items:center;gap:12px;position:sticky;top:44px;z-index:9;}
 .ficha-hero.opp{background:#0e4430;}
 .ficha-hero.lead{background:#1a1a1a;}
-.ficha-hero-inner{display:flex;align-items:center;gap:12px;flex:1;min-width:0;transform-origin:left center;transition:transform .1s linear;}
+.ficha-hero-inner{display:flex;align-items:center;gap:12px;flex:1;min-width:0;}
 .ficha-av{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;flex-shrink:0;border:1.5px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.15);}
 .ficha-name{font-size:17px;font-weight:700;color:#fff;line-height:1.2;}
 .ficha-sub{font-size:11px;color:rgba(255,255,255,0.55);margin-top:3px;}
@@ -248,7 +248,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
 <div id="main-view">
   <div class="topbar">
-    <div class="topbar-brand"><span>Mercedes-Benz · Sociedade Comercial C. Santos</span><span class="app-version" onclick="forcarAtualizacao()" title="Toca para forçar atualização">v2.2.69 🔄</span></div>
+    <div class="topbar-brand"><span>Mercedes-Benz · Sociedade Comercial C. Santos</span><span class="app-version" onclick="forcarAtualizacao()" title="Toca para forçar atualização">v2.2.71 🔄</span></div>
     <div class="topbar-row">
       <span class="topbar-name">Mariana Magalhães</span>
       <div class="topbar-btns">
@@ -318,7 +318,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <div class="overlay" id="ov-ficha">
   <div style="display:flex;align-items:center;background:#fff;border-bottom:1px solid #e8e6e1;position:sticky;top:0;z-index:10;">
     <button class="back-btn" onclick="fecharFicha()" style="border-bottom:none;flex:1;">← Voltar</button>
-    <button onclick="forcarAtualizacao()" style="background:none;border:none;color:#bbb;font-size:12px;padding:.85rem .9rem;cursor:pointer;white-space:nowrap;font-family:inherit;" title="Forçar atualização">🔄 v2.2.69</button>
+    <button onclick="forcarAtualizacao()" style="background:none;border:none;color:#bbb;font-size:12px;padding:.85rem .9rem;cursor:pointer;white-space:nowrap;font-family:inherit;" title="Forçar atualização">🔄 v2.2.71</button>
   </div>
   <div class="ficha-pad" id="ficha-content"></div>
   <div style="padding:0 1rem;">
@@ -720,6 +720,94 @@ Pedimos que se dirija ao showroom de viaturas novas e informe na receção que t
 Para a eventualidade de surgir alguma alteração, pedia-lhe que entrasse em contacto comigo com a devida antecedência.
 Muito obrigada.`};
 
+// ─── MENSAGENS DE AGENDAMENTO (Confirmação/Lembrete — TD/Reunião — PT/EN) ─────
+function gerarMsgAgendamento(agendType, acao, saudacao, lang, l){
+  const isPT = lang==='pt';
+  let data='___',hora='___',localTexto='___',morada='',modeloLine='';
+  if(agendType==='td'){
+    const dt=l.td_agendado||'';
+    data=dt.length>=10?dt.slice(8,10)+'/'+dt.slice(5,7)+'/'+dt.slice(0,4):'___';
+    hora=dt.length>=16?dt.slice(11,16):'___';
+    const stand=(l.td_stand||'').toUpperCase();
+    if(stand.includes('MAIA')){localTexto='Sociedade Comercial C. Santos Maia';morada='Rua da Estrada, 95, Maia';}
+    else{localTexto='Sociedade Comercial C. Santos Boavista';morada='Avenida da Boavista, 3743, Porto';}
+    const modelo=l.td_modelo||l.carro||'___';
+    modeloLine=(isPT?'Modelo: ':'Model: ')+modelo;
+  } else {
+    const dt=l.reuniao_data||'';
+    data=dt.length>=10?dt.slice(8,10)+'/'+dt.slice(5,7)+'/'+dt.slice(0,4):'___';
+    hora=dt.length>=16?dt.slice(11,16):'___';
+    const loc=(l.reuniao_local||'').toUpperCase();
+    if(loc.includes('MAIA')){localTexto='Sociedade Comercial C. Santos Maia';morada='Rua da Estrada, 95, Maia';}
+    else if(loc.includes('BOAVISTA')){localTexto='Sociedade Comercial C. Santos Boavista';morada='Avenida da Boavista, 3743, Porto';}
+    else{localTexto=l.reuniao_local||'___';morada='';}
+  }
+  const tipoLabel=agendType==='td'?(isPT?'Test Drive':'Test Drive'):(isPT?'Reunião Presencial':'In-person Meeting');
+  const saud=isPT?(saudacao==='bomdia'?'Bom dia':'Boa tarde'):(saudacao==='bomdia'?'Good morning':'Good afternoon');
+  if(isPT){
+    const verbo=acao==='confirmar'?'confirmar':'relembrar';
+    const linhas=['Tipo de agendamento: '+tipoLabel,'Data: '+data,'Hora: '+hora,'Local: '+localTexto];
+    if(morada)linhas.push('Morada: '+morada);
+    if(modeloLine)linhas.push(modeloLine);
+    return {subject:(agendType==='td'?'Test Drive':'Reunião')+' Mercedes-Benz | Sociedade Comercial C. Santos',
+      body:saud+',\n\nVenho por este meio '+verbo+' o seu agendamento:\n\n'+linhas.join('\n')+'\n\nPara a eventualidade de surgir alguma alteração, pedia-lhe que entrasse em contacto comigo com a devida antecedência.\nMuito obrigada.\n\nAté breve,\nMariana Magalhães — Sociedade Comercial C. Santos - Mercedes-Benz'};
+  } else {
+    const verbo=acao==='confirmar'?'confirm':'remind you of';
+    const linhas=['Appointment type: '+tipoLabel,'Date: '+data,'Time: '+hora,'Location: '+localTexto];
+    if(morada)linhas.push('Address: '+morada);
+    if(modeloLine)linhas.push(modeloLine);
+    return {subject:(agendType==='td'?'Test Drive':'Meeting')+' Mercedes-Benz | Sociedade Comercial C. Santos',
+      body:saud+',\n\nI am writing to '+verbo+' your appointment:\n\n'+linhas.join('\n')+'\n\nShould anything change, please let me know in advance.\nThank you.\n\nBest regards,\nMariana Magalhães — Sociedade Comercial C. Santos - Mercedes-Benz'};
+  }
+}
+function labelAgendType(agendType,lang){return agendType==='td'?(lang==='pt'?'🚗 Test Drive':'🚗 Test Drive'):(lang==='pt'?'📅 Reunião':'📅 Meeting');}
+// Estado de navegação do submenu de agendamento por canal
+const agendNavState={wa:null,sms:null,email:null};
+function renderMenuAgendRaiz(tipo,lang){
+  const l=fichaId?leads.find(x=>String(x.id)===fichaId):null;
+  const isPT=lang==='pt';
+  let html='<button class="tmpl-btn" style="color:#888;" onclick="fecharMenuAgend(\''+tipo+'\',\''+lang+'\')">← '+(isPT?'Voltar':'Back')+'</button>';
+  if(l&&l.reuniao_data){html+='<button class="tmpl-btn" style="border-color:#1e7a4a;color:#1e7a4a;font-weight:600;" onclick="abrirMenuAgendAcao(\''+tipo+'\',\'reuniao\',\''+lang+'\')">'+labelAgendType('reuniao',lang)+'</button>';}
+  if(l&&l.td_agendado){html+='<button class="tmpl-btn" style="border-color:#1e7a4a;color:#1e7a4a;font-weight:600;" onclick="abrirMenuAgendAcao(\''+tipo+'\',\'td\',\''+lang+'\')">'+labelAgendType('td',lang)+'</button>';}
+  document.getElementById('tmpl-'+tipo+'-list').innerHTML=html;
+}
+function abrirMenuAgend(tipo,lang){
+  agendNavState[tipo]={nivel:'raiz'};
+  renderMenuAgendRaiz(tipo,lang);
+}
+function fecharMenuAgend(tipo,lang){
+  agendNavState[tipo]=null;
+  buildTmplList(document.getElementById('tmpl-'+tipo+'-list'), (tipo==='email'?(lang==='pt'?TMPLS_EMAIL_PT:TMPLS_EMAIL_EN):(lang==='pt'?TMPLS_WA_PT:TMPLS_WA_EN)), tipo, lang);
+}
+function abrirMenuAgendAcao(tipo,agendType,lang){
+  agendNavState[tipo]={nivel:'acao',agendType};
+  const isPT=lang==='pt';
+  let html='<button class="tmpl-btn" style="color:#888;" onclick="abrirMenuAgend(\''+tipo+'\',\''+lang+'\')">← '+(isPT?'Voltar':'Back')+'</button>';
+  html+='<button class="tmpl-btn" style="border-color:#1e7a4a;color:#1e7a4a;" onclick="abrirMenuAgendSaudacao(\''+tipo+'\',\''+agendType+'\',\'confirmar\',\''+lang+'\')">'+(isPT?'✅ Confirmação':'✅ Confirmation')+'</button>';
+  html+='<button class="tmpl-btn" style="border-color:#b7770d;color:#b7770d;" onclick="abrirMenuAgendSaudacao(\''+tipo+'\',\''+agendType+'\',\'lembrar\',\''+lang+'\')">'+(isPT?'🔔 Lembrete':'🔔 Reminder')+'</button>';
+  document.getElementById('tmpl-'+tipo+'-list').innerHTML=html;
+}
+function abrirMenuAgendSaudacao(tipo,agendType,acao,lang){
+  agendNavState[tipo]={nivel:'saudacao',agendType,acao};
+  const isPT=lang==='pt';
+  let html='<button class="tmpl-btn" style="color:#888;" onclick="abrirMenuAgendAcao(\''+tipo+'\',\''+agendType+'\',\''+lang+'\')">← '+(isPT?'Voltar':'Back')+'</button>';
+  html+='<button class="tmpl-btn" onclick="enviarMsgAgendamento(\''+tipo+'\',\''+agendType+'\',\''+acao+'\',\'bomdia\',\''+lang+'\')">'+(isPT?'☀️ Bom dia':'☀️ Good morning')+'</button>';
+  html+='<button class="tmpl-btn" onclick="enviarMsgAgendamento(\''+tipo+'\',\''+agendType+'\',\''+acao+'\',\'boatarde\',\''+lang+'\')">'+(isPT?'🌇 Boa tarde':'🌇 Good afternoon')+'</button>';
+  document.getElementById('tmpl-'+tipo+'-list').innerHTML=html;
+}
+function enviarMsgAgendamento(tipo,agendType,acao,saudacao,lang){
+  const l=fichaId?leads.find(x=>String(x.id)===fichaId):null;if(!l)return;
+  const t=gerarMsgAgendamento(agendType,acao,saudacao,lang,l);
+  enviarTemplate(tipo,encodeURIComponent(JSON.stringify(t)));
+}
+// Atalho directo a partir da secção de agendamento (TD/Reunião) ou do histórico
+function atalhoAgendamento(tipo,agendType){
+  if(tipo==='wa')abrirTmplWA();
+  else if(tipo==='sms')abrirTmplSMS();
+  else abrirTmplEmail();
+  abrirMenuAgendAcao(tipo,agendType,tmplLang);
+}
+
 function preencherConfTD(tmpl){
   const l=fichaId?leads.find(x=>String(x.id)===fichaId):null;
   if(!l)return tmpl;
@@ -807,33 +895,12 @@ function buildTmplList(container, tmpls, tipo, lang){
   // Blank button
   const blankTmpl=tipo==='email'?{label:'Em branco',subject:'',body:''}:{label:'Em branco',body:'\n\nMariana Magalhães | Sociedade Comercial C. Santos - Mercedes-Benz'};
   const blankBtn=`<button class="tmpl-btn" style="border-color:#ccc;color:#888;" onclick="enviarTemplate('${tipo}','${encodeURIComponent(JSON.stringify(blankTmpl))}')">📝 Em branco</button>`;
-  // TD confirmation buttons (only if lead has TD scheduled)
-  let tdBtns='';
-  if(l&&l.td_agendado){
-    const stand=(l.td_stand||'').toUpperCase();
-    if(tipo==='wa'||tipo==='sms'){
-      const tmplBV=preencherConfTD(TMPLS_CONF_TD_BV_WA);
-      const tmplMaia=preencherConfTD(TMPLS_CONF_TD_MAIA_WA);
-      if(stand.includes('BOAVISTA')){
-        tdBtns=`<button class="tmpl-btn" style="border-color:#1e7a4a;color:#1e7a4a;" onclick="enviarTemplate('${tipo}','${encodeURIComponent(JSON.stringify(tmplBV))}')">✅ Confirmação TD Boavista</button>`;
-      } else if(stand.includes('MAIA')){
-        tdBtns=`<button class="tmpl-btn" style="border-color:#1e7a4a;color:#1e7a4a;" onclick="enviarTemplate('${tipo}','${encodeURIComponent(JSON.stringify(tmplMaia))}')">✅ Confirmação TD Maia</button>`;
-      } else {
-        tdBtns=`<button class="tmpl-btn" style="border-color:#1e7a4a;color:#1e7a4a;" onclick="enviarTemplate('${tipo}','${encodeURIComponent(JSON.stringify(tmplBV))}')">✅ Confirmação TD Boavista</button><button class="tmpl-btn" style="border-color:#1e7a4a;color:#1e7a4a;" onclick="enviarTemplate('${tipo}','${encodeURIComponent(JSON.stringify(tmplMaia))}')">✅ Confirmação TD Maia</button>`;
-      }
-    } else if(tipo==='email'){
-      const tmplBV=preencherConfTD(TMPLS_CONF_TD_BV_EMAIL);
-      const tmplMaia=preencherConfTD(TMPLS_CONF_TD_MAIA_EMAIL);
-      if(stand.includes('BOAVISTA')){
-        tdBtns=`<button class="tmpl-btn" style="border-color:#1e7a4a;color:#1e7a4a;" onclick="enviarTemplate('${tipo}','${encodeURIComponent(JSON.stringify(tmplBV))}')">✅ Confirmação TD Boavista</button>`;
-      } else if(stand.includes('MAIA')){
-        tdBtns=`<button class="tmpl-btn" style="border-color:#1e7a4a;color:#1e7a4a;" onclick="enviarTemplate('${tipo}','${encodeURIComponent(JSON.stringify(tmplMaia))}')">✅ Confirmação TD Maia</button>`;
-      } else {
-        tdBtns=`<button class="tmpl-btn" style="border-color:#1e7a4a;color:#1e7a4a;" onclick="enviarTemplate('${tipo}','${encodeURIComponent(JSON.stringify(tmplBV))}')">✅ Confirmação TD Boavista</button><button class="tmpl-btn" style="border-color:#1e7a4a;color:#1e7a4a;" onclick="enviarTemplate('${tipo}','${encodeURIComponent(JSON.stringify(tmplMaia))}')">✅ Confirmação TD Maia</button>`;
-      }
-    }
+  // Categorias de agendamento (Reunião / Test Drive) — só aparecem se houver algo agendado
+  let agendBtns='';
+  if(l&&(l.reuniao_data||l.td_agendado)){
+    agendBtns=`<button class="tmpl-btn" style="border-color:#1e7a4a;color:#1e7a4a;font-weight:600;" onclick="abrirMenuAgend('${tipo}','${lang}')">📅 Confirmar/Lembrar agendamento</button>`;
   }
-  container.innerHTML = tdBtns + blankBtn + items + enBtn;
+  container.innerHTML = agendBtns + blankBtn + items + enBtn;
 }
 
 function toggleTmplLang(tipo){
@@ -1706,7 +1773,7 @@ function renderPropostas(l){
 function renderReuniao(l){
   if(l.reuniao_data){
     const dt=new Date(l.reuniao_data);const dtStr=dt.toLocaleDateString('pt-PT')+' '+dt.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'});
-    return`<div class="nota-block"><div class="nota-meta">📅 ${dtStr}${l.reuniao_local?' · '+l.reuniao_local:''}</div><div class="nota-text">${l.reuniao_notas||''}</div><div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;"><button id="btn-ics-reun-${l.id}" onclick="outlookReuniao('${l.id}')" class="btn" style="font-size:12px;padding:5px 10px;border-color:#185FA5;color:#185FA5;">📅 Outlook</button><button onclick="confirmarReuniao('${l.id}')" class="btn" style="font-size:12px;padding:5px 10px;border-color:#2e7d32;color:#2e7d32;">✅ Realizada</button><button onclick="abrirModalReuniao('${l.id}')" class="btn" style="font-size:12px;padding:5px 10px;">✏️ Editar</button></div></div>`;
+    return`<div class="nota-block"><div class="nota-meta">📅 ${dtStr}${l.reuniao_local?' · '+l.reuniao_local:''}</div><div class="nota-text">${l.reuniao_notas||''}</div><div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;"><button id="btn-ics-reun-${l.id}" onclick="outlookReuniao('${l.id}')" class="btn" style="font-size:12px;padding:5px 10px;border-color:#185FA5;color:#185FA5;">📅 Outlook</button><button onclick="confirmarReuniao('${l.id}')" class="btn" style="font-size:12px;padding:5px 10px;border-color:#2e7d32;color:#2e7d32;">✅ Realizada</button><button onclick="abrirModalReuniao('${l.id}')" class="btn" style="font-size:12px;padding:5px 10px;">✏️ Editar</button></div><div style="display:flex;gap:6px;margin-top:6px;"><button onclick="atalhoAgendamento('wa','reuniao')" class="btn sm" style="flex:1;border-color:#1e7a4a;color:#1e7a4a;">💬 WhatsApp</button><button onclick="atalhoAgendamento('sms','reuniao')" class="btn sm" style="flex:1;">📱 SMS</button><button onclick="atalhoAgendamento('email','reuniao')" class="btn sm" style="flex:1;">✉️ Email</button></div></div>`;
   }
   if(l.reuniao_realizada)return`<div class="nota-block"><div class="nota-meta">✅ Reunião realizada</div><div class="nota-text">${l.reuniao_notas||''}</div></div>`;
   return`<p style="font-size:13px;color:#888;margin-bottom:.75rem;">Sem reunião agendada</p>`;
@@ -1740,17 +1807,8 @@ function abrirFicha(id){
     carregar();
   }
   atualizarVoz();
-  ovFicha.onscroll=()=>{
-    const hero=ovFicha.querySelector('.ficha-hero');
-    const inner=ovFicha.querySelector('.ficha-hero-inner');
-    if(!hero||!inner)return;
-    const t=Math.max(0,Math.min(1,ovFicha.scrollTop/70)); // 0 = topo, 1 = totalmente encolhido
-    const scale=1-0.32*t; // encolhe até 68% do tamanho
-    inner.style.transform='scale('+scale+')';
-    hero.style.padding=(1.1-0.85*t)+'rem 1rem '+(1-0.8*t)+'rem';
-  };
 }
-function fecharFicha(){fichaId=null;history.replaceState(null,'',window.location.pathname+window.location.search);const ovFicha=document.getElementById('ov-ficha');ovFicha.onscroll=null;ovFicha.classList.remove('open');atualizarVoz();renderAtual();}
+function fecharFicha(){fichaId=null;history.replaceState(null,'',window.location.pathname+window.location.search);const ovFicha=document.getElementById('ov-ficha');ovFicha.classList.remove('open');atualizarVoz();renderAtual();}
 
 // ─── ICS / OUTLOOK ───────────────────────────────────────────────────────────
 function pad2(n){return String(n).padStart(2,'0');}
@@ -1842,6 +1900,7 @@ function guardarTD(id){
   const dtEl=document.getElementById('td-data-'+id);
   const standEl=document.getElementById('td-stand-'+id);
   const espEl=document.getElementById('td-esp-'+id);
+  const modeloEl=document.getElementById('td-modelo-'+id);
   const dt=dtEl?dtEl.value:'';
   const stand=standEl?standEl.value:'';
   const esp=espEl?espEl.value:'';
@@ -1849,11 +1908,12 @@ function guardarTD(id){
   l.td_agendado=dt;l.td_pedido=true;
   l.td_stand=stand;
   l.td_esp=esp;
+  l.td_modelo=modeloEl?modeloEl.value.trim():(l.td_modelo||'');
   const btn=document.getElementById('btn-ics-td-'+id);
   if(btn){btn.style.opacity='1';btn.style.pointerEvents='auto';}
   const agora=new Date();const ds=agora.toLocaleDateString('pt-PT')+' '+agora.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'});
   if(!l.notas)l.notas=[];
-  pushNota(l,{data:ds,texto:'🚗 TD agendado: '+dt+(stand?' — '+stand:'')});
+  pushNota(l,{data:ds,texto:'🚗 TD agendado: '+dt+(stand?' — '+stand:'')+(l.td_modelo?' — '+l.td_modelo:'')});
   guardar(l);
   // Re-renderizar para que a persiana TD suba para o topo (posição condicional)
   renderFicha(l);
@@ -1944,6 +2004,9 @@ function renderFicha(l){
   const sugsHtml=sugs.length?`<div class="ficha-section alt" style="border-left:3px solid #b7770d;"><p class="sec-title" style="color:#9a6510;">Campanhas sugeridas</p>${sugs.map(c=>`<div style="font-size:12px;margin-bottom:4px;"><span style="font-weight:600;">${c.titulo}</span>${c.validade?' · até '+c.validade:''}<br><span style="color:#888;">${c.desc||''}</span></div>`).join('')}</div>`:'';
   const notas=(l.notas||[]).slice().reverse().map((n,ri)=>{
     const i=(l.notas.length-1-ri);
+    const ehAgendTD=n.texto&&n.texto.startsWith('🚗 TD agendado');
+    const ehAgendReuniao=n.texto&&n.texto.startsWith('📅 Reunião agendada');
+    const atalhosAgend=(ehAgendTD||ehAgendReuniao)?`<div style="display:flex;gap:6px;margin-top:6px;"><button onclick="atalhoAgendamento('wa','${ehAgendTD?'td':'reuniao'}')" class="btn sm" style="flex:1;border-color:#1e7a4a;color:#1e7a4a;">💬</button><button onclick="atalhoAgendamento('sms','${ehAgendTD?'td':'reuniao'}')" class="btn sm" style="flex:1;">📱</button><button onclick="atalhoAgendamento('email','${ehAgendTD?'td':'reuniao'}')" class="btn sm" style="flex:1;">✉️</button></div>`:'';
     return`<div class="nota-block" id="nb-${l.id}-${i}">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;">
         <div style="flex:1;">
@@ -1954,6 +2017,7 @@ function renderFicha(l){
             <button onclick="guardarEdicaoNota('${l.id}',${i})" class="btn primary" style="font-size:12px;padding:4px 10px;margin-right:6px;">✓ Guardar</button>
             <button onclick="cancelarEdicaoNota('${l.id}',${i})" class="btn" style="font-size:12px;padding:4px 10px;">✕</button>
           </div>
+          ${atalhosAgend}
         </div>
         <div style="display:flex;gap:4px;padding-left:8px;">
           <button onclick="editarNota('${l.id}',${i})" style="background:none;border:none;color:#ccc;cursor:pointer;font-size:12px;">✏️</button>
@@ -2146,10 +2210,13 @@ function renderFicha(l){
           +'</select></div>'
           +'<div style="display:flex;gap:6px;align-items:center;"><label style="font-size:12px;color:#888;flex-shrink:0;width:52px;">Espec.</label>'
           +'<input class="finput" id="td-esp-'+l.id+'" value="'+(l.td_esp||'')+'" placeholder="Especialista (opcional)" style="flex:1;font-size:13px;padding:.4rem .6rem;margin-bottom:0;"></div>'
+          +'<div style="display:flex;gap:6px;align-items:center;"><label style="font-size:12px;color:#888;flex-shrink:0;width:52px;">Modelo</label>'
+          +'<input class="finput" id="td-modelo-'+l.id+'" value="'+(l.td_modelo||'')+'" placeholder="Ex: GLC 300de AMG Line" style="flex:1;font-size:13px;padding:.4rem .6rem;margin-bottom:0;"></div>'
           +'<div style="display:flex;gap:8px;margin-top:2px;">'
           +'<button onclick="guardarTD(&#39;'+l.id+'&#39;)" class="btn primary full" style="font-size:13px;">Guardar</button>'
           +'<button id="btn-ics-td-'+l.id+'" onclick="outlookTD(&#39;'+l.id+'&#39;)" class="btn" style="'+outlookStyle+'">📅 Outlook</button>'
           +'</div>'
+          +(l.td_agendado?'<div style="display:flex;gap:6px;margin-top:2px;"><button onclick="atalhoAgendamento(&#39;wa&#39;,&#39;td&#39;)" class="btn sm" style="flex:1;border-color:#1e7a4a;color:#1e7a4a;">💬 WhatsApp</button><button onclick="atalhoAgendamento(&#39;sms&#39;,&#39;td&#39;)" class="btn sm" style="flex:1;">📱 SMS</button><button onclick="atalhoAgendamento(&#39;email&#39;,&#39;td&#39;)" class="btn sm" style="flex:1;">✉️ Email</button></div>':'')
           +(tdAberto?'<button onclick="cancelarTD(&#39;'+l.id+'&#39;)" class="btn" style="font-size:12px;color:#c0392b;border-color:#c0392b;margin-top:2px;">🗑 Remover Test Drive</button>':'')
           +'</div>';
         return col(l.id+'-td', tdLabel, '', tdHtml, tdAberto);
@@ -2174,6 +2241,8 @@ function renderFicha(l){
         +'</select></div>'
         +'<div style="display:flex;gap:6px;align-items:center;"><label style="font-size:12px;color:#888;flex-shrink:0;width:52px;">Espec.</label>'
         +'<input class="finput" id="td-esp-'+l.id+'" value="'+(l.td_esp||'')+'" placeholder="Especialista (opcional)" style="flex:1;font-size:13px;padding:.4rem .6rem;margin-bottom:0;"></div>'
+        +'<div style="display:flex;gap:6px;align-items:center;"><label style="font-size:12px;color:#888;flex-shrink:0;width:52px;">Modelo</label>'
+        +'<input class="finput" id="td-modelo-'+l.id+'" value="'+(l.td_modelo||'')+'" placeholder="Ex: GLC 300de AMG Line" style="flex:1;font-size:13px;padding:.4rem .6rem;margin-bottom:0;"></div>'
         +'<div style="display:flex;gap:8px;margin-top:2px;">'
         +'<button onclick="guardarTD(&#39;'+l.id+'&#39;)" class="btn primary full" style="font-size:13px;">Guardar</button>'
         +'<button id="btn-ics-td-'+l.id+'" onclick="outlookTD(&#39;'+l.id+'&#39;)" class="btn" style="font-size:12px;border-color:#185FA5;color:#185FA5;white-space:nowrap;opacity:.35;pointer-events:none;">📅 Outlook</button>'
