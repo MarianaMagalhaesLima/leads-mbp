@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Leads MBP">
-<title>Leads MBP v2.2.72</title>
+<title>Leads MBP v2.2.75</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f4f2;color:#1a1a1a;min-height:100vh;}
@@ -253,7 +253,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
 <div id="main-view">
   <div class="topbar">
-    <div class="topbar-brand"><span>Mercedes-Benz · Sociedade Comercial C. Santos</span><span class="app-version" onclick="forcarAtualizacao()" title="Toca para forçar atualização">v2.2.72 🔄</span></div>
+    <div class="topbar-brand"><span>Mercedes-Benz · Sociedade Comercial C. Santos</span><span class="app-version" onclick="forcarAtualizacao()" title="Toca para forçar atualização">v2.2.75 🔄</span></div>
     <div class="topbar-row">
       <span class="topbar-name">Mariana Magalhães</span>
       <div class="topbar-btns">
@@ -323,7 +323,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <div class="overlay" id="ov-ficha">
   <div style="display:flex;align-items:center;background:#fff;border-bottom:1px solid #e8e6e1;position:sticky;top:0;z-index:10;">
     <button class="back-btn" onclick="fecharFicha()" style="border-bottom:none;flex:1;">← Voltar</button>
-    <button onclick="forcarAtualizacao()" style="background:none;border:none;color:#bbb;font-size:12px;padding:.85rem .9rem;cursor:pointer;white-space:nowrap;font-family:inherit;" title="Forçar atualização">🔄 v2.2.72</button>
+    <button onclick="forcarAtualizacao()" style="background:none;border:none;color:#bbb;font-size:12px;padding:.85rem .9rem;cursor:pointer;white-space:nowrap;font-family:inherit;" title="Forçar atualização">🔄 v2.2.75</button>
   </div>
   <div class="ficha-pad" id="ficha-content"></div>
   <div style="padding:0 1rem;">
@@ -449,6 +449,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <button class="btn full opcao-btn" onclick="selInsucesso(this,'Passei a colega')">Passei a colega</button>
       <button class="btn full opcao-btn" onclick="selInsucesso(this,'Lead duplicada')">Lead duplicada</button>
       <button class="btn full opcao-btn" onclick="selInsucesso(this,'Gerou lead sem querer')">Gerou lead sem querer</button>
+      <button class="btn full opcao-btn" onclick="selInsucesso(this,'Só queria informações')">Só queria informações</button>
       <button class="btn full opcao-btn" onclick="selInsucesso(this,'Outro')">Outro</button>
     </div>
     <textarea class="finput" id="insucesso-texto" style="height:70px;margin-bottom:.75rem;" placeholder="Notas adicionais (opcional)..."></textarea>
@@ -548,6 +549,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
         <option value="Não">Não</option>
       </select>
     </div>
+    <div id="ret-lista" style="margin-bottom:.5rem;"></div>
     <div id="ret-campos">
       <div class="ffield"><label class="flabel">Viatura (marca / modelo / ano)</label><input class="finput" id="ret-veiculo" placeholder="Ex: Volkswagen Golf 2019"></div>
       <div class="ffield">
@@ -567,6 +569,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       </div>
       <div class="ffield"><label class="flabel">Entrega retoma</label><input class="finput" id="ret-entrega" placeholder="Ex: imediata, janeiro, na entrega do carro novo"></div>
       <div class="ffield"><label class="flabel">Observações</label><textarea class="finput" id="ret-obs" style="height:60px;" placeholder="Outras informações relevantes..."></textarea></div>
+      <div style="display:flex;gap:8px;margin-bottom:.5rem;">
+        <button type="button" onclick="adicionarNovaRetoma()" class="btn sm" style="flex:1;border-color:#1e7a4a;color:#1e7a4a;">➕ Adicionar retoma</button>
+        <button type="button" onclick="apagarRetomaActual()" class="btn sm" style="flex:1;border-color:#c0392b;color:#c0392b;">🗑 Apagar esta retoma</button>
+      </div>
     </div>
     <div style="display:flex;gap:8px;margin-top:.5rem;">
       <button class="btn primary full" onclick="guardarRetoma()">Guardar</button>
@@ -1738,29 +1744,29 @@ function campoTel(label,val){
 }
 
 function renderRetomaDados(l){
-  const ri=l.retoma_info||{};
   if(l.retoma==='Não'){
     return`<div class="drow"><span class="dlbl">Retoma</span><span class="dval" style="display:flex;align-items:center;gap:6px;">Não<button onclick="abrirRetoma('${l.id}')" style="background:none;border:none;color:#aaa;cursor:pointer;font-size:11px;padding:0;" title="Editar retoma">✏️</button></span></div>`;
   }
   if(!l.retoma){
     return`<div class="drow"><span class="dlbl">Retoma</span><span class="dval" style="display:flex;align-items:center;gap:6px;"><span style="color:#ccc;">—</span><button onclick="abrirRetoma('${l.id}')" style="background:none;border:none;color:#aaa;cursor:pointer;font-size:11px;padding:0;" title="Editar retoma">✏️</button></span></div>`;
   }
-  // Tem retoma — mostra bloco estruturado
-  let html=`<div class="drow"><span class="dlbl">Retoma</span><span class="dval" style="display:flex;align-items:center;gap:6px;">${l.retoma}<button onclick="abrirRetoma('${l.id}')" style="background:none;border:none;color:#aaa;cursor:pointer;font-size:11px;padding:0;" title="Editar retoma">✏️</button></span></div>`;
-  if(ri.veiculo)html+=`<div class="drow"><span class="dlbl" style="padding-left:8px;color:#bbb;">Viatura</span><span class="dval">${ri.veiculo}</span></div>`;
-  // Avaliação SCCS
-  const avaliador=ri.avaliacao_sccs_avaliador||'Reis';
-  if(ri.avaliacao_sccs)html+=`<div class="drow"><span class="dlbl" style="padding-left:8px;color:#bbb;">Aval. SCCS (${avaliador})</span><span class="dval">${Number(ri.avaliacao_sccs).toLocaleString('pt-PT')} €</span></div>`;
-  else html+=`<div class="drow"><span class="dlbl" style="padding-left:8px;color:#bbb;">Aval. SCCS (${avaliador})</span><span class="dval" style="color:#ccc;">—</span></div>`;
-  // Avaliações comércio
-  const comercio=ri.avaliacao_comercio||{};
-  Object.entries(comercio).forEach(([c,v])=>{
-    const disp=v==='SI'?'<span style="color:#a93226;font-size:11px;">Sem interesse</span>':`${Number(v).toLocaleString('pt-PT')} €`;
-    html+=`<div class="drow"><span class="dlbl" style="padding-left:8px;color:#bbb;">Aval. ${c}</span><span class="dval">${disp}</span></div>`;
+  // Tem retoma — mostra bloco(s) estruturado(s), uma secção por cada retoma
+  const retomas=(l.retomas&&l.retomas.length)?l.retomas:(l.retoma_info&&l.retoma_info.veiculo?[l.retoma_info]:[{}]);
+  let html=`<div class="drow"><span class="dlbl">Retoma${retomas.length>1?' ('+retomas.length+')':''}</span><span class="dval" style="display:flex;align-items:center;gap:6px;">${l.retoma}<button onclick="abrirRetoma('${l.id}')" style="background:none;border:none;color:#aaa;cursor:pointer;font-size:11px;padding:0;" title="Editar retoma">✏️</button></span></div>`;
+  retomas.forEach((ri,idx)=>{
+    if(retomas.length>1)html+=`<div class="drow"><span class="dlbl" style="padding-left:8px;color:#999;font-weight:600;">— Retoma ${idx+1} —</span><span class="dval"></span></div>`;
+    if(ri.veiculo)html+=`<div class="drow"><span class="dlbl" style="padding-left:8px;color:#bbb;">Viatura</span><span class="dval">${ri.veiculo}</span></div>`;
+    const avaliador=ri.avaliacao_sccs_avaliador||'Reis';
+    if(ri.avaliacao_sccs)html+=`<div class="drow"><span class="dlbl" style="padding-left:8px;color:#bbb;">Aval. SCCS (${avaliador})</span><span class="dval">${Number(ri.avaliacao_sccs).toLocaleString('pt-PT')} €</span></div>`;
+    else html+=`<div class="drow"><span class="dlbl" style="padding-left:8px;color:#bbb;">Aval. SCCS (${avaliador})</span><span class="dval" style="color:#ccc;">—</span></div>`;
+    const comercio=ri.avaliacao_comercio||{};
+    Object.entries(comercio).forEach(([c,v])=>{
+      const disp=v==='SI'?'<span style="color:#a93226;font-size:11px;">Sem interesse</span>':`${Number(v).toLocaleString('pt-PT')} €`;
+      html+=`<div class="drow"><span class="dlbl" style="padding-left:8px;color:#bbb;">Aval. ${c}</span><span class="dval">${disp}</span></div>`;
+    });
+    if(ri.entrega_prevista)html+=`<div class="drow"><span class="dlbl" style="padding-left:8px;color:#bbb;">Entrega retoma</span><span class="dval">${ri.entrega_prevista}</span></div>`;
+    if(ri.notas_extra)html+=`<div class="drow"><span class="dlbl" style="padding-left:8px;color:#bbb;">Obs.</span><span class="dval" style="color:#666;font-weight:400;">${ri.notas_extra}</span></div>`;
   });
-  // Entrega
-  if(ri.entrega_prevista)html+=`<div class="drow"><span class="dlbl" style="padding-left:8px;color:#bbb;">Entrega retoma</span><span class="dval">${ri.entrega_prevista}</span></div>`;
-  if(ri.notas_extra)html+=`<div class="drow"><span class="dlbl" style="padding-left:8px;color:#bbb;">Obs.</span><span class="dval" style="color:#666;font-weight:400;">${ri.notas_extra}</span></div>`;
   return html;
 }
 
@@ -2020,7 +2026,13 @@ function renderFicha(l){
     const i=(l.notas.length-1-ri);
     const ehAgendTD=n.texto&&n.texto.startsWith('🚗 TD agendado');
     const ehAgendReuniao=n.texto&&n.texto.startsWith('📅 Reunião agendada');
-    const atalhosAgend=(ehAgendTD||ehAgendReuniao)?`<div style="display:flex;gap:6px;margin-top:6px;"><button onclick="atalhoAgendamento('wa','${ehAgendTD?'td':'reuniao'}')" class="btn sm" style="flex:1;border-color:#1e7a4a;color:#1e7a4a;">💬</button><button onclick="atalhoAgendamento('sms','${ehAgendTD?'td':'reuniao'}')" class="btn sm" style="flex:1;">📱</button><button onclick="atalhoAgendamento('email','${ehAgendTD?'td':'reuniao'}')" class="btn sm" style="flex:1;">✉️</button></div>`:'';
+    const reuniaoAindaActiva=ehAgendReuniao&&l.reuniao_data&&n.texto.includes(l.reuniao_data);
+    const atalhosAgend=(ehAgendTD||reuniaoAindaActiva)?`<div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;">
+      <button onclick="atalhoAgendamento('wa','${ehAgendTD?'td':'reuniao'}')" class="btn sm" style="flex:1;border-color:#1e7a4a;color:#1e7a4a;">💬</button>
+      <button onclick="atalhoAgendamento('sms','${ehAgendTD?'td':'reuniao'}')" class="btn sm" style="flex:1;">📱</button>
+      <button onclick="atalhoAgendamento('email','${ehAgendTD?'td':'reuniao'}')" class="btn sm" style="flex:1;">✉️</button>
+      ${reuniaoAindaActiva?`<button onclick="confirmarReuniao('${l.id}')" class="btn sm" style="flex:1;border-color:#2e7d32;color:#2e7d32;">✅ Realizada</button><button onclick="naoRealizadaReuniao('${l.id}')" class="btn sm" style="flex:1;border-color:#c0392b;color:#c0392b;">❌ Não realizada</button>`:''}
+    </div>`:'';
     return`<div class="nota-block" id="nb-${l.id}-${i}">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;">
         <div style="flex:1;">
@@ -2463,8 +2475,18 @@ function guardarReuniao(){
 }
 function confirmarReuniao(id){
   const l=leads.find(x=>String(x.id)===String(id));if(!l)return;
-  l.reuniao_realizada=true;const agora=new Date();const ds=agora.toLocaleDateString('pt-PT')+' '+agora.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'});
+  l.reuniao_realizada=true;
+  l.reuniao_data=''; // liberta o campo, para poderes agendar uma reunião nova
+  const agora=new Date();const ds=agora.toLocaleDateString('pt-PT')+' '+agora.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'});
   pushNota(l,{data:ds,texto:'✅ Reunião realizada'});guardar(l);renderFicha(l);
+}
+function naoRealizadaReuniao(id){
+  const l=leads.find(x=>String(x.id)===String(id));if(!l)return;
+  const obs=prompt('Motivo (opcional — ex: cliente não apareceu):','');
+  if(obs===null)return; // cancelou o popup
+  l.reuniao_data=''; // liberta o campo, para poderes agendar uma reunião nova
+  const agora=new Date();const ds=agora.toLocaleDateString('pt-PT')+' '+agora.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'});
+  pushNota(l,{data:ds,texto:'❌ Reunião não realizada'+(obs?' — '+obs:'')});guardar(l);renderFicha(l);
 }
 
 const COMERCIANTES_DEFAULT=['Aguiar','PTF','André Pinto','Marco Almeida','Jorge Brás'];
@@ -2501,30 +2523,94 @@ function adicionarComercianteRetoma(){
   list.insertAdjacentHTML('beforeend',renderComercianteRow('',''));
 }
 
+let retomaEditIdx=0;
+function migrarRetomas(l){
+  if(!l.retomas)l.retomas=[];
+  if(l.retomas.length===0&&l.retoma_info&&l.retoma_info.veiculo){
+    l.retomas=[l.retoma_info];
+  }
+}
 function abrirRetoma(id){
   modalLeadId=String(id);
   const l=leads.find(x=>String(x.id)===String(id));if(!l)return;
-  const ri=l.retoma_info||{};
-  const comercio=ri.avaliacao_comercio||{};
+  migrarRetomas(l);
+  if(l.retomas.length===0)l.retomas.push({veiculo:'',avaliacao_sccs:'',avaliacao_sccs_avaliador:'Reis',avaliacao_comercio:{},entrega_prevista:'',notas_extra:''});
+  retomaEditIdx=0;
   document.getElementById('ret-tem').value=l.retoma==='Não'?'Não':'Sim';
+  renderListaRetomas(l);
+  carregarFormRetoma(l,retomaEditIdx);
+  toggleRetomaTem();
+  document.getElementById('modal-retoma').classList.add('open');
+}
+function renderListaRetomas(l){
+  const div=document.getElementById('ret-lista');
+  if(!div)return;
+  if(!l.retomas||l.retomas.length<=1){div.innerHTML='';return;}
+  div.innerHTML='<label class="flabel">Retomas deste cliente</label><div style="display:flex;flex-wrap:wrap;gap:6px;">'+l.retomas.map((r,i)=>`<button type="button" onclick="selecionarRetoma(${i})" class="btn sm" style="${i===retomaEditIdx?'border-color:#1e7a4a;color:#1e7a4a;font-weight:600;':''}">${r.veiculo||('Retoma '+(i+1))}</button>`).join('')+'</div>';
+}
+function selecionarRetoma(idx){
+  const l=leads.find(x=>String(x.id)===String(modalLeadId));if(!l)return;
+  guardarCamposRetomaAtual(l);
+  retomaEditIdx=idx;
+  carregarFormRetoma(l,idx);
+  renderListaRetomas(l);
+}
+function adicionarNovaRetoma(){
+  const l=leads.find(x=>String(x.id)===String(modalLeadId));if(!l)return;
+  guardarCamposRetomaAtual(l);
+  l.retomas.push({veiculo:'',avaliacao_sccs:'',avaliacao_sccs_avaliador:'Reis',avaliacao_comercio:{},entrega_prevista:'',notas_extra:''});
+  retomaEditIdx=l.retomas.length-1;
+  carregarFormRetoma(l,retomaEditIdx);
+  renderListaRetomas(l);
+}
+function apagarRetomaActual(){
+  const l=leads.find(x=>String(x.id)===String(modalLeadId));if(!l)return;
+  if(l.retomas.length<=1){alert('Tem de ficar sempre pelo menos uma retoma enquanto "Tem retoma?" for Sim. Se não há retoma, muda esse campo para "Não".');return;}
+  if(!confirm('Apagar esta retoma?'))return;
+  l.retomas.splice(retomaEditIdx,1);
+  retomaEditIdx=0;
+  carregarFormRetoma(l,retomaEditIdx);
+  renderListaRetomas(l);
+}
+function carregarFormRetoma(l,idx){
+  const ri=(idx>=0&&l.retomas[idx])?l.retomas[idx]:{};
+  const comercio=ri.avaliacao_comercio||{};
   document.getElementById('ret-veiculo').value=ri.veiculo||'';
   document.getElementById('ret-aval-sccs').value=ri.avaliacao_sccs||'';
   document.getElementById('ret-avaliador').value=ri.avaliacao_sccs_avaliador||'Reis';
   document.getElementById('ret-entrega').value=ri.entrega_prevista||'';
   document.getElementById('ret-obs').value=ri.notas_extra||'';
-  // Render comerciantes
   const list=document.getElementById('ret-comercio-list');
   list.innerHTML='';
-  // Comerciantes guardados
   const temGuardados=Object.keys(comercio).length>0;
   if(temGuardados){
     Object.entries(comercio).forEach(([nome,val])=>list.insertAdjacentHTML('beforeend',renderComercianteRow(nome,val)));
   } else {
-    // Pré-preenche com os habituais em branco
     COMERCIANTES_DEFAULT.forEach(c=>list.insertAdjacentHTML('beforeend',renderComercianteRow(c,'')));
   }
-  toggleRetomaTem();
-  document.getElementById('modal-retoma').classList.add('open');
+}
+function lerCamposRetomaForm(){
+  const comercio={};
+  document.querySelectorAll('.ret-com-row').forEach(row=>{
+    const nome=row.querySelector('.ret-com-nome').value.trim();if(!nome)return;
+    const siBtn=row.querySelector('button');
+    const isSI=siBtn.style.background==='rgb(252, 233, 233)'||siBtn.style.background==='#fce9e9';
+    const val=row.querySelector('.ret-com-val').value;
+    if(isSI)comercio[nome]='SI';
+    else if(val)comercio[nome]=val;
+  });
+  return {
+    veiculo:document.getElementById('ret-veiculo').value.trim(),
+    avaliacao_sccs:document.getElementById('ret-aval-sccs').value||'',
+    avaliacao_sccs_avaliador:document.getElementById('ret-avaliador').value||'Reis',
+    avaliacao_comercio:comercio,
+    entrega_prevista:document.getElementById('ret-entrega').value.trim(),
+    notas_extra:document.getElementById('ret-obs').value.trim()
+  };
+}
+function guardarCamposRetomaAtual(l){
+  if(retomaEditIdx<0||!l.retomas)return;
+  l.retomas[retomaEditIdx]=lerCamposRetomaForm();
 }
 function fecharModalRetoma(){document.getElementById('modal-retoma').classList.remove('open');}
 function toggleRetomaTem(){
@@ -2536,24 +2622,11 @@ function guardarRetoma(){
   const tem=document.getElementById('ret-tem').value;
   l.retoma=tem;
   if(tem==='Sim'){
-    const comercio={};
-    document.querySelectorAll('.ret-com-row').forEach(row=>{
-      const nome=row.querySelector('.ret-com-nome').value.trim();if(!nome)return;
-      const siBtn=row.querySelector('button');
-      const isSI=siBtn.style.background==='rgb(252, 233, 233)'||siBtn.style.background==='#fce9e9';
-      const val=row.querySelector('.ret-com-val').value;
-      if(isSI)comercio[nome]='SI';
-      else if(val)comercio[nome]=val;
-    });
-    l.retoma_info={
-      veiculo:document.getElementById('ret-veiculo').value.trim(),
-      avaliacao_sccs:document.getElementById('ret-aval-sccs').value||'',
-      avaliacao_sccs_avaliador:document.getElementById('ret-avaliador').value||'Reis',
-      avaliacao_comercio:comercio,
-      entrega_prevista:document.getElementById('ret-entrega').value.trim(),
-      notas_extra:document.getElementById('ret-obs').value.trim()
-    };
+    guardarCamposRetomaAtual(l);
+    // retoma_info aponta sempre para a primeira retoma, para compatibilidade com o resto da app
+    l.retoma_info=l.retomas[0]||{};
   } else {
+    l.retomas=[];
     l.retoma_info={};
   }
   guardar(l);fecharModalRetoma();renderFicha(l);
