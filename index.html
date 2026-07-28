@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Leads MBP">
-<title>Leads MBP v2.2.77</title>
+<title>Leads MBP v2.2.79</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f4f2;color:#1a1a1a;min-height:100vh;}
@@ -90,19 +90,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .ficha-pad{padding:0 0 2rem;}
 
 /* ── FICHA HEADER (colored) ── */
-.ficha-hero{padding:1.1rem 1rem 1rem;display:flex;align-items:center;gap:12px;position:sticky;top:44px;z-index:9;transition:padding .25s ease;}
+.ficha-hero{padding:1.1rem 1rem 1rem;display:flex;align-items:center;gap:12px;position:sticky;top:44px;z-index:9;}
 .ficha-hero.opp{background:#0e4430;}
 .ficha-hero.lead{background:#1a1a1a;}
-.ficha-hero.compact{padding:.5rem 1rem;}
 .ficha-hero-inner{display:flex;align-items:center;gap:12px;flex:1;min-width:0;}
-.ficha-av{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;flex-shrink:0;border:1.5px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.15);transition:width .25s ease,height .25s ease,font-size .25s ease;}
-.ficha-hero.compact .ficha-av{width:28px;height:28px;font-size:11px;}
-.ficha-name{font-size:17px;font-weight:700;color:#fff;line-height:1.2;transition:font-size .25s ease;}
-.ficha-hero.compact .ficha-name{font-size:14px;}
-.ficha-sub{font-size:11px;color:rgba(255,255,255,0.55);margin-top:3px;max-height:20px;opacity:1;overflow:hidden;transition:opacity .2s ease,max-height .25s ease,margin .25s ease;}
-.ficha-badge{display:inline-block;font-size:10px;padding:2px 8px;border-radius:20px;background:rgba(255,255,255,0.15);color:#fff;border:.5px solid rgba(255,255,255,0.25);font-weight:500;margin-top:5px;max-height:20px;opacity:1;overflow:hidden;transition:opacity .2s ease,max-height .25s ease,margin .25s ease;}
-.ficha-hero.compact .ficha-sub,.ficha-hero.compact .ficha-badge,.ficha-hero.compact .ficha-estado-sel{opacity:0;max-height:0;margin:0;pointer-events:none;}
-.ficha-estado-sel{max-height:30px;opacity:1;overflow:hidden;transition:opacity .2s ease,max-height .25s ease,margin .25s ease;}
+.ficha-av{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;flex-shrink:0;border:1.5px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.15);}
+.ficha-name{font-size:17px;font-weight:700;color:#fff;line-height:1.2;}
+.ficha-sub{font-size:11px;color:rgba(255,255,255,0.55);margin-top:3px;}
+.ficha-badge{display:inline-block;font-size:10px;padding:2px 8px;border-radius:20px;background:rgba(255,255,255,0.15);color:#fff;border:.5px solid rgba(255,255,255,0.25);font-weight:500;margin-top:5px;}
 
 /* ── BOTÕES DE AÇÃO 4 em grelha ── */
 .action-grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:.75rem 1rem;background:#fff;border-bottom:1px solid #e8e6e1;}
@@ -253,7 +248,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
 <div id="main-view">
   <div class="topbar">
-    <div class="topbar-brand"><span>Mercedes-Benz · Sociedade Comercial C. Santos</span><span class="app-version" onclick="forcarAtualizacao()" title="Toca para forçar atualização">v2.2.77 🔄</span></div>
+    <div class="topbar-brand"><span>Mercedes-Benz · Sociedade Comercial C. Santos</span><span class="app-version" onclick="forcarAtualizacao()" title="Toca para forçar atualização">v2.2.79 🔄</span></div>
     <div class="topbar-row">
       <span class="topbar-name">Mariana Magalhães</span>
       <div class="topbar-btns">
@@ -323,7 +318,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <div class="overlay" id="ov-ficha">
   <div style="display:flex;align-items:center;background:#fff;border-bottom:1px solid #e8e6e1;position:sticky;top:0;z-index:10;">
     <button class="back-btn" onclick="fecharFicha()" style="border-bottom:none;flex:1;">← Voltar</button>
-    <button onclick="forcarAtualizacao()" style="background:none;border:none;color:#bbb;font-size:12px;padding:.85rem .9rem;cursor:pointer;white-space:nowrap;font-family:inherit;" title="Forçar atualização">🔄 v2.2.77</button>
+    <button onclick="forcarAtualizacao()" style="background:none;border:none;color:#bbb;font-size:12px;padding:.85rem .9rem;cursor:pointer;white-space:nowrap;font-family:inherit;" title="Forçar atualização">🔄 v2.2.79</button>
   </div>
   <div class="ficha-pad" id="ficha-content"></div>
   <div style="padding:0 1rem;">
@@ -1784,7 +1779,7 @@ function renderPropostas(l){
 function renderReuniao(l){
   if(l.reuniao_data){
     const dt=new Date(l.reuniao_data);const dtStr=dt.toLocaleDateString('pt-PT')+' '+dt.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'});
-    return`<div class="nota-block"><div class="nota-meta">📅 ${dtStr}${l.reuniao_local?' · '+l.reuniao_local:''}</div><div class="nota-text">${l.reuniao_notas||''}</div><div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;"><button id="btn-ics-reun-${l.id}" onclick="outlookReuniao('${l.id}')" class="btn" style="font-size:12px;padding:5px 10px;border-color:#185FA5;color:#185FA5;">📅 Outlook</button><button onclick="confirmarReuniao('${l.id}')" class="btn" style="font-size:12px;padding:5px 10px;border-color:#2e7d32;color:#2e7d32;">✅ Realizada</button><button onclick="abrirModalReuniao('${l.id}')" class="btn" style="font-size:12px;padding:5px 10px;">✏️ Editar</button></div><div style="display:flex;gap:6px;margin-top:6px;"><button onclick="atalhoAgendamento('wa','reuniao')" class="btn sm" style="flex:1;border-color:#1e7a4a;color:#1e7a4a;">💬 WhatsApp</button><button onclick="atalhoAgendamento('sms','reuniao')" class="btn sm" style="flex:1;">📱 SMS</button><button onclick="atalhoAgendamento('email','reuniao')" class="btn sm" style="flex:1;">✉️ Email</button></div></div>`;
+    return`<div class="nota-block"><div class="nota-meta">📅 ${dtStr}${l.reuniao_local?' · '+l.reuniao_local:''}</div><div class="nota-text">${l.reuniao_notas||''}</div><div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;"><button id="btn-ics-reun-${l.id}" onclick="outlookReuniao('${l.id}')" class="btn" style="font-size:12px;padding:5px 10px;border-color:#185FA5;color:#185FA5;">📅 Outlook</button><button onclick="confirmarReuniao('${l.id}')" class="btn" style="font-size:12px;padding:5px 10px;border-color:#2e7d32;color:#2e7d32;">✅ Realizada</button><button onclick="naoRealizadaReuniao('${l.id}')" class="btn" style="font-size:12px;padding:5px 10px;border-color:#c0392b;color:#c0392b;">❌ Não realizada</button><button onclick="abrirModalReuniao('${l.id}')" class="btn" style="font-size:12px;padding:5px 10px;">✏️ Editar</button></div><div style="display:flex;gap:6px;margin-top:6px;"><button onclick="atalhoAgendamento('wa','reuniao')" class="btn sm" style="flex:1;border-color:#1e7a4a;color:#1e7a4a;">💬 WhatsApp</button><button onclick="atalhoAgendamento('sms','reuniao')" class="btn sm" style="flex:1;">📱 SMS</button><button onclick="atalhoAgendamento('email','reuniao')" class="btn sm" style="flex:1;">✉️ Email</button></div></div>`;
   }
   if(l.reuniao_realizada)return`<div class="nota-block"><div class="nota-meta">✅ Reunião realizada</div><div class="nota-text">${l.reuniao_notas||''}</div></div>`;
   return`<p style="font-size:13px;color:#888;margin-bottom:.75rem;">Sem reunião agendada</p>`;
@@ -1818,23 +1813,8 @@ function abrirFicha(id){
     carregar();
   }
   atualizarVoz();
-  ovFicha.onscroll=()=>{
-    if(ovFicha._rafPendente)return;
-    ovFicha._rafPendente=true;
-    requestAnimationFrame(()=>{
-      ovFicha._rafPendente=false;
-      const hero=ovFicha.querySelector('.ficha-hero');
-      if(!hero)return;
-      const isCompact=hero.classList.contains('compact');
-      // Histerese: limites diferentes para encolher (60px) e para voltar ao normal (15px).
-      // Impede que pequenas oscilações do scroll perto de um único limite façam
-      // a barra alternar repetidamente (tremeliques) entre os dois estados.
-      if(!isCompact&&ovFicha.scrollTop>60)hero.classList.add('compact');
-      else if(isCompact&&ovFicha.scrollTop<15)hero.classList.remove('compact');
-    });
-  };
 }
-function fecharFicha(){fichaId=null;history.replaceState(null,'',window.location.pathname+window.location.search);const ovFicha=document.getElementById('ov-ficha');ovFicha.onscroll=null;ovFicha.classList.remove('open');atualizarVoz();renderAtual();}
+function fecharFicha(){fichaId=null;history.replaceState(null,'',window.location.pathname+window.location.search);const ovFicha=document.getElementById('ov-ficha');ovFicha.classList.remove('open');atualizarVoz();renderAtual();}
 
 // ─── ICS / OUTLOOK ───────────────────────────────────────────────────────────
 function pad2(n){return String(n).padStart(2,'0');}
@@ -2346,22 +2326,15 @@ async function addNota(id){
   const l=leads.find(x=>String(x.id)===String(id));const inp=document.getElementById('ni-'+id);
   const txt=inp.value.trim();if(!txt)return;
   inp.value='';
-  // GARANTIA: guardar a nota imediatamente, em texto simples, ANTES de qualquer chamada à IA
   const agora=new Date();const ds=agora.toLocaleDateString('pt-PT')+' '+agora.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'});
   if(!l.notas)l.notas=[];
   pushNota(l,{data:ds,texto:txt});
   await guardar(l);
   renderFicha(l);
   setSyncStatus('ok','Nota guardada · '+ds);
-  // Processar nota pela IA (igual à voz) para extrair dados estruturados — bónus, não bloqueia a nota
-  const fichaIdAntes=fichaId;
-  fichaId=String(id);
-  const ind=document.getElementById('ai-ind');if(ind)ind.style.display='block';
-  try{
-    await enriquecerComIA(l, txt);
-  }catch(e){console.error('Enriquecimento IA falhou (nota já estava guardada):',e);}
-  fichaId=fichaIdAntes;
-  if(ind)ind.style.display='none';
+  // NOTA: o enriquecimento automático por IA (preenchimento de TD/financiamento/
+  // retoma a partir do texto) foi DESLIGADO a pedido — estava a criar/alterar
+  // campos sem confirmação (ex: Test Drives que não foram pedidos).
 }
 async function sugerirProximoPasso(l,notaAtual){
   try{
@@ -3136,19 +3109,15 @@ async function enriquecerComIA(l, txt){
 }
 
 async function processarTextoComIA(l, txt){
-  // Usado pelo fluxo de VOZ — aqui a nota ainda não foi adicionada, por isso garantimos primeiro
+  // Usado pelo fluxo de VOZ — grava a nota tal como ditada, sem qualquer
+  // preenchimento automático de campos (TD/financiamento/retoma) — desligado
+  // a pedido, para evitar que a IA crie ou altere dados sem confirmação.
   const agora=new Date();const ds=agora.toLocaleDateString('pt-PT')+' '+agora.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'});
   if(!l.notas)l.notas=[];
   pushNota(l,{data:ds,texto:txt});
   await guardar(l);
   renderFicha(l);
   setSyncStatus('ok','Nota guardada · '+ds);
-  try{
-    await enriquecerComIA(l, txt);
-  }catch(e){
-    setSyncStatus('error','Nota guardada · Erro IA: '+String(e).slice(0,60));
-    console.error('processarTextoComIA erro:',e);
-  }
 }
 
 async function usarT(){
