@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Leads MBP">
-<title>Leads MBP v2.2.81</title>
+<title>Leads MBP v2.2.82</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f4f2;color:#1a1a1a;min-height:100vh;}
@@ -248,7 +248,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
 <div id="main-view">
   <div class="topbar">
-    <div class="topbar-brand"><span>Mercedes-Benz · Sociedade Comercial C. Santos</span><span class="app-version" onclick="forcarAtualizacao()" title="Toca para forçar atualização">v2.2.81 🔄</span></div>
+    <div class="topbar-brand"><span>Mercedes-Benz · Sociedade Comercial C. Santos</span><span class="app-version" onclick="forcarAtualizacao()" title="Toca para forçar atualização">v2.2.82 🔄</span></div>
     <div class="topbar-row">
       <span class="topbar-name">Mariana Magalhães</span>
       <div class="topbar-btns">
@@ -318,7 +318,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <div class="overlay" id="ov-ficha">
   <div style="display:flex;align-items:center;background:#fff;border-bottom:1px solid #e8e6e1;position:sticky;top:0;z-index:10;">
     <button class="back-btn" onclick="fecharFicha()" style="border-bottom:none;flex:1;">← Voltar</button>
-    <button onclick="forcarAtualizacao()" style="background:none;border:none;color:#bbb;font-size:12px;padding:.85rem .9rem;cursor:pointer;white-space:nowrap;font-family:inherit;" title="Forçar atualização">🔄 v2.2.81</button>
+    <button onclick="forcarAtualizacao()" style="background:none;border:none;color:#bbb;font-size:12px;padding:.85rem .9rem;cursor:pointer;white-space:nowrap;font-family:inherit;" title="Forçar atualização">🔄 v2.2.82</button>
   </div>
   <div class="ficha-pad" id="ficha-content"></div>
   <div style="padding:0 1rem;">
@@ -1322,7 +1322,7 @@ function cardHTML(l){
   const estadoClass=l.estado==='contactar'?'estado-contactar':l.estado==='follow_up'?'estado-follow_up':l.estado==='td_agendado'?'estado-td_agendado':'';
   const quenteBadge=`<label onclick="event.stopPropagation();" style="display:flex;align-items:center;gap:5px;margin-top:5px;cursor:pointer;width:fit-content;">
     <input type="checkbox" onclick="toggleNegocioQuente('${l.id}',event)" ${l.negocio_quente?'checked':''} style="width:15px;height:15px;cursor:pointer;accent-color:#c0392b;">
-    <span style="font-size:10px;font-weight:800;color:#c0392b;letter-spacing:.3px;">NEGÓCIO QUENTE</span>
+    <span style="font-size:10px;font-weight:${l.negocio_quente?800:400};color:${l.negocio_quente?'#c0392b':'#333'};letter-spacing:.3px;">${l.negocio_quente?'NEGÓCIO QUENTE':'Negócio Quente'}</span>
   </label>`;
   return`<div class="lead-card${estadoClass?' '+estadoClass:''}${temCampanha&&!estadoClass?' campanha-ativa':''}" id="card-${l.id}" onclick="abrirFicha('${String(l.id)}')"><div class="lead-header"><div class="avatar" style="background:${corTipoLead(l)};">${ini(l.nome)}</div><div style="flex:1;min-width:0;"><div class="lead-name">${l.nome}</div><div class="lead-car">${l.carro}${l.kom?' · '+l.kom:''}</div>${metaStr?`<div class="lead-meta">${metaStr}</div>`:''}</div>${bdg(l.estado)}</div>${quenteBadge}${atraso?`<div class="lead-follow urgent">Em atraso desde ${(parseDataSegura(l.follow_data)||'').toLocaleDateString?parseDataSegura(l.follow_data).toLocaleDateString('pt-PT'):l.follow_data} — ${l.follow_nota||''}</div>`:`<div class="lead-follow ${isUrg(l)?'urgent':''}">${l.follow_nota||'Sem follow-up'}</div>`}${inativo&&!atraso?`<div class="inativo-badge">Sem actividade há ${diasSemNota} dias úteis</div>`:''}${temCampanha?`<div style="font-size:10px;color:#9a6510;margin-top:2px;"><span class="campanha-dot"></span>Campanha ativa</div>`:''}</div>`;}
 function toggleNegocioQuente(id,ev){
@@ -2118,7 +2118,7 @@ function renderFicha(l){
 
     <label style="display:flex;align-items:center;gap:8px;padding:.6rem 1rem;cursor:pointer;background:${l.negocio_quente?'#fdecea':'#f5f4f2'};border-bottom:1px solid #eee;">
       <input type="checkbox" onclick="toggleNegocioQuente('${l.id}',event)" ${l.negocio_quente?'checked':''} style="width:18px;height:18px;cursor:pointer;accent-color:#c0392b;">
-      <span style="font-size:13px;font-weight:800;color:#c0392b;letter-spacing:.3px;">NEGÓCIO QUENTE</span>
+      <span style="font-size:13px;font-weight:${l.negocio_quente?800:400};color:${l.negocio_quente?'#c0392b':'#333'};letter-spacing:.3px;">${l.negocio_quente?'NEGÓCIO QUENTE':'Negócio Quente'}</span>
     </label>
 
     ${(l.cae_rent==='Sim'||l.cae_rent===true||l.cae_rent==='true')?`<div style="background:#c0392b;color:#fff;padding:.7rem 1rem;text-align:center;font-weight:800;font-size:13px;line-height:1.4;">⚠️⚠️⚠️ CAE RENT-A-CAR / COMÉRCIO AUTO ⚠️⚠️⚠️<br>Desconto reduzido em 3% (1% no A180d) — NÃO ESQUECER ao calcular o preço!</div>`:''}
