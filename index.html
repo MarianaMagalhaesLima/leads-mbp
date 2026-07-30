@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Leads MBP">
-<title>Leads MBP v2.2.82</title>
+<title>Leads MBP v2.2.84</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f4f2;color:#1a1a1a;min-height:100vh;}
@@ -248,7 +248,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
 <div id="main-view">
   <div class="topbar">
-    <div class="topbar-brand"><span>Mercedes-Benz · Sociedade Comercial C. Santos</span><span class="app-version" onclick="forcarAtualizacao()" title="Toca para forçar atualização">v2.2.82 🔄</span></div>
+    <div class="topbar-brand"><span>Mercedes-Benz · Sociedade Comercial C. Santos</span><span class="app-version" onclick="forcarAtualizacao()" title="Toca para forçar atualização">v2.2.84 🔄</span></div>
     <div class="topbar-row">
       <span class="topbar-name">Mariana Magalhães</span>
       <div class="topbar-btns">
@@ -280,7 +280,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <div id="tab-hoje" class="section"><div id="lista-hoje"></div></div>
   <div id="tab-todas" class="section" style="display:none"><div id="lista-todas"></div></div>
   <div id="tab-tarefas" class="section" style="display:none"><div id="lista-tarefas"></div></div>
-  <div id="tab-entregas" class="section" style="display:none"><div id="lista-entregas"></div></div>
+  <div id="tab-entregas" class="section" style="display:none">
+    <div id="lista-entregas"></div>
+  </div>
   <div id="tab-stats" class="section" style="display:none">
     <div class="stat-grid" id="stat-cards"></div>
     <div class="divider"></div>
@@ -318,7 +320,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <div class="overlay" id="ov-ficha">
   <div style="display:flex;align-items:center;background:#fff;border-bottom:1px solid #e8e6e1;position:sticky;top:0;z-index:10;">
     <button class="back-btn" onclick="fecharFicha()" style="border-bottom:none;flex:1;">← Voltar</button>
-    <button onclick="forcarAtualizacao()" style="background:none;border:none;color:#bbb;font-size:12px;padding:.85rem .9rem;cursor:pointer;white-space:nowrap;font-family:inherit;" title="Forçar atualização">🔄 v2.2.82</button>
+    <button onclick="forcarAtualizacao()" style="background:none;border:none;color:#bbb;font-size:12px;padding:.85rem .9rem;cursor:pointer;white-space:nowrap;font-family:inherit;" title="Forçar atualização">🔄 v2.2.84</button>
   </div>
   <div class="ficha-pad" id="ficha-content"></div>
   <div style="padding:0 1rem;">
@@ -1469,6 +1471,30 @@ function reabrirLead(id){
   if(fichaId===String(id))renderFicha(l);
   renderAtual();
 }
+function renderEntregaResumo(l){
+  const ei=l.entrega_info||{};
+  const linhas=[];
+  if(ei.entregue)linhas.push(`<div class="nota-meta" style="color:#1e7a4a;font-weight:700;">✅ Entregue em ${formatDataHora(ei.entregue_data)}</div>`);
+  if(ei.tipo_entrega)linhas.push(`<div class="drow"><span class="dlbl">Tipo</span><span class="dval">${ei.tipo_entrega}</span></div>`);
+  if(ei.data)linhas.push(`<div class="drow"><span class="dlbl">Data</span><span class="dval">${new Date(ei.data).toLocaleDateString('pt-PT')}${ei.hora?' às '+ei.hora:''}</span></div>`);
+  if(ei.local)linhas.push(`<div class="drow"><span class="dlbl">Local</span><span class="dval">${ei.local}</span></div>`);
+  if(ei.especialista)linhas.push(`<div class="drow"><span class="dlbl">Especialista</span><span class="dval">${ei.especialista}</span></div>`);
+  if(ei.gestora_entrega)linhas.push(`<div class="drow"><span class="dlbl">Gestora</span><span class="dval">${ei.gestora_entrega}</span></div>`);
+  if(ei.financiamento_modo)linhas.push(`<div class="drow"><span class="dlbl">PP/Financ.</span><span class="dval">${ei.financiamento_modo}</span></div>`);
+  if(ei.financiamento_tipo)linhas.push(`<div class="drow"><span class="dlbl">Tipo financ.</span><span class="dval">${ei.financiamento_tipo}</span></div>`);
+  if(ei.financiamento_aprovado)linhas.push(`<div class="drow"><span class="dlbl">Aprovado?</span><span class="dval">${ei.financiamento_aprovado}</span></div>`);
+  if(ei.financiamento_externo)linhas.push(`<div class="drow"><span class="dlbl">Externo?</span><span class="dval">${ei.financiamento_externo}</span></div>`);
+  linhas.push(`<div class="drow"><span class="dlbl">Seguro tratado</span><span class="dval">${ei.seguro_tratado?'✅ Sim':'—'}</span></div>`);
+  if(ei.tipo_entrega!=='Usado'){
+    if(ei.frota_tipo)linhas.push(`<div class="drow"><span class="dlbl">Tipo de frota</span><span class="dval">${ei.frota_tipo}</span></div>`);
+    linhas.push(`<div class="drow"><span class="dlbl">Frota carregada</span><span class="dval">${ei.frota_carregada_pasta?'✅ Sim':'—'}</span></div>`);
+    linhas.push(`<div class="drow"><span class="dlbl">Frota validada</span><span class="dval">${ei.frota_validada?'✅ Sim':'—'}</span></div>`);
+    linhas.push(`<div class="drow"><span class="dlbl">Matrícula atribuída</span><span class="dval">${ei.matricula_atribuida?'✅ Sim':'—'}</span></div>`);
+  }
+  if(ei.matricula)linhas.push(`<div class="drow"><span class="dlbl">Matrícula</span><span class="dval">${ei.matricula}</span></div>`);
+  if(ei.observacoes)linhas.push(`<div class="drow"><span class="dlbl">Obs.</span><span class="dval" style="color:#666;font-weight:400;">${ei.observacoes}</span></div>`);
+  return linhas.join('');
+}
 function entregasPendentes(){return leads.filter(l=>l.estado==='fechado'&&!(l.entrega_info&&l.entrega_info.entregue));}
 function atualizarContadores(){
   const hojeCount=ativos().filter(l=>isLembreteAgora(l)||l.estado==='contactar'||isUrg(l)).length+tarefasAtivas().length;
@@ -2261,6 +2287,7 @@ function renderFicha(l){
     })()}
     ${col(l.id+'-props','PROPOSTAS',nPropostas||'',`<div style="margin-bottom:6px;">${renderPropostas(l)}</div><button onclick="abrirModalProposta('${l.id}')" class="btn sm" style="margin-top:4px;">+ Nova proposta</button>`)}
     ${col(l.id+'-reun','REUNIÃO','',`${renderReuniao(l)}<button onclick="abrirModalReuniao('${l.id}')" class="btn sm" style="margin-top:6px;">+ Agendar reunião</button>`)}
+    ${l.entrega_info&&(l.entrega_info.tipo_entrega||l.entrega_info.data)?col(l.id+'-entrega','ENTREGA',l.entrega_info.entregue?'✅':'',`${renderEntregaResumo(l)}<button onclick="abrirModalEntrega('${l.id}')" class="btn sm" style="margin-top:6px;">✏️ Editar entrega</button>`):''}
     ${(()=>{
       // TD sem agendamento — aparece aqui em baixo
       const temTD=!!(l.td_agendado||l.td_pedido);
