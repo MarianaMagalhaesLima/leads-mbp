@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Leads MBP">
-<title>Leads MBP v2.2.86</title>
+<title>Leads MBP v2.2.88</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f4f2;color:#1a1a1a;min-height:100vh;}
@@ -248,7 +248,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
 <div id="main-view">
   <div class="topbar">
-    <div class="topbar-brand"><span>Mercedes-Benz · Sociedade Comercial C. Santos</span><span class="app-version" onclick="forcarAtualizacao()" title="Toca para forçar atualização">v2.2.86 🔄</span></div>
+    <div class="topbar-brand"><span>Mercedes-Benz · Sociedade Comercial C. Santos</span><span class="app-version" onclick="forcarAtualizacao()" title="Toca para forçar atualização">v2.2.88 🔄</span></div>
     <div class="topbar-row">
       <span class="topbar-name">Mariana Magalhães</span>
       <div class="topbar-btns">
@@ -320,7 +320,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <div class="overlay" id="ov-ficha">
   <div style="display:flex;align-items:center;background:#fff;border-bottom:1px solid #e8e6e1;position:sticky;top:0;z-index:10;">
     <button class="back-btn" onclick="fecharFicha()" style="border-bottom:none;flex:1;">← Voltar</button>
-    <button onclick="forcarAtualizacao()" style="background:none;border:none;color:#bbb;font-size:12px;padding:.85rem .9rem;cursor:pointer;white-space:nowrap;font-family:inherit;" title="Forçar atualização">🔄 v2.2.86</button>
+    <button onclick="forcarAtualizacao()" style="background:none;border:none;color:#bbb;font-size:12px;padding:.85rem .9rem;cursor:pointer;white-space:nowrap;font-family:inherit;" title="Forçar atualização">🔄 v2.2.88</button>
   </div>
   <div class="ficha-pad" id="ficha-content"></div>
   <div style="padding:0 1rem;">
@@ -1370,7 +1370,7 @@ function textoPesquisavel(l){
   return normalizar([
     l.nome,l.carro,l.tel,l.email,l.opp_id,l.kom,l.tipo,l.nif,l.negociacao_fora,l.relacao_interna,
     l.follow_nota,l.cliente_existente,l.financiamento_tipo,l.financiamento_gestora,l.financiamento_financeira,
-    l.empresa_nome,l.td_modelo,l.td_stand,l.td_esp,
+    l.empresa_nome,l.td_modelo,l.td_stand,l.td_esp,l.mbp_id_secundario,
     ...retomasTxt,
     l.reuniao_notas,l.reuniao_local,
     ...(l.notas||[]).map(n=>n.texto),
@@ -1390,7 +1390,7 @@ function pesquisar(){
     const apagadasIds=new Set(apagadas.map(x=>String(x.id)));
     document.getElementById('lista-arquivo').innerHTML=r.length?r.map(l=>{
       const isAp=apagadasIds.has(String(l.id));
-      return`<div class="lead-card" ${!isAp?`onclick="abrirFicha('${l.id}')"`:''}><div class="lead-header"><div class="avatar">${ini(l.nome)}</div><div style="flex:1;min-width:0;"><div class="lead-name">${l.nome}</div><div class="lead-car">${l.carro||'—'}</div></div>${bdg(l.estado)}</div><div class="lead-follow">${((l.notas&&l.notas.length?l.notas[l.notas.length-1].texto:'')||'').substring(0,60)}</div>${isAp?`<div style="margin-top:8px;" onclick="event.stopPropagation();"><button onclick="restaurarLead('${l.id}')" class="btn" style="font-size:12px;padding:5px 10px;">↩ Restaurar</button></div>`:''}${!isAp?`<div style="margin-top:8px;" onclick="event.stopPropagation();"><button onclick="reabrirLead('${l.id}')" class="btn" style="font-size:12px;padding:5px 10px;">↩ Reabrir</button></div>`:''}</div>`;
+      return`<div class="lead-card" ${!isAp?`onclick="abrirFicha('${l.id}')"`:''}><div class="lead-header"><div class="avatar" style="background:${corTipoLead(l)};">${ini(l.nome)}</div><div style="flex:1;min-width:0;"><div class="lead-name">${l.nome}</div><div class="lead-car">${l.carro||'—'}</div>${l.tipo_lead?`<div class="lead-meta">${l.tipo_lead}</div>`:''}</div>${bdg(l.estado)}</div><div class="lead-follow">${((l.notas&&l.notas.length?l.notas[l.notas.length-1].texto:'')||'').substring(0,60)}</div>${isAp?`<div style="margin-top:8px;" onclick="event.stopPropagation();"><button onclick="restaurarLead('${l.id}')" class="btn" style="font-size:12px;padding:5px 10px;">↩ Restaurar</button></div>`:''}${!isAp?`<div style="margin-top:8px;" onclick="event.stopPropagation();"><button onclick="reabrirLead('${l.id}')" class="btn" style="font-size:12px;padding:5px 10px;">↩ Reabrir</button></div>`:''}</div>`;
     }).join(''):`<div class="empty">Sem resultados para "${document.getElementById('search-input').value}"</div>`;
     return;
   }
@@ -1467,8 +1467,8 @@ function renderArquivo(){
     const isAp=!!apagadas.find(x=>String(x.id)===String(l.id));
     return`<div class="lead-card" ${!isAp?`onclick="abrirFicha('${l.id}')"`:''}> 
       <div class="lead-header">
-        <div class="avatar">${ini(l.nome)}</div>
-        <div style="flex:1;min-width:0;"><div class="lead-name">${l.nome}</div><div class="lead-car">${l.carro||'—'}${l.data_apagada?' · Apagada '+l.data_apagada:''}</div></div>
+        <div class="avatar" style="background:${corTipoLead(l)};">${ini(l.nome)}</div>
+        <div style="flex:1;min-width:0;"><div class="lead-name">${l.nome}</div><div class="lead-car">${l.carro||'—'}${l.data_apagada?' · Apagada '+l.data_apagada:''}</div>${l.tipo_lead?`<div class="lead-meta">${l.tipo_lead}</div>`:''}</div>
         ${bdg(l.estado)}
       </div>
       <div class="lead-follow">${((l.notas&&l.notas.length?l.notas[l.notas.length-1].texto:'')||'').substring(0,60)}</div>
@@ -2207,6 +2207,7 @@ function renderFicha(l){
       ${cr('KOM',l.kom)}
       ${cr('Tipo',l.tipo)}
       ${l.empresa_nome?cr('Nome da empresa',l.empresa_nome):''}
+      ${l.tambem_mbp?`<div class="drow" style="background:#fdecea;margin:0 -1rem;padding:.5rem 1rem;"><span class="dlbl" style="color:#c0392b;font-weight:700;">📋 Também gerou MBP</span><span class="dval" style="color:#c0392b;font-weight:700;">${l.mbp_id_secundario||'(sem ID)'}</span></div>`:''}
       ${l.nif?cr('NIF',l.nif):''}
       ${(l.tipo==='Empresa'||l.tipo==='Sócio de Empresa')&&l.frota?cr('Frota',l.frota):''}
       ${l.cae_rent&&l.cae_rent!==false&&l.cae_rent!=='false'?cr('CAE Rent/Auto',l.cae_rent===true||l.cae_rent==='true'?'Sim':l.cae_rent):''}
@@ -2719,6 +2720,13 @@ function abrirEditar(id){
       <div id="edit-colega-div" style="display:${(l.tipo_lead||'').startsWith('Passada por Colega')?'block':'none'};margin-top:6px;">
         <input class="finput" id="edit-colega" placeholder="Nome do colega" value="${(l.tipo_lead||'').startsWith('Passada por Colega')?((l.tipo_lead.match(/\(([^)]+)\)/)||[])[1]||''):''}">
       </div>
+      <label style="display:flex;align-items:center;gap:8px;margin-top:8px;background:#f5f4f2;border-radius:10px;padding:.5rem .65rem;cursor:pointer;">
+        <input type="checkbox" id="ed-tambem-mbp" ${l.tambem_mbp?'checked':''} onchange="document.getElementById('ed-mbp-id-div').style.display=this.checked?'block':'none';" style="width:18px;height:18px;cursor:pointer;">
+        <span style="font-size:12px;font-weight:600;">Também gerou Lead/Opp MBP</span>
+      </label>
+      <div id="ed-mbp-id-div" style="display:${l.tambem_mbp?'block':'none'};margin-top:6px;">
+        <input class="finput" id="ed-mbp-id" placeholder="ID da Lead/Opp MBP" value="${l.mbp_id_secundario||''}">
+      </div>
     </div>
     <div class="ffield"><label class="flabel">Cliente existente</label>
       <select class="finput" id="ed-exist-sel">
@@ -2825,6 +2833,8 @@ function guardarEditar(){
     tipoLeadEdit='Passada por Colega ('+colega+')';
   }
   l.tipo_lead=tipoLeadEdit;
+  l.tambem_mbp=g('ed-tambem-mbp').checked;
+  l.mbp_id_secundario=l.tambem_mbp?g('ed-mbp-id').value.trim():'';
   const existSel=g('ed-exist-sel').value;
   const existTexto=g('ed-exist-texto').value.trim();
   l.cliente_existente=existSel?(existTexto?existSel+' — '+existTexto:existSel):false;
