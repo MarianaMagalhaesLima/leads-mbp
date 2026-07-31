@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Leads MBP">
-<title>Leads MBP v2.2.85</title>
+<title>Leads MBP v2.2.86</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f4f2;color:#1a1a1a;min-height:100vh;}
@@ -248,7 +248,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
 <div id="main-view">
   <div class="topbar">
-    <div class="topbar-brand"><span>Mercedes-Benz · Sociedade Comercial C. Santos</span><span class="app-version" onclick="forcarAtualizacao()" title="Toca para forçar atualização">v2.2.85 🔄</span></div>
+    <div class="topbar-brand"><span>Mercedes-Benz · Sociedade Comercial C. Santos</span><span class="app-version" onclick="forcarAtualizacao()" title="Toca para forçar atualização">v2.2.86 🔄</span></div>
     <div class="topbar-row">
       <span class="topbar-name">Mariana Magalhães</span>
       <div class="topbar-btns">
@@ -320,7 +320,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <div class="overlay" id="ov-ficha">
   <div style="display:flex;align-items:center;background:#fff;border-bottom:1px solid #e8e6e1;position:sticky;top:0;z-index:10;">
     <button class="back-btn" onclick="fecharFicha()" style="border-bottom:none;flex:1;">← Voltar</button>
-    <button onclick="forcarAtualizacao()" style="background:none;border:none;color:#bbb;font-size:12px;padding:.85rem .9rem;cursor:pointer;white-space:nowrap;font-family:inherit;" title="Forçar atualização">🔄 v2.2.85</button>
+    <button onclick="forcarAtualizacao()" style="background:none;border:none;color:#bbb;font-size:12px;padding:.85rem .9rem;cursor:pointer;white-space:nowrap;font-family:inherit;" title="Forçar atualização">🔄 v2.2.86</button>
   </div>
   <div class="ficha-pad" id="ficha-content"></div>
   <div style="padding:0 1rem;">
@@ -2299,7 +2299,6 @@ function renderFicha(l){
       const temTD=!!(l.td_agendado||l.td_pedido);
       return temTD ? tdColSecao : '';
     })()}
-    ${col(l.id+'-props','PROPOSTAS',nPropostas||'',`<div style="margin-bottom:6px;">${renderPropostas(l)}</div><button onclick="abrirModalProposta('${l.id}')" class="btn sm" style="margin-top:4px;">+ Nova proposta</button>`)}
     ${col(l.id+'-reun','REUNIÃO','',`${renderReuniao(l)}<button onclick="abrirModalReuniao('${l.id}')" class="btn sm" style="margin-top:6px;">+ Agendar reunião</button>`)}
     ${l.entrega_info&&(l.entrega_info.tipo_entrega||l.entrega_info.data)?col(l.id+'-entrega','ENTREGA',l.entrega_info.entregue?'✅':'',`${renderEntregaResumo(l)}<button onclick="abrirModalEntrega('${l.id}')" class="btn sm" style="margin-top:6px;">✏️ Editar entrega</button>`):''}
     ${(()=>{
@@ -2963,6 +2962,9 @@ function criarLead(){
   const finOutra=g('nf-fin-outra')?.value.trim()||'';
   const nova={id:Date.now(),nome,tel,email:g('nf-email').value.trim(),opp_id:g('nf-opp').value.trim()||'(sem ID)',tipo_lead:tipoLead,carro:g('nf-carro').value.trim()||'—',kom:normalizarKOM(g('nf-kom').value.trim()),tipo:g('nf-tipo').value,nif:g('nf-nif').value.trim(),empresa_nome:g('nf-empresa-nome').value.trim(),frota:g('nf-frota').value.trim(),cae_rent:g('nf-cae').value||false,cliente_existente:clienteExistente,sector:'',estado:'contactar',notas:[{data:ds,texto:g('nf-nota').value.trim()||'Lead criada.'}],follow_data:agora.toISOString().split('T')[0],follow_nota:'Primeiro contacto',negociacao_fora:g('nf-neg').value.trim(),relacao_interna:g('nf-rel').value.trim(),financiamento:finanValor,financiamento_tipo:finanValor==='Financiamento'?(g('nf-fin-tipo')?.value||''):'',financiamento_gestora:finanValor==='Financiamento'?(g('nf-fin-gestora')?.value||''):'',financiamento_financeira:finanValor==='Financiamento'?(finFin==='Outra'&&finOutra?finOutra:finFin):'',retoma:g('nf-retoma').value,td_pedido:false,td_agendado:'',td_stand:'',td_esp:'',reuniao_data:'',reuniao_local:'',reuniao_notas:'',reuniao_realizada:false,preferencias:[],propostas:[],criado:agora.toISOString().split('T')[0],criado_app:agora.toISOString(),primeiro_contacto:agora.toISOString()};
   guardar(nova);fecharNova();renderAtual();
+  if(nova.retoma==='Sim'){
+    setTimeout(()=>abrirRetoma(nova.id),200);
+  }
 }
 
 function abrirImport(){document.getElementById('ov-import').classList.add('open');}
