@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Leads MBP">
-<title>Leads MBP v2.2.92</title>
+<title>Leads MBP v2.2.94</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23f4a6c6'/%3E%3Ctext x='50' y='70' font-size='58' font-family='Arial, sans-serif' font-weight='900' fill='%237a1350' text-anchor='middle'%3EM%3C/text%3E%3C/svg%3E">
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
@@ -249,7 +249,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
 <div id="main-view">
   <div class="topbar">
-    <div class="topbar-brand"><span>Mercedes-Benz · Sociedade Comercial C. Santos</span><span class="app-version" onclick="forcarAtualizacao()" title="Toca para forçar atualização">v2.2.92 🔄</span></div>
+    <div class="topbar-brand"><span>Mercedes-Benz · Sociedade Comercial C. Santos</span><span class="app-version" onclick="forcarAtualizacao()" title="Toca para forçar atualização">v2.2.94 🔄</span></div>
     <div class="topbar-row">
       <span class="topbar-name">Mariana Magalhães</span>
       <div class="topbar-btns">
@@ -321,7 +321,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <div class="overlay" id="ov-ficha">
   <div style="display:flex;align-items:center;background:#fff;border-bottom:1px solid #e8e6e1;position:sticky;top:0;z-index:10;">
     <button class="back-btn" onclick="fecharFicha()" style="border-bottom:none;flex:1;">← Voltar</button>
-    <button onclick="forcarAtualizacao()" style="background:none;border:none;color:#bbb;font-size:12px;padding:.85rem .9rem;cursor:pointer;white-space:nowrap;font-family:inherit;" title="Forçar atualização">🔄 v2.2.92</button>
+    <button onclick="forcarAtualizacao()" style="background:none;border:none;color:#bbb;font-size:12px;padding:.85rem .9rem;cursor:pointer;white-space:nowrap;font-family:inherit;" title="Forçar atualização">🔄 v2.2.94</button>
   </div>
   <div class="ficha-pad" id="ficha-content"></div>
   <div style="padding:0 1rem;">
@@ -1005,7 +1005,7 @@ function copiarParaPOS(id){
   const tel=String(l.tel||'').replace(/\s/g,'');
   const texto=apelido+';'+proprio+';'+tel;
   navigator.clipboard.writeText(texto).then(()=>{
-    alert('✅ Copiado!\n\nApelido: '+apelido+'\nNome Próprio: '+proprio+'\nTelemóvel: '+tel+'\n\nSe a divisão do nome não estiver correcta, avisa-me para eu ajustar a regra.\n\nNo MBC POS, com o cursor no campo "Apelido", prime o atalho do AutoHotkey (Ctrl+Alt+P).');
+    alert('✅ Copiado!\n\nApelido: '+apelido+'\nNome Próprio: '+proprio+'\nTelemóvel: '+tel+'\n\nSe a divisão do nome não estiver correcta, avisa-me para eu ajustar a regra.\n\nNo MBC POS, com o cursor no campo "Apelido", prime o atalho do AutoHotkey (Ctrl+Shift+P).');
   }).catch(()=>{
     alert('Não foi possível copiar automaticamente. Copia manualmente:\n\n'+texto);
   });
@@ -1016,7 +1016,7 @@ function copiarEmpresaParaPOS(id){
   const tel=String(l.tel||'').replace(/\s/g,'');
   const texto=l.empresa_nome+';'+tel+';'+(l.nif||'');
   navigator.clipboard.writeText(texto).then(()=>{
-    alert('✅ Copiado!\n\nNome da Empresa: '+l.empresa_nome+'\nTelefone: '+tel+'\nNIF/NIPC: '+(l.nif||'(vazio)')+'\n\nNo MBC POS, com o cursor no campo "Nome da Empresa", prime o atalho do AutoHotkey (Ctrl+Alt+E).');
+    alert('✅ Copiado!\n\nNome da Empresa: '+l.empresa_nome+'\nTelefone: '+tel+'\nNIF/NIPC: '+(l.nif||'(vazio)')+'\n\nNo MBC POS, com o cursor no campo "Nome da Empresa", prime o atalho do AutoHotkey (Ctrl+Shift+E).');
   }).catch(()=>{
     alert('Não foi possível copiar automaticamente. Copia manualmente:\n\n'+texto);
   });
