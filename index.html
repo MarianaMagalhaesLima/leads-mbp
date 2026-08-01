@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Leads MBP">
-<title>Leads MBP v2.2.88</title>
+<title>Leads MBP v2.2.89</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f4f2;color:#1a1a1a;min-height:100vh;}
@@ -248,7 +248,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
 <div id="main-view">
   <div class="topbar">
-    <div class="topbar-brand"><span>Mercedes-Benz · Sociedade Comercial C. Santos</span><span class="app-version" onclick="forcarAtualizacao()" title="Toca para forçar atualização">v2.2.88 🔄</span></div>
+    <div class="topbar-brand"><span>Mercedes-Benz · Sociedade Comercial C. Santos</span><span class="app-version" onclick="forcarAtualizacao()" title="Toca para forçar atualização">v2.2.89 🔄</span></div>
     <div class="topbar-row">
       <span class="topbar-name">Mariana Magalhães</span>
       <div class="topbar-btns">
@@ -320,7 +320,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <div class="overlay" id="ov-ficha">
   <div style="display:flex;align-items:center;background:#fff;border-bottom:1px solid #e8e6e1;position:sticky;top:0;z-index:10;">
     <button class="back-btn" onclick="fecharFicha()" style="border-bottom:none;flex:1;">← Voltar</button>
-    <button onclick="forcarAtualizacao()" style="background:none;border:none;color:#bbb;font-size:12px;padding:.85rem .9rem;cursor:pointer;white-space:nowrap;font-family:inherit;" title="Forçar atualização">🔄 v2.2.88</button>
+    <button onclick="forcarAtualizacao()" style="background:none;border:none;color:#bbb;font-size:12px;padding:.85rem .9rem;cursor:pointer;white-space:nowrap;font-family:inherit;" title="Forçar atualização">🔄 v2.2.89</button>
   </div>
   <div class="ficha-pad" id="ficha-content"></div>
   <div style="padding:0 1rem;">
@@ -984,6 +984,29 @@ function iniciarPostCallWatch(){
       postCallTimer=null;
       mostrarPostCall();
     }
+  });
+}
+
+// ─── COPIAR PARA MBC POS ──────────────────────────────────────────────────────
+const NOMES_PROPRIOS_PT=new Set(['José','João','António','Manuel','Francisco','Carlos','Luís','Paulo','Pedro','Miguel','Jorge','André','Rui','Nuno','Bruno','Ricardo','Filipe','Tiago','Fernando','Vítor','Vitor','Rodrigo','Diogo','Daniel','Gonçalo','Hugo','Marco','Mário','Alexandre','Sérgio','Vasco','Duarte','Gil','Henrique','Simão','Ivo','Artur','Eduardo','Domingos','Alberto','Alfredo','Adriano','Amândio','Aníbal','Armando','Augusto','Aurélio','Belmiro','Bernardo','Cristiano','Cristóvão','Diamantino','Edmundo','Emanuel','Ernesto','Estêvão','Evaristo','Ezequiel','Fábio','Félix','Gaspar','Gustavo','Horácio','Ilídio','Isaías','Ismael','Ivan','Joaquim','Jaime','Júlio','Justino','Leonardo','Lourenço','Marcelo','Mateus','Maurício','Nelson','Norberto','Octávio','Osvaldo','Raul','Renato','Reinaldo','Roberto','Rogério','Rúben','Samuel','Salvador','Sebastião','Severino','Silvestre','Teodoro','Tomás','Valdemar','Valentim','Xavier','Zacarias',
+'Maria','Ana','Beatriz','Catarina','Carolina','Cláudia','Cristina','Daniela','Diana','Fátima','Filipa','Francisca','Helena','Inês','Isabel','Joana','Leonor','Luísa','Madalena','Mafalda','Margarida','Marta','Mónica','Patrícia','Paula','Raquel','Rita','Rosa','Sara','Sofia','Susana','Teresa','Vera','Vânia','Alexandra','Amélia','Andreia','Bárbara','Bruna','Camila','Carla','Célia','Conceição','Constança','Débora','Dulce','Elisabete','Emília','Fernanda','Gabriela','Gisela','Glória','Graça','Guilhermina','Ivone','Judite','Júlia','Justina','Lara','Laura','Liliana','Lúcia','Lurdes','Manuela','Mariana','Marina','Marisa','Micaela','Miriam','Natália','Nídia','Noémia','Odete','Olga','Palmira','Piedade','Priscila','Rafaela','Regina','Sandra','Sílvia','Soraia','Tânia','Telma','Vitória']);
+function classificarPartesNome(nomeCompleto){
+  const partes=(nomeCompleto||'').trim().split(/\s+/).filter(Boolean);
+  if(partes.length<=1)return{proprio:'',apelido:partes[0]||''};
+  let i=0;
+  while(i<partes.length-1&&NOMES_PROPRIOS_PT.has(partes[i]))i++;
+  if(i===0)i=1;
+  return{proprio:partes.slice(0,i).join(' '),apelido:partes.slice(i).join(' ')};
+}
+function copiarParaPOS(id){
+  const l=leads.find(x=>String(x.id)===String(id));if(!l)return;
+  const{proprio,apelido}=classificarPartesNome(l.nome);
+  const tel=String(l.tel||'').replace(/\s/g,'');
+  const texto=apelido+';'+proprio+';'+tel;
+  navigator.clipboard.writeText(texto).then(()=>{
+    alert('✅ Copiado!\n\nApelido: '+apelido+'\nNome Próprio: '+proprio+'\nTelemóvel: '+tel+'\n\nSe a divisão do nome não estiver correcta, avisa-me para eu ajustar a regra.\n\nNo MBC POS, com o cursor no campo "Apelido", prime o atalho do AutoHotkey (Ctrl+Alt+P).');
+  }).catch(()=>{
+    alert('Não foi possível copiar automaticamente. Copia manualmente:\n\n'+texto);
   });
 }
 
@@ -2169,6 +2192,9 @@ function renderFicha(l){
       <button onclick="abrirTmplWA()" class="action-btn"><span>💬</span>WhatsApp</button>
       <button onclick="abrirTmplSMS()" class="action-btn"><span>📱</span>SMS</button>
       <button onclick="abrirTmplEmail()" class="action-btn"><span>✉️</span>Email</button>
+    </div>
+    <div style="padding:0 1rem .75rem;background:#fff;border-bottom:1px solid #e8e6e1;">
+      <button onclick="copiarParaPOS('${l.id}')" class="btn full" style="font-size:12.5px;">📋 Copiar para POS</button>
     </div>
 
     <!-- EDITAR + DESFAZER + REABRIR -->
