@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Leads MBP">
-<title>Leads MBP v2.2.94</title>
+<title>Leads MBP v2.2.95</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23f4a6c6'/%3E%3Ctext x='50' y='70' font-size='58' font-family='Arial, sans-serif' font-weight='900' fill='%237a1350' text-anchor='middle'%3EM%3C/text%3E%3C/svg%3E">
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
@@ -249,7 +249,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
 <div id="main-view">
   <div class="topbar">
-    <div class="topbar-brand"><span>Mercedes-Benz · Sociedade Comercial C. Santos</span><span class="app-version" onclick="forcarAtualizacao()" title="Toca para forçar atualização">v2.2.94 🔄</span></div>
+    <div class="topbar-brand"><span>Mercedes-Benz · Sociedade Comercial C. Santos</span><span class="app-version" onclick="forcarAtualizacao()" title="Toca para forçar atualização">v2.2.95 🔄</span></div>
     <div class="topbar-row">
       <span class="topbar-name">Mariana Magalhães</span>
       <div class="topbar-btns">
@@ -321,7 +321,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <div class="overlay" id="ov-ficha">
   <div style="display:flex;align-items:center;background:#fff;border-bottom:1px solid #e8e6e1;position:sticky;top:0;z-index:10;">
     <button class="back-btn" onclick="fecharFicha()" style="border-bottom:none;flex:1;">← Voltar</button>
-    <button onclick="forcarAtualizacao()" style="background:none;border:none;color:#bbb;font-size:12px;padding:.85rem .9rem;cursor:pointer;white-space:nowrap;font-family:inherit;" title="Forçar atualização">🔄 v2.2.94</button>
+    <button onclick="forcarAtualizacao()" style="background:none;border:none;color:#bbb;font-size:12px;padding:.85rem .9rem;cursor:pointer;white-space:nowrap;font-family:inherit;" title="Forçar atualização">🔄 v2.2.95</button>
   </div>
   <div class="ficha-pad" id="ficha-content"></div>
   <div style="padding:0 1rem;">
@@ -671,6 +671,8 @@ const TMPLS_WA_PT=[
   {label:'Último contacto — Boa tarde', body:`Boa tarde,\n\nUma vez que não obtive qualquer resposta, venho dar seguimento à conversa e perguntar se poderei ajudar em alguma questão.\n\nPor favor, não hesite em contactar-me.\n\nMuito obrigada.\n\nAté breve,\n\nMariana Magalhães | Sociedade Comercial C. Santos - Mercedes-Benz`},
   {label:'Envio de contactos — Bom dia', body:`Bom dia,\n\nTal como combinado, seguem os meus contactos:\n\nMariana Magalhães | Mercedes-Benz - Sociedade Comercial C. Santos\nTelemóvel: 918 080 238\n\nFico à disposição para o que precisar.`},
   {label:'Envio de contactos — Boa tarde', body:`Boa tarde,\n\nTal como combinado, seguem os meus contactos:\n\nMariana Magalhães | Mercedes-Benz - Sociedade Comercial C. Santos\nTelemóvel: 918 080 238\n\nFico à disposição para o que precisar.`},
+  {label:'Mantém o interesse? — Bom dia', body:`Bom dia. No seguimento das tentativas de contacto, venho por este meio questionar se o interesse no automóvel se mantém e se poderei ajudar com alguma questão. Obrigada.\nMariana Magalhães | Sociedade Comercial C. Santos - Mercedes-Benz`},
+  {label:'Mantém o interesse? — Boa tarde', body:`Boa tarde. No seguimento das tentativas de contacto, venho por este meio questionar se o interesse no automóvel se mantém e se poderei ajudar com alguma questão. Obrigada.\nMariana Magalhães | Sociedade Comercial C. Santos - Mercedes-Benz`},
 ];
 
 // ─── TEMPLATES CONFIRMAÇÃO TEST DRIVE ───────────────────────────────────────
@@ -849,6 +851,8 @@ const TMPLS_EMAIL_PT=[
   {label:'N.º incorreto — Boa tarde', subject:'Mercedes-Benz | Sociedade Comercial C. Santos – Mariana Magalhães', body:`Boa tarde,\n\nO meu nome é Mariana Magalhães e sou consultora comercial Mercedes-Benz na Sociedade Comercial C. Santos. Tentei entrar em contacto por telefone a propósito do seu interesse num dos nossos modelos, mas o número que temos em sistema não está correto.\nCaso pretenda, pode responder a este email ou contactar-me diretamente através do 918 080 238 — terei todo o gosto em ajudar e dar seguimento ao seu pedido.\nObrigada.`},
   {label:'Envio de contactos — Bom dia', subject:'Os meus contactos | Mercedes-Benz - Sociedade Comercial C. Santos', body:`Bom dia,\n\nTal como combinado, seguem os meus contactos:\n\nMariana Magalhães | Mercedes-Benz - Sociedade Comercial C. Santos\nTelemóvel: 918 080 238\n\nFico à disposição para o que precisar.`},
   {label:'Envio de contactos — Boa tarde', subject:'Os meus contactos | Mercedes-Benz - Sociedade Comercial C. Santos', body:`Boa tarde,\n\nTal como combinado, seguem os meus contactos:\n\nMariana Magalhães | Mercedes-Benz - Sociedade Comercial C. Santos\nTelemóvel: 918 080 238\n\nFico à disposição para o que precisar.`},
+  {label:'Mantém o interesse? — Bom dia', subject:'Mercedes-Benz | Sociedade Comercial C. Santos – Mariana Magalhães', body:`Bom dia,\n\nEspero que se encontre bem.\n\nNo seguimento das tentativas de contacto, venho por este meio questionar se o interesse no automóvel se mantém e se poderei ajudar com alguma questão.\n\nObrigada.`},
+  {label:'Mantém o interesse? — Boa tarde', subject:'Mercedes-Benz | Sociedade Comercial C. Santos – Mariana Magalhães', body:`Boa tarde,\n\nEspero que se encontre bem.\n\nNo seguimento das tentativas de contacto, venho por este meio questionar se o interesse no automóvel se mantém e se poderei ajudar com alguma questão.\n\nObrigada.`},
   {label:'Envio de proposta — Bom dia', subject:'Proposta Mercedes-Benz | Sociedade Comercial C. Santos', body:`Bom dia,\n\nAntes de mais, permita-me agradecer-lhe o contacto, bem como o interesse demonstrado na Sociedade Comercial C. Santos e na Mercedes-Benz.\nConforme acordado, remeto, em anexo, a proposta referente ao modelo do seu interesse. Estou à sua inteira disposição para esclarecer qualquer dúvida ou ajustar a proposta de acordo com as suas necessidades.\nMuito obrigada.`},
   {label:'Envio de proposta — Boa tarde', subject:'Proposta Mercedes-Benz | Sociedade Comercial C. Santos', body:`Boa tarde,\n\nAntes de mais, permita-me agradecer-lhe o contacto, bem como o interesse demonstrado na Sociedade Comercial C. Santos e na Mercedes-Benz.\nConforme acordado, remeto, em anexo, a proposta referente ao modelo do seu interesse. Estou à sua inteira disposição para esclarecer qualquer dúvida ou ajustar a proposta de acordo com as suas necessidades.\nMuito obrigada.`},
   {label:'Follow-up proposta — Bom dia', subject:'Proposta Mercedes-Benz | Sociedade Comercial C. Santos', body:`Bom dia,\n\nGostaria de saber se teve oportunidade de analisar a proposta que lhe enviei e se existe alguma questão em que eu possa ajudar.\nMuito obrigada.`},
