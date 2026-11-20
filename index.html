@@ -709,6 +709,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
         </div>
       </div>
     </div>
+    <div class="ffield" id="fs-aniv-wrap" style="background:#fbf6ea;border:1px solid #efe2c2;border-radius:10px;padding:.65rem .75rem;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;"><label class="flabel" style="margin:0;font-weight:700;">🎂 Aniversários</label><a href="#" style="font-size:12px;" onclick="adicionarPessoaRow('fs');return false;">+ Pessoa</a></div>
+      <div id="fs-aniv-box"></div>
+      <div style="font-size:11px;color:#999;">Opcional. Fica no APV para os parabéns.</div>
+    </div>
     <label style="display:flex;align-items:center;gap:10px;margin:1rem 0 0;background:#f5f4f2;border-radius:10px;padding:.65rem .75rem;cursor:pointer;">
       <input type="checkbox" id="fs-troca" style="width:20px;height:20px;flex-shrink:0;">
       <span style="font-size:13px;font-weight:600;">🔁 Negócio trocado com um colega</span><span style="font-size:11.5px;color:#888;">(a seguir pede os dados da troca)</span>
@@ -3018,7 +3023,7 @@ const SYNC_QUEUE_KEY='leads_sync_queue';
 // que chegue depois de uma mais recente (ex: a fila a reenviar uma cópia antiga depois de já teres fechado a lead).
 const DEV_ID=(()=>{try{let d=localStorage.getItem('dev_id');if(!d){d='d'+Date.now().toString(36)+Math.random().toString(36).slice(2,7);localStorage.setItem('dev_id',d);}return d;}catch(e){return 'd-sem-storage';}})();
 // Versão da app enviada em cada gravação: o servidor recusa gravações de versões antigas (com a falha das cópias antigas)
-const VERSAO_APP='2.3.352';
+const VERSAO_APP='2.3.354';
 function paraEnvio(lead,mud){const o={...lead,extras:{...((lead.extras&&typeof lead.extras==='object')?lead.extras:{}),_ts:lead._localTs||Date.now(),_dev:DEV_ID}};delete o._mudou;delete o._full;delete o._qver;if(mud)o._mudou=mud;o._ver=VERSAO_APP;return o;}
 // Alteração que ficou na fila numa versão antiga da app (antes de 2.3.338): pode trazer campos de uma cópia antiga.
 // Só as notas dela seguem; os campos ficam como estão gravados e aparece um aviso com o que não foi aplicado.
@@ -6388,6 +6393,41 @@ function anivFichaHTML(l){
       <span id="aniv-msg-${id}" style="font-size:12px;color:#b00020;"></span>
     </div></div>`;
 }
+// Aniversários só de quem compra: pedidos no formulário de venda; corrigíveis no Editar Dados (lead vendida)
+function anivLeadVendida(l){return !!(l&&l.fecho_motivo==='Fechado com sucesso'&&!(l.fecho_info&&l.fecho_info.tipo==='Lead #'));}
+function anivAcharPorNome(l,nome){const n=String(nome||'').trim().toLowerCase();return n?anivLista(l).find(a=>String(a.nome||'').trim().toLowerCase()===n):null;}
+// lista: [{anivId,nome,data}] — atualiza/cria/apaga conforme a data (vazia apaga a que já existia)
+function anivGravarLista(l,lista){
+  if(!l.extras||typeof l.extras!=='object')l.extras={};
+  if(!Array.isArray(l.extras.aniversarios))l.extras.aniversarios=[];
+  const fmt=d=>d.slice(8,10)+'/'+d.slice(5,7)+'/'+d.slice(0,4);const notas=[];
+  lista.forEach(x=>{const nome=String(x.nome||'').trim(),data=String(x.data||'');const okData=/^\d{4}-\d{2}-\d{2}$/.test(data);
+    let a=x.anivId?l.extras.aniversarios.find(y=>y.id===x.anivId):null;if(!a&&nome)a=anivAcharPorNome(l,nome);
+    if(a){
+      if(!okData){l.extras.aniversarios=l.extras.aniversarios.filter(y=>y!==a);notas.push('🎂 Aniversário apagado: '+a.nome);return;}
+      if(a.data!==data||(nome&&a.nome!==nome)){if(a.data.slice(5)!==data.slice(5))a.parabens=[];a.data=data;if(nome)a.nome=nome;notas.push('🎂 Aniversário: '+a.nome+' — '+fmt(data));}
+    }else if(okData&&nome){l.extras.aniversarios.push({id:'an'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),nome,data,parabens:[]});notas.push('🎂 Aniversário registado: '+nome+' — '+fmt(data));}
+  });
+  return notas;
+}
+function anivInputHTML(cls,a,extra){return `<input type="date" class="finput ${cls}" data-aniv-id="${a?a.id:''}" value="${a?a.data:''}" title="Aniversário" style="margin:0;font-size:12px;${extra||''}">`;}
+function fsAnivIniciar(l){
+  const w=document.getElementById('fs-aniv-box');if(!w)return;
+  const esc=x=>String(x||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
+  const linha=(nome,sub,a,ref)=>`<div class="fs-aniv-row" data-ref="${ref}" data-nome="${esc(nome)}" style="display:grid;grid-template-columns:1fr 140px;gap:8px;align-items:center;margin-bottom:6px;"><span style="font-size:13px;">${esc(nome)}${sub?' <span style="color:#888;">('+esc(sub)+')</span>':''}</span>${anivInputHTML('fs-aniv-data',a)}</div>`;
+  const pes=(l&&l.pessoas_adicionais)||[];
+  w.innerHTML=(l?linha(l.nome||'Cliente','',anivAcharPorNome(l,l.nome),'cliente'):'')+pes.map((p,i)=>p.nome?linha(p.nome,p.parentesco,anivAcharPorNome(l,p.nome),'p'+i):'').join('')+'<div id="fs-pessoas-list"></div>';
+}
+function fsAnivRecolher(l){
+  const lista=[];
+  document.querySelectorAll('#fs-aniv-box .fs-aniv-row').forEach(r=>{const i=r.querySelector('.fs-aniv-data');lista.push({anivId:i.dataset.anivId||'',nome:r.dataset.nome,data:i.value});});
+  const novas=[];let erro='';
+  document.querySelectorAll('#fs-pessoas-list .pessoa-row').forEach(row=>{const g=c=>(row.querySelector(c)?.value||'').trim();
+    const p={nome:g('.pessoa-nome'),parentesco:g('.pessoa-parentesco'),tel:g('.pessoa-tel'),email:g('.pessoa-email')},data=g('.pessoa-aniv');
+    if(!p.nome&&(p.tel||p.email||data)){erro='Falta o nome de uma pessoa nova.';return;}
+    if(!p.nome)return;novas.push(p);if(data)lista.push({nome:p.nome,data});});
+  return {lista,novas,erro};
+}
 function anivCartao(x){
   const {l,a,d,hoje}=x;const esc=s=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;');const id2=anivIdade(a,d);
   return `<div class="lead-card" style="${hoje?'border-left:3px solid #b7770d;':''}" onclick="document.getElementById('pv-ov')?.remove();abrirFicha('${String(l.id)}')">
@@ -7460,7 +7500,6 @@ function _renderFichaBase(l){
         <p class="sec-title" style="margin:0;">Dados</p>
         <button onclick="abrirEditar('${l.id}')" class="btn sm" style="font-size:11px;padding:4px 10px;color:#888;">✏️ Editar Dados</button>
       </div>
-      ${anivFichaHTML(l)}
       ${l.tambem_mbp?`<div class="drow dcol-full" style="background:#fdecea;margin:0 -1rem;padding:.5rem 1rem;"><span class="dlbl" style="color:#c0392b;font-weight:700;">📋 Também gerou MBP</span><span class="dval" style="color:#c0392b;font-weight:700;">${l.mbp_id_secundario||'(sem ID)'}</span></div>`:''}
 
       <div class="dcol">
@@ -7921,6 +7960,7 @@ function fsPagToggle(inicio){
 function fsCamposVendaToggle(tipo){
   const pw=document.getElementById('fs-pag-wrap');if(pw)pw.style.display=(tipo&&tipo!=='Lead #')?'block':'none';
   const uw=document.getElementById('fs-utilizador-wrap');if(uw)uw.style.display=tipo==='Serviço'?'block':'none';
+  const aw=document.getElementById('fs-aniv-wrap');if(aw)aw.style.display=tipo==='Lead #'?'none':'block';
 }
 // Campo Frota do formulário de venda: vem com a frota da lead (sugestão) e pode ser mudado
 function renderFsFrota(){
@@ -8459,7 +8499,7 @@ function abrirModalSucesso(id){
   fsMarteladaFlag=!!(lPrev&&lPrev.martelada);
   document.getElementById('fs-martelada-icon').style.opacity=fsMarteladaFlag?'.9':'.22';
   atualizarFsRetomaPrevisao();
-  fsDescIniciar(lPrev);fsPagIniciar(lPrev);fsCamposVendaToggle('');
+  fsDescIniciar(lPrev);fsPagIniciar(lPrev);fsAnivIniciar(lPrev);fsCamposVendaToggle('');
   {const av=document.getElementById('fs-aviso-socio');if(av){const v=lPrev&&lPrev.tipo==='Sócio de Empresa'?vendasSocioRecentes(lPrev):[];av.style.display=v.length?'block':'none';av.innerHTML=v.length?'⚠️ Sócio: já houve uma venda com este NIPC há menos de 12 meses ('+v.map(x=>String(x.l.nome).replace(/</g,'&lt;')+', '+x.d.toLocaleDateString('pt-PT')).join('; ')+'). A compra como sócio só pode acontecer 1 vez por ano.':'';}}
   document.getElementById('modal-sucesso').classList.add('open');
 }
@@ -8497,6 +8537,7 @@ function fecharComSucesso(){
   const vVenda=comNum((_comSt.fs||{}).venda);
   if(!isLeadHash&&!fsMarteladaFlag&&vVenda===null){alert('Falta o valor de venda (do contrato).');document.getElementById('fs-com-venda')?.focus();return;}
   const l=leads.find(x=>String(x.id)===String(modalLeadId));if(!l)return;
+  const fsAn=isLeadHash?{lista:[],novas:[],erro:''}:fsAnivRecolher(l);if(fsAn.erro){alert(fsAn.erro);return;}
   if(tipo==='Novo')fsAplicarFrota(l);
   const agora=new Date();const ds=agora.toLocaleDateString('pt-PT')+' '+agora.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'});
   {const tc=document.getElementById('fs-tipo-cliente')?.value||'';if(tc)l.tipo=tc;}
@@ -8531,8 +8572,12 @@ function fecharComSucesso(){
   l.negocio_quente=false;
   if(fsMarteladaFlag)l.martelada=true;
   const _troca=document.getElementById('fs-troca')?.checked;
+  if(fsAn.novas.length){l.pessoas_adicionais=listaSegura(l.pessoas_adicionais).concat(fsAn.novas);pushNota(l,{data:ds,texto:'👥 Pessoa adicionada no fecho: '+fsAn.novas.map(p=>p.nome+(p.parentesco?' ('+p.parentesco+')':'')).join(', ')});}
+  anivGravarLista(l,fsAn.lista).forEach(t=>pushNota(l,{data:ds,texto:t}));
   guardar(l);fecharModalSucesso();renderFicha(l);renderAtual();
+  const _pesCt=fsAn.novas.filter(p=>p.tel||p.email);
   if(_troca)setTimeout(()=>abrirTroca(String(l.id)),150);
+  else if(_pesCt.length)setTimeout(()=>pedirContactosAposEditar(l,{novosTels:[],novosEmails:[],telRemovido:'',emailRemovido:'',pessoasNovas:_pesCt}),150);
 }
 function abrirModalInsucesso(id){
   modalLeadId=String(id);insucessoSel=null;
@@ -8890,17 +8935,20 @@ function renderEmailRow(e){
 function adicionarEmailRow(prefix){
   document.getElementById((prefix||'ed')+'-emails-list').insertAdjacentHTML('beforeend',renderEmailRow({}));
 }
-function renderPessoaRow(p){
+function renderPessoaRow(p,a){
   return `<div class="pessoa-row" style="display:flex;gap:6px;margin-bottom:6px;align-items:center;flex-wrap:wrap;">
     <input class="finput pessoa-nome" placeholder="Nome" value="${(p.nome||'').replace(/"/g,'&quot;')}" style="flex:1;min-width:100px;margin-bottom:0;font-size:12px;">
     <input class="finput pessoa-parentesco" placeholder="Parentesco" value="${(p.parentesco||'').replace(/"/g,'&quot;')}" style="width:100px;flex-shrink:0;margin-bottom:0;font-size:12px;">
     <input class="finput pessoa-tel" placeholder="Telemóvel" value="${(p.tel||'').replace(/"/g,'&quot;')}" style="width:110px;flex-shrink:0;margin-bottom:0;font-size:12px;">
     <input class="finput pessoa-email" type="email" placeholder="Email" value="${(p.email||'').replace(/"/g,'&quot;')}" style="flex:1;min-width:140px;margin-bottom:0;font-size:12px;">
+    ${a?`<label style="display:flex;align-items:center;gap:4px;font-size:11px;color:#888;flex-shrink:0;">🎂${anivInputHTML('pessoa-aniv',a===true?null:a,'width:135px;')}</label>`:''}
     <button type="button" onclick="this.parentElement.remove()" style="background:none;border:none;color:#c0392b;cursor:pointer;font-size:18px;flex-shrink:0;line-height:1;">✕</button>
   </div>`;
 }
 function adicionarPessoaRow(prefix){
-  document.getElementById((prefix||'ed')+'-pessoas-list').insertAdjacentHTML('beforeend',renderPessoaRow({}));
+  const pf=prefix||'ed';const lm=leads.find(x=>String(x.id)===String(modalLeadId));
+  const comAniv=pf==='fs'||(pf==='ed'&&anivLeadVendida(lm));
+  document.getElementById(pf+'-pessoas-list').insertAdjacentHTML('beforeend',renderPessoaRow({},comAniv));
 }
 // ─── EDITAR DADOS: o que falta preencher ─────────────────────────────────────
 // Só conta campos visíveis (os que fazem sentido para aquela lead). Opcionais não contam:
@@ -8978,7 +9026,8 @@ function abrirEditar(id){
         <span onclick="adicionarPessoaRow()" title="Adicionar pessoa (ex: cônjuge)" style="cursor:pointer;font-size:16px;font-weight:700;color:#999;padding:0 4px;line-height:1;">+</span>
       </div>
       <input class="finput" id="ed-nome" value="${l.nome||''}">
-      <div id="ed-pessoas-list">${(l.pessoas_adicionais||[]).map(p=>renderPessoaRow(p)).join('')}</div>
+      ${anivLeadVendida(l)?`<label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#888;margin:-2px 0 6px;">🎂 Aniversário${anivInputHTML('',anivAcharPorNome(l,l.nome),'width:150px;').replace('class="finput ','id="ed-aniv-cliente" class="finput ')}</label>`:''}
+      <div id="ed-pessoas-list">${(l.pessoas_adicionais||[]).map(p=>renderPessoaRow(p,anivLeadVendida(l)?(anivAcharPorNome(l,p.nome)||true):false)).join('')}</div>
     </div>
     <div class="ffield">
       <div style="display:flex;justify-content:space-between;align-items:center;">
@@ -9177,7 +9226,13 @@ function guardarEditar(){
   const ehMBP=tipoLeadEdit==='Lead MBP'||tipoLeadEdit==='Opp MBP';
   if(ehMBP){l.tambem_mbp=false;l.mbp_id_secundario='';}
   const extraEd=lerContactosExtra('ed');
+  const anivEd=[];
+  if(anivLeadVendida(l)){const ac=g('ed-aniv-cliente');if(ac)anivEd.push({anivId:ac.dataset.anivId||'',nome:l.nome,data:ac.value});
+    document.querySelectorAll('#ed-pessoas-list .pessoa-row').forEach(row=>{const nm=(row.querySelector('.pessoa-nome')?.value||'').trim(),ai=row.querySelector('.pessoa-aniv');if(nm&&ai)anivEd.push({anivId:ai.dataset.anivId||'',nome:nm,data:ai.value});});
+    // pessoa retirada da lead → o aniversário dela também sai
+    listaSegura(l.pessoas_adicionais).forEach(p=>{const an=anivAcharPorNome(l,p.nome);if(an&&!anivEd.some(x=>x.anivId===an.id||String(x.nome).trim().toLowerCase()===String(an.nome).trim().toLowerCase()))anivEd.push({anivId:an.id,nome:an.nome,data:''});});}
   l.pessoas_adicionais=extraEd.pessoas;
+  {const dsA=dstamp();anivGravarLista(l,anivEd).forEach(t=>pushNota(l,{data:dsA,texto:t}));}
   l.telefones_adicionais=extraEd.telefones;
   l.emails_adicionais=extraEd.emails;
   const existSel=g('ed-exist-sel').value;
@@ -10006,7 +10061,7 @@ function renderEnvio(){
     <div style="display:flex;gap:6px;">${['Email','WhatsApp','Em mão'].map(c=>chip(e.canal===c,c,`_envEst.canal=_envEst.canal==='${c}'?'':'${c}';renderEnvio()`)).join('')}</div>
     <div class="sr-lbl">FOLLOW-UP</div>
     <div style="display:flex;gap:6px;">${opts.map(o=>chip(e.dias===o[0],o[1],`_envEst.dias=${o[0]};renderEnvio()`)).join('')}</div>
-    <div style="font-size:12px;color:#555;margin-top:6px;">Fica para <b>${fmtDiaPt(iso)}</b>${e.dias!==1&&iso!==envDataISO(0)?'':''}</div>
+    <div style="font-size:12px;color:#555;margin-top:6px;">Fica para <b>${iso?new Date(iso+'T12:00').toLocaleDateString('pt-PT',{weekday:'long'})+', '+fmtDiaPt(iso):''}</b></div>
     <div class="sr-lbl">NOTA (opcional)</div>
     <input id="env-nota" class="sr-in" style="width:100%;" placeholder="Ex: GLC 300 e, 62.500 €, 48 meses" value="${String(e.nota||'').replace(/"/g,'&quot;')}" oninput="_envEst.nota=this.value">
     <div style="display:flex;gap:8px;margin-top:.8rem;">
