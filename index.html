@@ -1380,7 +1380,8 @@ async function verificarContactoExistente(l,tel,email){
 }
 function mostrarVerificacaoContacto(l,tel,email,j){
   const box=()=>document.getElementById('ct-dup');if(!box())return;
-  const esc=x=>String(x||'').replace(/</g,'&lt;').replace(/'/g,'&#39;');
+  const esc=x=>String(x||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+  const escH=x=>String(x||'').replace(/&/g,'&amp;').replace(/</g,'&lt;');
   {
     const enc=j.encontrados||[];
     const ip=j.iphone&&(j.iphone.tel||j.iphone.email)?j.iphone:null;
@@ -1398,7 +1399,7 @@ function mostrarVerificacaoContacto(l,tel,email,j){
     box().style.color='#1a1a1a';
     box().innerHTML=`<div style="background:#fff4e0;border:1.5px solid #b7770d;border-radius:8px;padding:.55rem .7rem;">
       <div style="font-weight:700;color:#7a4e08;margin-bottom:4px;">⚠️ Já tens ${enc.length>1?'estes contactos':'este contacto'} com o mesmo ${enc[0].por}:</div>
-      ${enc.map(c=>`<div style="display:flex;align-items:center;gap:8px;margin-top:6px;"><span style="flex:1;font-size:13px;"><b>${esc(c.nome)}</b></span><span style="display:flex;flex-direction:column;gap:4px;"><button class="btn sm" onclick="ligarContactoExistente('${String(l.id)}','${esc(c.resource)}','${esc(c.nome)}')">Acrescentar a este</button><button class="btn sm" style="background:#1a1a1a;color:#fff;border-color:#1a1a1a;" onclick="ligarContactoExistente('${String(l.id)}','${esc(c.resource)}','${esc(c.nome)}',true)">Mudar nome e atualizar</button></span></div>`).join('')}
+      ${enc.map(c=>`<div style="display:flex;align-items:center;gap:8px;margin-top:6px;"><span style="flex:1;font-size:13px;"><b>${escH(c.nome)}</b></span><span style="display:flex;flex-direction:column;gap:4px;"><button class="btn sm" onclick="ligarContactoExistente('${String(l.id)}','${esc(c.resource)}','${esc(c.nome)}')">Acrescentar a este</button><button class="btn sm" style="background:#1a1a1a;color:#fff;border-color:#1a1a1a;" onclick="ligarContactoExistente('${String(l.id)}','${esc(c.resource)}','${esc(c.nome)}',true)">Mudar nome e atualizar</button></span></div>`).join('')}
       <div style="font-size:11px;color:#7a4e08;margin-top:6px;">"Acrescentar a este" junta o que faltar (telefone/email) ao contacto existente, sem mudar o nome. "Mudar nome e atualizar" faz o mesmo e muda o nome para o que está escrito em cima. Ou cria um novo na mesma.</div>
     </div>`;
     const ok=document.getElementById('ct-ok');if(ok)ok.textContent='Criar novo na mesma';mostrarBotaoJaTinha(l);
@@ -1409,16 +1410,22 @@ async function ligarContactoExistente(id,resource,nome,renomear){
   const err=document.getElementById('ct-err');
   const novoNome=renomear?(document.getElementById('ct-nome')?.value||'').trim():'';
   if(renomear&&!novoNome){if(err)err.textContent='Escreve o nome novo em cima.';return;}
+  // mostrar logo que está a trabalhar (o Google pode demorar) e não deixar carregar duas vezes
+  const ovB=document.getElementById('ct-ov');const botoes=ovB?[...ovB.querySelectorAll('button')]:[];
+  botoes.forEach(b=>b.disabled=true);
+  if(err){err.style.color='#555';err.textContent=renomear?'⏳ A atualizar e a mudar o nome do contacto…':'⏳ A atualizar o contacto…';}
+  const falhou=m=>{botoes.forEach(b=>b.disabled=false);if(err){err.style.color='#b00020';err.textContent=m;}};
+  const comPrazo=(url,op)=>{const ac=new AbortController();const t=setTimeout(()=>ac.abort(),45000);return fetch(url,{...op,signal:ac.signal}).finally(()=>clearTimeout(t));};
   try{
     const tels=[telContactoApp(l.tel)].filter(Boolean),emails=[String(l.email||'').trim()].filter(Boolean);
-    const r=await fetch(SCRIPT+'?k='+encodeURIComponent(chaveApp())+'&action=contactoAtualizar',{method:'POST',body:JSON.stringify({action:'contactoAtualizar',resource,tels,emails})});
+    const r=await comPrazo(SCRIPT+'?k='+encodeURIComponent(chaveApp())+'&action=contactoAtualizar',{method:'POST',body:JSON.stringify({action:'contactoAtualizar',resource,tels,emails})});
     const j=await r.json();if(!j.ok)throw new Error(j.error||'erro desconhecido');
     if(!j.resource)throw new Error('o Apps Script publicado é antigo — publica a versão nova');
     let nomeFinal='';
     if(renomear&&novoNome!==nome){
-      const r2=await fetch(SCRIPT+'?k='+encodeURIComponent(chaveApp())+'&action=contactoRenomear',{method:'POST',body:JSON.stringify({action:'contactoRenomear',resource:j.resource||resource,tel:l.tel||'',email:l.email||'',nome:novoNome,manterNota:true})});
+      const r2=await comPrazo(SCRIPT+'?k='+encodeURIComponent(chaveApp())+'&action=contactoRenomear',{method:'POST',body:JSON.stringify({action:'contactoRenomear',resource:j.resource||resource,tel:l.tel||'',email:l.email||'',nome:novoNome,manterNota:true})});
       const j2=await r2.json();
-      if(!j2.ok){if(err)err.textContent='Juntei o telefone/email, mas não consegui mudar o nome ('+erroCurto(j2.error||'erro')+').';
+      if(!j2.ok){falhou('Juntei o telefone/email, mas não consegui mudar o nome ('+erroCurto(j2.error||'erro')+').');
         pushNota(l,{data:dstamp(),texto:'📇 Contacto criado no telemóvel: ligado ao contacto existente "'+nome+'"',contacto_ref:j.resource||resource});guardar(l);return;}
       nomeFinal=j2.nomeFinal||novoNome;
     }
@@ -1426,7 +1433,7 @@ async function ligarContactoExistente(id,resource,nome,renomear){
     pushNota(l,{data:dstamp(),texto:nomeFinal?'📇 Contacto existente "'+nome+'" atualizado e renomeado no telemóvel: '+nomeFinal:'📇 Contacto criado no telemóvel: ligado ao contacto existente "'+nome+'"',contacto_ref:j.resource||resource});
     guardar(l);if(fichaId===String(l.id))renderFicha(l);
     setSyncStatus('ok',nomeFinal?'📇 Contacto renomeado: '+nomeFinal:'📇 Ligado a '+nome);
-  }catch(e){if(err)err.textContent='Não foi possível atualizar o contacto ('+erroCurto(e)+').';}
+  }catch(e){falhou(e&&e.name==='AbortError'?'O Google não respondeu a tempo. Veja no telemóvel se o contacto já mudou antes de tentar outra vez.':'Não foi possível atualizar o contacto ('+erroCurto(e)+').');}
 }
 async function criarContactoTelemovel(id){
   const l=leads.find(x=>String(x.id)===String(id));if(!l)return;
@@ -3023,7 +3030,7 @@ const SYNC_QUEUE_KEY='leads_sync_queue';
 // que chegue depois de uma mais recente (ex: a fila a reenviar uma cópia antiga depois de já teres fechado a lead).
 const DEV_ID=(()=>{try{let d=localStorage.getItem('dev_id');if(!d){d='d'+Date.now().toString(36)+Math.random().toString(36).slice(2,7);localStorage.setItem('dev_id',d);}return d;}catch(e){return 'd-sem-storage';}})();
 // Versão da app enviada em cada gravação: o servidor recusa gravações de versões antigas (com a falha das cópias antigas)
-const VERSAO_APP='2.3.356';
+const VERSAO_APP='2.3.358';
 function paraEnvio(lead,mud){const o={...lead,extras:{...((lead.extras&&typeof lead.extras==='object')?lead.extras:{}),_ts:lead._localTs||Date.now(),_dev:DEV_ID}};delete o._mudou;delete o._full;delete o._qver;if(mud)o._mudou=mud;o._ver=VERSAO_APP;return o;}
 // Alteração que ficou na fila numa versão antiga da app (antes de 2.3.338): pode trazer campos de uma cópia antiga.
 // Só as notas dela seguem; os campos ficam como estão gravados e aparece um aviso com o que não foi aplicado.
@@ -5096,11 +5103,16 @@ function enAtualizarFaltam(){
   const comBloco=x=>{const t=(EN_SECS.find(S=>S.k===x.k)||{}).t||'';const w=(t.split(/\s+/)[0]||'').toLowerCase().slice(0,4);return t&&!String(x.lbl).toLowerCase().includes(w)?t+': '+x.lbl:x.lbl;};
   extra.forEach((x,xi)=>itens.push({o:ordem(x.k),i:1000+xi,html:`<a href="#" onclick="enIrCheck(${xi});return false;" style="${chip}color:#7a4e08;border:1px solid #efd9b0;">${String(comBloco(x)).replace(/</g,'&lt;')}</a>`}));
   itens.sort((a,b)=>a.o-b.o||a.i-b.i);
-  const total=f.length+av.length+extra.length;
+  // no quadro de cima, Pagamento só a partir de 2 dias úteis antes da entrega e Dia da entrega só no próprio dia (os blocos ficam iguais)
+  const kOrd=k=>ordem(k);const oPag=kOrd('pag'),oDia=kOrd('dia');
+  const ainda=enQuadroAinda();
+  const visiveis=itens.filter(x=>!(x.o===oPag&&!ainda.pag)&&!(x.o===oDia&&!ainda.dia));
+  const escondidos=itens.length-visiveis.length;
+  const total=visiveis.length;
   try{enSecAtualizar(false);}catch(e){}
   box.innerHTML=total
-    ?`<b>📝 Por tratar (${total})</b><div style="margin-top:5px;display:flex;flex-wrap:wrap;gap:5px;">${itens.map(x=>x.html).join('')}</div>`
-    :'<b style="color:#1e7a4a;">✓ Nada por tratar</b>';
+    ?`<b>📝 Por tratar (${total})</b><div style="margin-top:5px;display:flex;flex-wrap:wrap;gap:5px;">${visiveis.map(x=>x.html).join('')}</div>`
+    :`<b style="color:#1e7a4a;">✓ Nada por tratar${escondidos?' por agora':''}</b>`;
   box.style.background=total?'#fff8ec':'#e3f2e9';box.style.borderColor=total?'#efd9b0':'#bfe0cc';box.style.color=total?'#7a4e08':'#1e7a4a';
 }
 const EN_LBL_FIXO={'en-iuc-chk':'IUC','en-retoma-fatura-chk':'Fatura da retoma'};
@@ -5126,6 +5138,15 @@ function enJaCoberto(lbl,txt){
   const pal=String(lbl).split(/[^0-9A-Za-zÀ-ÿ]+/).filter(w=>w&&!_EN_STOP.includes(w.toLowerCase())&&(w.length>=4||(w.length>=2&&w===w.toUpperCase()))).map(w=>w.toLowerCase().slice(0,4));
   const t=String(txt).toLowerCase();
   return pal.length>0&&pal.every(w=>t.includes(w));
+}
+// Que partes do quadro "Por tratar" já contam, conforme a data da entrega escrita no formulário
+function enQuadroAinda(){
+  const d=document.getElementById('en-data')?.value||'';
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(d))return{pag:false,dia:false};
+  const iso=x=>x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0');
+  const hoje=iso(new Date());
+  const t=new Date(d+'T12:00');let n=0;while(n<2){t.setDate(t.getDate()-1);if(ehDiaUtil(t))n++;}
+  return{pag:hoje>=iso(t),dia:hoje>=d};
 }
 function enChecksPorTratar(av,f,secDe){
   const out=[];
