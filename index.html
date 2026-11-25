@@ -1263,7 +1263,20 @@ async function corrigirContactosTodos(){
   for(let i=0;i<mal.length;i++){if(!(mal[i].g&&mal[i].g.existe))continue;if(await corrigirContactoVer(i))ok++;else falhas++;}
   if(btn)btn.textContent='✓ '+ok+' corrigidos'+(falhas?' · '+falhas+' com erro':'');
 }
-function refContacto(l){const n=(l.notas||[]).filter(n=>n.contacto_ref);return n.length?n[n.length-1].contacto_ref:'';}
+function refContactoProprio(l){const n=(l&&l.notas||[]).filter(n=>n.contacto_ref);return n.length?n[n.length-1].contacto_ref:'';}
+// Referência do contacto Google desta lead: a da própria lead; senão, a de outra lead do mesmo cliente (mesmo telefone/email);
+// senão, o único contacto Google com esse telefone/email no índice. Só quando não há dúvida (uma só referência).
+function refContacto(l){
+  const prop=refContactoProprio(l);if(prop||!l)return prop;
+  const t9=String(telContactoApp(l.tel)||'').replace(/\D/g,'').slice(-9),em=String(l.email||'').trim().toLowerCase();
+  if(t9.length!==9&&!em)return'';
+  const mesmo=x=>{const xt=String(telContactoApp(x.tel)||'').replace(/\D/g,'').slice(-9),xe=String(x.email||'').trim().toLowerCase();return(t9.length===9&&xt===t9)||(!!em&&xe===em);};
+  const refs=new Set(leads.filter(x=>x!==l&&mesmo(x)).map(refContactoProprio).filter(Boolean));
+  if(refs.size===1)return[...refs][0];
+  if(refs.size>1)return'';
+  try{const r=procurarNoIndice(l.tel,l.email);const u=r&&r.encontrados?[...new Set(r.encontrados.map(c=>c.resource))]:[];if(u.length===1)return u[0];}catch(e){}
+  return'';
+}
 function contactosDaLead(l){
   const tels=[l.tel,...(l.telefones_adicionais||[]).map(t=>t.tel)].map(telContactoApp).filter(Boolean);
   const emails=[l.email,...(l.emails_adicionais||[]).map(e=>e.email)].map(e=>String(e||'').trim().toLowerCase()).filter(Boolean);
@@ -3030,7 +3043,7 @@ const SYNC_QUEUE_KEY='leads_sync_queue';
 // que chegue depois de uma mais recente (ex: a fila a reenviar uma cópia antiga depois de já teres fechado a lead).
 const DEV_ID=(()=>{try{let d=localStorage.getItem('dev_id');if(!d){d='d'+Date.now().toString(36)+Math.random().toString(36).slice(2,7);localStorage.setItem('dev_id',d);}return d;}catch(e){return 'd-sem-storage';}})();
 // Versão da app enviada em cada gravação: o servidor recusa gravações de versões antigas (com a falha das cópias antigas)
-const VERSAO_APP='2.3.361';
+const VERSAO_APP='2.3.362';
 // O número da versão no ecrã e no separador vem sempre daqui (antes estava escrito à mão e ficava para trás)
 (function(){const v='v'+VERSAO_APP;try{document.title='Leads MBP '+v;document.querySelectorAll('.app-version').forEach(e=>e.textContent=v+' 🔄');const b=document.getElementById('versao-btn');if(b)b.textContent='🔄 '+v;}catch(e){}})();
 function paraEnvio(lead,mud){const o={...lead,extras:{...((lead.extras&&typeof lead.extras==='object')?lead.extras:{}),_ts:lead._localTs||Date.now(),_dev:DEV_ID}};delete o._mudou;delete o._full;delete o._qver;if(mud)o._mudou=mud;o._ver=VERSAO_APP;return o;}
