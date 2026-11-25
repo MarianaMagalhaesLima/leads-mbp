@@ -3023,7 +3023,7 @@ const SYNC_QUEUE_KEY='leads_sync_queue';
 // que chegue depois de uma mais recente (ex: a fila a reenviar uma cópia antiga depois de já teres fechado a lead).
 const DEV_ID=(()=>{try{let d=localStorage.getItem('dev_id');if(!d){d='d'+Date.now().toString(36)+Math.random().toString(36).slice(2,7);localStorage.setItem('dev_id',d);}return d;}catch(e){return 'd-sem-storage';}})();
 // Versão da app enviada em cada gravação: o servidor recusa gravações de versões antigas (com a falha das cópias antigas)
-const VERSAO_APP='2.3.354';
+const VERSAO_APP='2.3.356';
 function paraEnvio(lead,mud){const o={...lead,extras:{...((lead.extras&&typeof lead.extras==='object')?lead.extras:{}),_ts:lead._localTs||Date.now(),_dev:DEV_ID}};delete o._mudou;delete o._full;delete o._qver;if(mud)o._mudou=mud;o._ver=VERSAO_APP;return o;}
 // Alteração que ficou na fila numa versão antiga da app (antes de 2.3.338): pode trazer campos de uma cópia antiga.
 // Só as notas dela seguem; os campos ficam como estão gravados e aparece um aviso com o que não foi aplicado.
@@ -4112,6 +4112,7 @@ function renderEntregaResumo(l){
   if(ei.gestora_entrega)linhas.push(`<div class="drow"><span class="dlbl">Gestora</span><span class="dval">${ei.gestora_entrega}</span></div>`);
   if(ei.financiamento_modo)linhas.push(`<div class="drow"><span class="dlbl">PP/Financ.</span><span class="dval">${ei.financiamento_modo}</span></div>`);
   if(ei.financiamento_tipo)linhas.push(`<div class="drow"><span class="dlbl">Tipo financ.</span><span class="dval">${ei.financiamento_tipo}</span></div>`);
+  if(ei.financiamento_financeira)linhas.push(`<div class="drow"><span class="dlbl">Financeira</span><span class="dval">${String(ei.financiamento_financeira).replace(/</g,'&lt;')}</span></div>`);
   if(ei.financiamento_aprovado)linhas.push(`<div class="drow"><span class="dlbl">Aprovado?</span><span class="dval">${ei.financiamento_aprovado}</span></div>`);
   if(ei.financiamento_externo)linhas.push(`<div class="drow"><span class="dlbl">Externo?</span><span class="dval">${ei.financiamento_externo}</span></div>`);
   linhas.push(`<div class="drow"><span class="dlbl">Seguro tratado</span><span class="dval">${ei.seguro_tratado?'✅ Sim':'—'}</span></div>`);
@@ -4744,9 +4745,9 @@ function substituirConteudoLead(o,n){if(!o||!n||o===n)return o;Object.keys(o).fo
 function snapLead(l){try{if(l&&l.id!=null)_snap[String(l.id)]=JSON.stringify(l);}catch(e){}}
 function snapTodos(){(leads||[]).forEach(snapLead);}
 const REG_IGNORAR=new Set(['notas','_localTs','_savedAt','primeiro_contacto','criado_app','lembretes_estado','id']);
-const REG_LBL={nome:'Nome',tel:'Telemóvel',email:'Email',carro:'Modelo do pedido',kom:'KOM',tipo:'Tipo de cliente',nif:'NIF/NIPC',frota:'Frota',cae_rent:'CAE Rent/Auto',cliente_existente:'Cliente existente',opp_id:'ID MBP',tipo_lead:'Tipo de lead',estado:'Estado',follow_data:'Follow-up (data)',follow_hora:'Follow-up (hora)',follow_nota:'Follow-up (descrição)',negociacao_fora:'Negociação fora',relacao_interna:'Relação/referência',td_pedido:'Test drive pedido',td_agendado:'Test drive agendado',td_stand:'Stand do test drive',td_esp:'Especialista do test drive',td_modelo:'Modelo do test drive',td_realizado:'Test drive realizado',td_realizado_data:'Data do test drive realizado',reuniao_data:'Reunião (data)',reuniao_local:'Reunião (local)',reuniao_notas:'Reunião (notas)',reuniao_realizada:'Reunião realizada',bitrix_ok:'Inserida no Bitrix',financiamento:'PP ou financiamento',retoma:'Retoma',financiamento_tipo:'Tipo de financiamento',financiamento_gestora:'Gestora',financiamento_financeira:'Financeira',financiamento_obs:'Obs. financiamento',retoma_obs:'Obs. retoma',empresa_nome:'Empresa',negocio_quente:'Negócio quente',fixada:'Fixada',tambem_mbp:'Também MBP',mbp_id_secundario:'2.º ID MBP',fecho_motivo:'Motivo do fecho',fecho_notas:'Notas do fecho',lista_negra:'Lista negra',lista_negra_motivo:'Motivo da lista negra',martelada:'🔨',modelo_interesse_real:'Modelo de interesse real',tel_categoria:'Categoria do telemóvel',email_categoria:'Categoria do email',data_apagada:'Apagada em',criado:'Recebida em (data)',criado_hora:'Recebida em (hora)',criado_hora:'Hora de criação',email_recebido:'Email recebido',pedido_info_data:'Pedido de informação',propostas:'Propostas',preferencias:'Preferências',retomas:'Retomas',pessoas_adicionais:'Pessoas adicionais',telefones_adicionais:'Telefones adicionais',emails_adicionais:'Emails adicionais',reunioes_extra:'Outras reuniões',reaberturas:'Reaberturas'};
+const REG_LBL={nome:'Nome',tel:'Telemóvel',email:'Email',carro:'Modelo do pedido',kom:'KOM',tipo:'Tipo de cliente',nif:'NIF/NIPC',frota:'Frota',cae_rent:'CAE Rent/Auto',cliente_existente:'Cliente existente',opp_id:'ID MBP',tipo_lead:'Tipo de lead',estado:'Estado',follow_data:'Follow-up (data)',follow_hora:'Follow-up (hora)',follow_nota:'Follow-up (descrição)',negociacao_fora:'Negociação fora',relacao_interna:'Relação/referência',td_pedido:'Test drive pedido',td_agendado:'Test drive agendado',td_stand:'Stand do test drive',td_esp:'Especialista do test drive',td_modelo:'Modelo do test drive',td_realizado:'Test drive realizado',td_realizado_data:'Data do test drive realizado',reuniao_data:'Reunião (data)',reuniao_local:'Reunião (local)',reuniao_notas:'Reunião (notas)',reuniao_realizada:'Reunião realizada',bitrix_ok:'Inserida no Bitrix',financiamento:'PP ou financiamento',retoma:'Retoma',financiamento_tipo:'Tipo de financiamento',financiamento_financeira:'Financeira',financiamento_gestora:'Gestora',financiamento_financeira:'Financeira',financiamento_obs:'Obs. financiamento',retoma_obs:'Obs. retoma',empresa_nome:'Empresa',negocio_quente:'Negócio quente',fixada:'Fixada',tambem_mbp:'Também MBP',mbp_id_secundario:'2.º ID MBP',fecho_motivo:'Motivo do fecho',fecho_notas:'Notas do fecho',lista_negra:'Lista negra',lista_negra_motivo:'Motivo da lista negra',martelada:'🔨',modelo_interesse_real:'Modelo de interesse real',tel_categoria:'Categoria do telemóvel',email_categoria:'Categoria do email',data_apagada:'Apagada em',criado:'Recebida em (data)',criado_hora:'Recebida em (hora)',criado_hora:'Hora de criação',email_recebido:'Email recebido',pedido_info_data:'Pedido de informação',propostas:'Propostas',preferencias:'Preferências',retomas:'Retomas',pessoas_adicionais:'Pessoas adicionais',telefones_adicionais:'Telefones adicionais',emails_adicionais:'Emails adicionais',reunioes_extra:'Outras reuniões',reaberturas:'Reaberturas'};
 const REG_GRUPO={entrega_info:'Entrega',fecho_info:'Venda',retoma_info:'Retoma',extras:'Outros'};
-const REG_SUB={auto_rececao_original:'Auto de receção ORIGINAL',usado_tipo:'Tipo de usado',retoma_terceiro_nome:'Retoma em nome de (terceiro)',retoma_terceiro_modo:'Terceiro da retoma vai assinar',retoma_terceiro_ok:'Terceiro da retoma tratado',retoma_ver_modelo:'Retoma conferida: modelo',retoma_ver_matricula:'Retoma conferida: matrícula',retoma_ver_data:'Retoma conferida: data da matrícula',retoma_ver_km:'Retoma conferida: quilometragem',retoma_pode_desistir:'Cliente pode desistir da retoma',retoma_mantem_confirmado:'Confirmou que mantém a retoma',pep:'Pessoa politicamente exposta (PEP)',pep_juridico:'PEP validado pelo jurídico',fin_externo_secretaria:'Docs do financiamento externo validados pela secretaria',resumo_contas_gestora:'Resumo de contas enviado pela gestora',pagamento_cliente_avisado:'Cliente avisado do pagamento',doc_branqueamento:'Declaração PEP assinada',modelo:'Modelo',tipo_entrega:'Tipo de entrega',komission:'Komission',utilizador_servico:'Andava com o carro',origem:'Origem',gestora_entrega:'Gestora da entrega',gestora_cliente:'Gestora do cliente',financiamento_modo:'Pagamento',financiamento_tipo:'Tipo de financiamento',financiamento_aprovado_chk:'Financiamento aprovado',fin_externo_aprovacao:'Aprovação do financiamento externo',fin_externo_autorizacao:'Autorização do financiamento externo',fin_externo_auto_rececao:'Auto de receção',observacoes:'Observações',local:'Local',especialista:'Especialista',previsao_entrega:'Previsão de entrega',novas_previsoes:'Novas previsões',carro_chegou:'Carro chegou',agendada:'Entrega agendada',encomenda_realizada_estado:'Encomenda realizada',encomenda_confirmada_estado:'Encomenda confirmada',data:'Data da entrega',hora:'Hora da entrega',seguro_tratado:'Seguro tratado',seguro_connosco:'Seguro connosco',five_star_rater:'5 Star Rater',five_star_martelado:'5 Star martelado',contrato_assinado:'Contrato assinado',sinal_confirmado:'Sinal confirmado',sinal_valor:'Valor do sinal',sem_sinal:'Sem sinal',preparacao_pedida:'Preparação pedida',preparacao_pronta:'Preparação pronta',doc_certidao_permanente:'Certidão permanente',doc_rcbe:'RCBE',doc_cc_assinante:'CC de quem assina',doc_cc:'CC',doc_morada:'Comprovativo de morada',doc_profissao:'Comprovativo de profissão',retoma_entrega:'Retoma',retoma_modelo:'Modelo da retoma',retoma_matricula:'Matrícula da retoma',retoma_data_matricula:'Data de matrícula da retoma',retoma_km_contrato:'Km da retoma (contrato)',retoma_km_entrega:'Km da retoma (entrega)',retoma_valor:'Valor da retoma',retoma_iva:'IVA dedutível da retoma',retoma_destino:'Retoma vai para',retoma_comerciante:'Comerciante da retoma',retoma_destino_venda:'Destino da retoma',retoma_nome:'Retoma em nome de',retoma_fatura_empresa:'Fatura da retoma (empresa)',retoma_obs:'Obs. da retoma',pagamento_viatura:'Pagamento da viatura',pagamento_iuc_estado:'IUC',retoma_fatura_entregue:'Fatura da retoma entregue',retoma_fatura_na:'Fatura da retoma N/A',seguro_cert_provisorio:'Certificado provisório do seguro',dois_comandos_chave:'Dois comandos/chaves',inspecao_valida:'Inspeção válida',dua:'DUA',cabos_carregamento:'Cabos de carregamento originais',manuais:'Manuais',retoma_aval_comandos:'Retoma avaliada com quantos comandos',retoma_eletrica:'Retoma elétrica ou híbrida plug-in',frota_tipo:'Frota',frota:'Frota do cliente',frota_carregada_pasta:'Frota carregada na pasta',frota_validada:'Frota validada',matricula_pedida:'Matrícula pedida',matricula_atribuida:'Matrícula atribuída',matricula:'Matrícula',entregue:'Entregue',entregue_data:'Data de entrega efetiva',obs_entrega:'Observações da entrega',tipo:'Tipo',tipo_novo:'Novo de',previsao:'Previsão',desconto:'Desconto',titular:'Fica em nome de',decl_check:'Requisitos da declaração',veiculo:'Viatura',avaliacao_sccs:'Avaliação SCCS',avaliacao_sccs_avaliador:'Avaliador',entrega_prevista:'Entrega prevista',notas_extra:'Notas'};
+const REG_SUB={auto_rececao_original:'Auto de receção ORIGINAL',usado_tipo:'Tipo de usado',retoma_terceiro_nome:'Retoma em nome de (terceiro)',retoma_terceiro_modo:'Terceiro da retoma vai assinar',retoma_terceiro_ok:'Terceiro da retoma tratado',retoma_ver_modelo:'Retoma conferida: modelo',retoma_ver_matricula:'Retoma conferida: matrícula',retoma_ver_data:'Retoma conferida: data da matrícula',retoma_ver_km:'Retoma conferida: quilometragem',retoma_pode_desistir:'Cliente pode desistir da retoma',retoma_mantem_confirmado:'Confirmou que mantém a retoma',pep:'Pessoa politicamente exposta (PEP)',pep_juridico:'PEP validado pelo jurídico',fin_externo_secretaria:'Docs do financiamento externo validados pela secretaria',resumo_contas_gestora:'Resumo de contas enviado pela gestora',pagamento_cliente_avisado:'Cliente avisado do pagamento',doc_branqueamento:'Declaração PEP assinada',modelo:'Modelo',tipo_entrega:'Tipo de entrega',komission:'Komission',utilizador_servico:'Andava com o carro',origem:'Origem',gestora_entrega:'Gestora da entrega',gestora_cliente:'Gestora do cliente',financiamento_modo:'Pagamento',financiamento_tipo:'Tipo de financiamento',financiamento_financeira:'Financeira',financiamento_aprovado_chk:'Financiamento aprovado',fin_externo_aprovacao:'Aprovação do financiamento externo',fin_externo_autorizacao:'Autorização do financiamento externo',fin_externo_auto_rececao:'Auto de receção',observacoes:'Observações',local:'Local',especialista:'Especialista',previsao_entrega:'Previsão de entrega',novas_previsoes:'Novas previsões',carro_chegou:'Carro chegou',agendada:'Entrega agendada',encomenda_realizada_estado:'Encomenda realizada',encomenda_confirmada_estado:'Encomenda confirmada',data:'Data da entrega',hora:'Hora da entrega',seguro_tratado:'Seguro tratado',seguro_connosco:'Seguro connosco',five_star_rater:'5 Star Rater',five_star_martelado:'5 Star martelado',contrato_assinado:'Contrato assinado',sinal_confirmado:'Sinal confirmado',sinal_valor:'Valor do sinal',sem_sinal:'Sem sinal',preparacao_pedida:'Preparação pedida',preparacao_pronta:'Preparação pronta',doc_certidao_permanente:'Certidão permanente',doc_rcbe:'RCBE',doc_cc_assinante:'CC de quem assina',doc_cc:'CC',doc_morada:'Comprovativo de morada',doc_profissao:'Comprovativo de profissão',retoma_entrega:'Retoma',retoma_modelo:'Modelo da retoma',retoma_matricula:'Matrícula da retoma',retoma_data_matricula:'Data de matrícula da retoma',retoma_km_contrato:'Km da retoma (contrato)',retoma_km_entrega:'Km da retoma (entrega)',retoma_valor:'Valor da retoma',retoma_iva:'IVA dedutível da retoma',retoma_destino:'Retoma vai para',retoma_comerciante:'Comerciante da retoma',retoma_destino_venda:'Destino da retoma',retoma_nome:'Retoma em nome de',retoma_fatura_empresa:'Fatura da retoma (empresa)',retoma_obs:'Obs. da retoma',pagamento_viatura:'Pagamento da viatura',pagamento_iuc_estado:'IUC',retoma_fatura_entregue:'Fatura da retoma entregue',retoma_fatura_na:'Fatura da retoma N/A',seguro_cert_provisorio:'Certificado provisório do seguro',dois_comandos_chave:'Dois comandos/chaves',inspecao_valida:'Inspeção válida',dua:'DUA',cabos_carregamento:'Cabos de carregamento originais',manuais:'Manuais',retoma_aval_comandos:'Retoma avaliada com quantos comandos',retoma_eletrica:'Retoma elétrica ou híbrida plug-in',frota_tipo:'Frota',frota:'Frota do cliente',frota_carregada_pasta:'Frota carregada na pasta',frota_validada:'Frota validada',matricula_pedida:'Matrícula pedida',matricula_atribuida:'Matrícula atribuída',matricula:'Matrícula',entregue:'Entregue',entregue_data:'Data de entrega efetiva',obs_entrega:'Observações da entrega',tipo:'Tipo',tipo_novo:'Novo de',previsao:'Previsão',desconto:'Desconto',titular:'Fica em nome de',decl_check:'Requisitos da declaração',veiculo:'Viatura',avaliacao_sccs:'Avaliação SCCS',avaliacao_sccs_avaliador:'Avaliador',entrega_prevista:'Entrega prevista',notas_extra:'Notas'};
 const REG_SUB_IGNORAR=new Set(['ics_uid','tarefa_id']);
 function _regVazio(v){return v===undefined||v===null||v===''||v===false||(Array.isArray(v)&&!v.length)||(typeof v==='object'&&!Array.isArray(v)&&!Object.keys(v).length);}
 function _regFmt(v,k){
@@ -5024,6 +5025,28 @@ function trocarPrincipalFundida(id){
 // Um campo conta para "por tratar" se faz parte do formulário (não está escondido por não se aplicar),
 // MESMO que o bloco onde está esteja fechado. Antes, fechar o bloco tirava o campo da conta e ficava ✅ sem estar.
 function enVisLogico(el){if(!el)return false;let e=el;for(;e&&e.id!=='entrega-form';e=e.parentElement){if(e.style&&e.style.display==='none')return false;}return !!e;}
+// Financeira na Entrega: lista base + as que já escreveu noutras entregas; "Outra" abre campo de texto
+const FINANCEIRAS_BASE=['MBF','Credibom','Santander','Montepio','Cetelem/BNP Paribas','BBVA','321 Crédito'];
+function financeirasConhecidas(){
+  const v=new Set(FINANCEIRAS_BASE);
+  leads.forEach(l=>{const f=l&&l.entrega_info&&String(l.entrega_info.financiamento_financeira||'').trim();if(f)v.add(f);});
+  return [...v];
+}
+function enFinanceiraHTML(atual){
+  const esc=x=>String(x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
+  const lista=financeirasConhecidas();
+  return `<div class="ffield"><label class="flabel" style="padding-left:12px;color:#aaa;">Financeira</label>
+    <select class="finput" id="en-fin-financeira" onchange="const o=document.getElementById('en-fin-financeira-outra-div');o.style.display=this.value==='Outra'?'block':'none';if(this.value==='Outra')document.getElementById('en-fin-financeira-outra').focus();enAtualizarFaltam();">
+      <option value="">— Selecionar —</option>
+      ${lista.map(o=>`<option value="${esc(o)}" ${atual===o?'selected':''}>${esc(o)}</option>`).join('')}
+      <option value="Outra">Outra…</option>
+    </select>
+    <div id="en-fin-financeira-outra-div" style="display:none;"><input class="finput" id="en-fin-financeira-outra" placeholder="Nome da financeira" oninput="enAtualizarFaltam()"></div></div>`;
+}
+function enFinanceiraValor(){
+  const s=document.getElementById('en-fin-financeira')?.value||'';
+  return s==='Outra'?(document.getElementById('en-fin-financeira-outra')?.value||'').trim():s;
+}
 function enFaltam(){
   const out=[],g=id=>document.getElementById(id),val=id=>{const e=g(id);return e?String(e.value||'').trim():'';};
   const req=(id,lbl)=>{const el=g(id);if(el&&enVisLogico(el)&&!val(id))out.push({id,lbl});};
@@ -5037,7 +5060,7 @@ function enFaltam(){
   // matrícula atribuída só fica tratada com a matrícula escrita
   {const ma=g('en-mat-atribuida');if(ma&&ma.checked&&enVisLogico(ma)&&!val('en-matricula'))out.push({id:'en-matricula',lbl:'Matrícula atribuída por introduzir'});}
   if(!val('en-data'))req('en-previsao','Previsão de entrega');
-  req('en-fin-modo','Pagamento');req('en-fin-tipo','Tipo de financiamento');
+  req('en-fin-modo','Pagamento');req('en-fin-tipo','Tipo de financiamento');req('en-fin-financeira','Financeira');if(val('en-fin-financeira')==='Outra')req('en-fin-financeira-outra','Qual financeira');
   req('en-gestora','Gestora da entrega');req('en-gestora-cliente','Gestora do cliente');req('en-especialista','Especialista');
   req('en-frota-sel','Frota');
   req('en-data','Data da entrega');req('en-hora','Hora da entrega');req('en-local-sel','Local da entrega');
@@ -5486,6 +5509,7 @@ function abrirModalEntrega(id){
             ${['Opção Vantagem','50/50','4toGo','VLP Premium','Crédito','Leasing','Renting','ALD','Indeciso'].map(o=>`<option ${ei.financiamento_tipo===o?'selected':''}>${o}</option>`).join('')}
           </select>
         </div>
+        ${enFinanceiraHTML(ei.financiamento_financeira||'')}
       </div>
       <div class="ffield" id="en-especialista-div" style="display:block;">
         <label class="flabel">Especialista de produto</label>
@@ -6031,6 +6055,7 @@ async function guardarEntrega(id){
     gestora_cliente:g('en-gestora-cliente')?.value||'',
     financiamento_modo:finModo,
     financiamento_tipo:(finModo==='Financiamento'||finModo==='Financiamento Externo')?(g('en-fin-tipo')?.value||''):'',
+    financiamento_financeira:(finModo==='Financiamento'||finModo==='Financiamento Externo')?enFinanceiraValor():'',
     financiamento_aprovado_chk:finModo==='Financiamento'?(g('en-fin-aprovado-chk')?.checked||false):(finModo==='Financiamento Externo'?(g('en-fin-ext-aprovacao')?.checked||false):false),
     fin_externo_aprovacao:finModo==='Financiamento Externo'?(g('en-fin-ext-aprovacao')?.checked||false):false,
     fin_externo_autorizacao:finModo==='Financiamento Externo'?(g('en-fin-ext-autorizacao')?.checked||false):false,
@@ -8103,7 +8128,17 @@ function comEur(n){if(n===null||n===undefined||isNaN(n))return'—';const neg=n<
 function comEsc(x){return String(x??'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');}
 function evtEscalao(n){return n>10?2:n>5?1:0;}
 function evtNomeIgual(a,b){return String(a||'').trim().toLowerCase()===String(b||'').trim().toLowerCase();}
-function comElegivel(l){const fi=l.fecho_info||{};return l.estado==='fechado'&&!l.martelada&&!!fi.tipo&&fi.tipo!=='Lead #'&&!foraEstatisticas(l);}
+// tipo de venda: o do fecho; se o fecho não o tiver (leads antigas), vale o da Entrega
+function comElegivel(l){const fi=l.fecho_info||{};return l.estado==='fechado'&&!l.martelada&&fi.tipo!=='Lead #'&&!!(fi.tipo||(l.entrega_info||{}).tipo_entrega)&&!foraEstatisticas(l);}
+// Porque é que uma venda fechada não tem comissão (para dizer em vez de esconder)
+function comMotivoSem(l){
+  const fi=l.fecho_info||{};
+  if(l.martelada||fi.tipo==='Lead #')return'Lead #';
+  const t=trocaDe(l);if(t&&t.papel==='passado')return'negócio passado a '+t.colega;
+  if(ehPassadaColega(l)||ehFundida(l))return'lead fora das estatísticas';
+  if(!(fi.tipo||(l.entrega_info||{}).tipo_entrega))return'';
+  return'';
+}
 function comTipo(l){const fi=l.fecho_info||{};return((l.entrega_info||{}).tipo_entrega)||fi.tipo||'';}
 // Unidades da mesma marca vendidas no mesmo evento, sem contar com esta venda
 function comUnidadesEvento(nome,marca,semId){
@@ -8262,7 +8297,13 @@ function comValoresRecolher(pref,tipo){
 
 // Linha da comissão no cabeçalho da entrega (toca para preencher/corrigir/marcar recebida)
 function comLinhaEntrega(l){
-  if(!l||!comElegivel(l))return'';
+  if(!l)return'';
+  if(!comElegivel(l)){
+    if(l.estado!=='fechado')return'';
+    const m=comMotivoSem(l);
+    return m?`<div class="en-l2" style="color:#888;" title="Comissão desta venda">💰 Sem comissão: ${comEsc(m)}</div>`
+      :`<div class="en-l2" style="color:#b5451b;font-weight:600;cursor:pointer;" onclick="enIrSec('venda')" title="Escolher o tipo de entrega">💰 Comissão: falta tipo de venda</div>`;
+  }
   const r=comConta(l),rec=comRecebida(l),k=comMesPagamento(l);
   const mes=k?MESES_PT[+k.split('-')[1]-1]+(k.split('-')[0]!==String(new Date().getFullYear())?' '+k.split('-')[0]:''):'';
   let txt;
