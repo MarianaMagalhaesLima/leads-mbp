@@ -742,6 +742,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <button class="btn full opcao-btn" onclick="selInsucesso(this,'Decidiu não avançar')">Decidiu não avançar</button>
       <button class="btn full opcao-btn" onclick="selInsucesso(this,'Desistiu depois de fechar negócio')">Desistiu depois de fechar negócio</button>
       <button class="btn full opcao-btn" onclick="selInsucesso(this,'Sem capacidade financeira')">Sem capacidade financeira</button>
+      <button class="btn full opcao-btn" onclick="selInsucesso(this,'Sem stock / prazo de entrega')">Sem stock / prazo de entrega</button>
       <button class="btn full opcao-btn" onclick="selInsucesso(this,'Retoma')">Retoma</button>
       <button class="btn full opcao-btn" onclick="selInsucesso(this,'Passei a colega')">Passei a colega</button>
       <button class="btn full opcao-btn" onclick="selInsucesso(this,'Já a tratar com um colega')">Já a tratar com um colega</button>
@@ -3043,7 +3044,7 @@ const SYNC_QUEUE_KEY='leads_sync_queue';
 // que chegue depois de uma mais recente (ex: a fila a reenviar uma cópia antiga depois de já teres fechado a lead).
 const DEV_ID=(()=>{try{let d=localStorage.getItem('dev_id');if(!d){d='d'+Date.now().toString(36)+Math.random().toString(36).slice(2,7);localStorage.setItem('dev_id',d);}return d;}catch(e){return 'd-sem-storage';}})();
 // Versão da app enviada em cada gravação: o servidor recusa gravações de versões antigas (com a falha das cópias antigas)
-const VERSAO_APP='2.3.362';
+const VERSAO_APP='2.3.363';
 // O número da versão no ecrã e no separador vem sempre daqui (antes estava escrito à mão e ficava para trás)
 (function(){const v='v'+VERSAO_APP;try{document.title='Leads MBP '+v;document.querySelectorAll('.app-version').forEach(e=>e.textContent=v+' 🔄');const b=document.getElementById('versao-btn');if(b)b.textContent='🔄 '+v;}catch(e){}})();
 function paraEnvio(lead,mud){const o={...lead,extras:{...((lead.extras&&typeof lead.extras==='object')?lead.extras:{}),_ts:lead._localTs||Date.now(),_dev:DEV_ID}};delete o._mudou;delete o._full;delete o._qver;if(mud)o._mudou=mud;o._ver=VERSAO_APP;return o;}
