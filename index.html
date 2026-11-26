@@ -176,6 +176,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .action-grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:.75rem 1rem;background:#fff;border-bottom:1px solid #e8e6e1;}
 .action-btn{display:flex;flex-direction:column;align-items:center;gap:3px;padding:9px 4px;border:1px solid #e8e6e1;border-radius:10px;cursor:pointer;background:#fff;font-family:inherit;font-size:10px;color:#1a1a1a;text-decoration:none;}
 .action-btn:active{background:#f5f4f2;}
+.acoes4{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;}
+@media(max-width:600px){.acoes4{grid-template-columns:1fr 1fr;}}
 .btn-sem-resp{width:100%;padding:8px 12px;border:1.5px dashed #c9722a;border-radius:10px;background:#fff8f1;color:#a0571b;font-family:inherit;font-size:12.5px;font-weight:600;cursor:pointer;}
 .btn-sem-resp:active{background:#fdebd8;}
 .btn-atendeu{border-color:#1e7a4a;background:#f1f8f3;color:#1e7a4a;}
@@ -3078,7 +3080,7 @@ const SYNC_QUEUE_KEY='leads_sync_queue';
 // que chegue depois de uma mais recente (ex: a fila a reenviar uma cópia antiga depois de já teres fechado a lead).
 const DEV_ID=(()=>{try{let d=localStorage.getItem('dev_id');if(!d){d='d'+Date.now().toString(36)+Math.random().toString(36).slice(2,7);localStorage.setItem('dev_id',d);}return d;}catch(e){return 'd-sem-storage';}})();
 // Versão da app enviada em cada gravação: o servidor recusa gravações de versões antigas (com a falha das cópias antigas)
-const VERSAO_APP='2.3.367';
+const VERSAO_APP='2.3.369';
 // O número da versão no ecrã e no separador vem sempre daqui (antes estava escrito à mão e ficava para trás)
 (function(){const v='v'+VERSAO_APP;try{document.title='Leads MBP '+v;document.querySelectorAll('.app-version').forEach(e=>e.textContent=v+' 🔄');const b=document.getElementById('versao-btn');if(b)b.textContent='🔄 '+v;}catch(e){}})();
 function paraEnvio(lead,mud){const o={...lead,extras:{...((lead.extras&&typeof lead.extras==='object')?lead.extras:{}),_ts:lead._localTs||Date.now(),_dev:DEV_ID}};delete o._mudou;delete o._full;delete o._qver;if(mud)o._mudou=mud;o._ver=VERSAO_APP;return o;}
@@ -7548,7 +7550,7 @@ function _renderFichaBase(l){
       <button onclick="abrirTmplSMS()" class="action-btn"><span>📱</span>SMS</button>
       <button onclick="abrirTmplEmail()" class="action-btn"><span>✉️</span>Email</button>
     </div>
-    <div style="padding:0 1rem .4rem;display:flex;gap:6px;"><button onclick="abrirAtendeu('${l.id}')" class="btn-sem-resp btn-atendeu" style="padding:8px 4px;">📞 Atendeu</button><button onclick="abrirSemResposta('${l.id}')" class="btn-sem-resp" style="padding:8px 4px;">📵 Sem resposta</button><button onclick="abrirEnvio('${l.id}','prop')" class="btn-sem-resp" style="padding:8px 4px;border-color:#185FA5;color:#185FA5;background:#eef3fb;" title="Enviei proposta / simulação">📄 Proposta</button></div>
+    <div class="acoes4" style="padding:0 1rem .4rem;"><button onclick="abrirAtendeu('${l.id}')" class="btn-sem-resp btn-atendeu" style="padding:8px 4px;">📞 Atendeu</button><button onclick="abrirSemResposta('${l.id}')" class="btn-sem-resp" style="padding:8px 4px;">📵 Sem resposta</button><button onclick="abrirEnvio('${l.id}','prop')" class="btn-sem-resp" style="padding:8px 4px;border-color:#185FA5;color:#185FA5;background:#eef3fb;" title="Enviei proposta / simulação">📄 Proposta</button><button onclick="abrirPediSim('${l.id}')" class="btn-sem-resp" style="padding:8px 4px;border-color:#6b4fa0;color:#6b4fa0;background:#f3effa;" title="Pedi simulação a uma gestora">🏦 Pedi simulação</button></div>
 
     <!-- COPIAR POS + EDITAR + DESFAZER + REABRIR — tudo junto -->
     <div class="ficha-section" style="padding:.6rem 1rem;display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;">
@@ -10162,12 +10164,60 @@ function pedirFollowAposCancelar(l,contexto){
 // ─── ENVIEI PROPOSTA / SIMULAÇÃO: um clique regista e agenda o follow-up ──────
 var _envEst=null;
 function abrirEnvio(id,tipo){
-  _envEst={id:String(id),tipo,canal:'',dias:2,nota:''};renderEnvio();
+  _envEst={id:String(id),tipo,canais:[],dias:2,nota:''};renderEnvio();
 }
 function envDataISO(dias){
   const d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()+dias);
-  while(!ehDiaUtil(d))d.setDate(d.getDate()+1); // fim de semana/feriado → próximo dia útil
+  // dias corridos (ela também trabalha ao fim de semana); a janela mostra sempre em que dia calha
   return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+// ─── PEDI SIMULAÇÃO (a uma gestora) → follow-up para ligar ao cliente ───
+var _simEst=null;
+const SIM_GESTORAS=['Diana Sousa','Paula Alexandra','Raquel Magalhães','Vera Teles'];
+function abrirPediSim(id){
+  let ult='';try{ult=localStorage.getItem('ult_gestora_sim')||'';}catch(e){}
+  const outra=ult&&!SIM_GESTORAS.includes(ult);
+  _simEst={id:String(id),gestora:outra?'Outra':ult,outra:outra?ult:'',dias:2,nota:''};renderPediSim();
+}
+function renderPediSim(){
+  const e=_simEst;if(!e)return;const l=leads.find(x=>String(x.id)===e.id);if(!l)return;
+  let ov=document.getElementById('sim-ov');if(!ov){ov=document.createElement('div');ov.id='sim-ov';ov.className='sr-ov';document.body.appendChild(ov);}
+  const esc=x=>String(x||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
+  const chip=(on,txt,js)=>`<button type="button" class="btn sm" style="flex:1;min-width:0;${on?'background:#1a1a1a;color:#fff;border-color:#1a1a1a;':''}" onclick="${js}">${txt}</button>`;
+  const iso=envDataISO(e.dias);
+  ov.innerHTML=`<div class="sr-box" style="max-width:460px;">
+    <div style="font-size:15px;font-weight:700;">🏦 Pedi simulação</div>
+    <div style="font-size:12px;color:#777;margin-top:2px;">${esc(l.nome)}</div>
+    <div class="sr-lbl">A QUE GESTORA</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">${SIM_GESTORAS.concat(['Outra']).map(g=>chip(e.gestora===g,g,`_simEst.gestora='${g}';renderPediSim()`)).join('')}</div>
+    ${e.gestora==='Outra'?`<input id="sim-outra" class="sr-in" style="width:100%;margin-top:6px;" placeholder="Nome da gestora" value="${esc(e.outra)}" oninput="_simEst.outra=this.value">`:''}
+    <div class="sr-lbl">FOLLOW-UP (LIGAR AO CLIENTE)</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;">${[[1,'1 dia'],[2,'2 dias'],[3,'3 dias'],[4,'4 dias'],[7,'1 semana']].map(o=>chip(e.dias===o[0],o[1],`_simEst.dias=${o[0]};renderPediSim()`)).join('')}</div>
+    <div style="font-size:12px;color:#555;margin-top:6px;">Fica para <b>${new Date(iso+'T12:00').toLocaleDateString('pt-PT',{weekday:'long'})+', '+fmtDiaPt(iso)}</b></div>
+    <div class="sr-lbl">NOTA (opcional)</div>
+    <input id="sim-nota" class="sr-in" style="width:100%;" placeholder="Ex: 48 meses, 10.000 € de entrada" value="${esc(e.nota)}" oninput="_simEst.nota=this.value">
+    <div id="sim-err" style="color:#b00020;font-size:12px;min-height:14px;margin-top:4px;"></div>
+    <div style="display:flex;gap:8px;margin-top:.4rem;">
+      <button class="btn" style="flex:1;" onclick="document.getElementById('sim-ov').remove();_simEst=null;">Cancelar</button>
+      <button class="btn" style="flex:2;background:#1a1a1a;color:#fff;border-color:#1a1a1a;" onclick="confirmarPediSim()">Guardar</button>
+    </div></div>`;
+}
+function confirmarPediSim(){
+  const e=_simEst;if(!e)return;const l=leads.find(x=>String(x.id)===e.id);if(!l)return;
+  const g=e.gestora==='Outra'?String(e.outra||'').trim():e.gestora;
+  if(!g){const er=document.getElementById('sim-err');if(er)er.textContent=e.gestora==='Outra'?'Escreve o nome da gestora.':'Escolhe a gestora.';return;}
+  try{localStorage.setItem('ult_gestora_sim',g);}catch(x){}
+  const ov=document.getElementById('sim-ov');if(ov)ov.remove();
+  const ds=dstamp(),iso=envDataISO(e.dias),hoje=new Date().toLocaleDateString('pt-PT',{day:'2-digit',month:'2-digit'});
+  const nota=String(e.nota||'').trim();
+  pushNota(l,{data:ds,texto:'🏦 Simulação pedida à '+g+(nota?' — '+nota:'')});
+  const fuTxt='Follow-up da simulação pedida à '+g+' a '+hoje;
+  l.follow_data=iso;l.follow_hora='';l.follow_nota=fuTxt;
+  if(!['fechado','sem_retorno','td_agendado'].includes(l.estado))l.estado='follow_up';
+  pushNota(l,{data:ds,texto:'📅 Follow-up agendado para o dia '+iso.split('-').reverse().join('/')+' com a descrição "'+fuTxt+'"'});
+  guardar(l);renderAtual();if(fichaId===String(l.id))renderFicha(l);
+  setSyncStatus('ok','✓ Registado · follow-up '+fmtDiaPt(iso));
+  _simEst=null;
 }
 function renderEnvio(){
   const e=_envEst;if(!e)return;const l=leads.find(x=>String(x.id)===e.id);if(!l)return;
@@ -10182,7 +10232,7 @@ function renderEnvio(){
     <div class="sr-lbl">O QUÊ</div>
     <div style="display:flex;gap:6px;">${[['prop','Proposta'],['sim','Simulação'],['ambas','As duas']].map(o=>chip(e.tipo===o[0],o[1],`_envEst.tipo='${o[0]}';renderEnvio()`)).join('')}</div>
     <div class="sr-lbl">ENVIADA POR</div>
-    <div style="display:flex;gap:6px;">${['Email','WhatsApp','Em mão'].map(c=>chip(e.canal===c,c,`_envEst.canal=_envEst.canal==='${c}'?'':'${c}';renderEnvio()`)).join('')}</div>
+    <div style="display:flex;gap:6px;">${['Email','WhatsApp','Em mão'].map(c=>chip(e.canais.includes(c),c,`envCanal('${c}')`)).join('')}</div>
     <div class="sr-lbl">FOLLOW-UP</div>
     <div style="display:flex;gap:6px;">${opts.map(o=>chip(e.dias===o[0],o[1],`_envEst.dias=${o[0]};renderEnvio()`)).join('')}</div>
     <div style="font-size:12px;color:#555;margin-top:6px;">Fica para <b>${iso?new Date(iso+'T12:00').toLocaleDateString('pt-PT',{weekday:'long'})+', '+fmtDiaPt(iso):''}</b></div>
@@ -10193,6 +10243,8 @@ function renderEnvio(){
       <button class="btn" style="flex:2;background:#1a1a1a;color:#fff;border-color:#1a1a1a;" onclick="confirmarEnvio()">Guardar</button>
     </div></div>`;
 }
+// "Enviada por": pode escolher mais do que um (toca outra vez para tirar)
+function envCanal(c){const e=_envEst;if(!e)return;const i=e.canais.indexOf(c);if(i>=0)e.canais.splice(i,1);else e.canais.push(c);e.canais.sort((a,b)=>['Email','WhatsApp','Em mão'].indexOf(a)-['Email','WhatsApp','Em mão'].indexOf(b));renderEnvio();}
 function confirmarEnvio(){
   const e=_envEst;if(!e)return;const l=leads.find(x=>String(x.id)===e.id);if(!l)return;
   const ov=document.getElementById('env-ov');if(ov)ov.remove();
@@ -10200,7 +10252,7 @@ function confirmarEnvio(){
   const oQue=e.tipo==='ambas'?'Proposta e simulação de financiamento':e.tipo==='sim'?'Simulação de financiamento':'Proposta';
   const pl=e.tipo==='ambas';
   const nota=String(e.nota||'').trim();
-  pushNota(l,{data:ds,texto:(e.tipo==='sim'?'💶 ':'📄 ')+oQue+(pl?' enviadas':' enviada')+(e.canal?' por '+e.canal:'')+(nota?' — '+nota:'')});
+  pushNota(l,{data:ds,texto:(e.tipo==='sim'?'💶 ':'📄 ')+oQue+(pl?' enviadas':' enviada')+(e.canais.length?' por '+(e.canais.length>1?e.canais.slice(0,-1).join(', ')+' e '+e.canais[e.canais.length-1]:e.canais[0]):'')+(nota?' — '+nota:'')});
   const fuTxt='Follow-up '+(pl?'da proposta e simulação enviadas':e.tipo==='sim'?'da simulação enviada':'da proposta enviada')+' a '+hoje;
   l.follow_data=iso;l.follow_hora='';l.follow_nota=fuTxt;
   if(!['fechado','sem_retorno','td_agendado'].includes(l.estado))l.estado='follow_up';
