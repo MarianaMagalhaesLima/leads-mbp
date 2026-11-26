@@ -3080,7 +3080,7 @@ const SYNC_QUEUE_KEY='leads_sync_queue';
 // que chegue depois de uma mais recente (ex: a fila a reenviar uma cópia antiga depois de já teres fechado a lead).
 const DEV_ID=(()=>{try{let d=localStorage.getItem('dev_id');if(!d){d='d'+Date.now().toString(36)+Math.random().toString(36).slice(2,7);localStorage.setItem('dev_id',d);}return d;}catch(e){return 'd-sem-storage';}})();
 // Versão da app enviada em cada gravação: o servidor recusa gravações de versões antigas (com a falha das cópias antigas)
-const VERSAO_APP='2.3.369';
+const VERSAO_APP='2.3.371';
 // O número da versão no ecrã e no separador vem sempre daqui (antes estava escrito à mão e ficava para trás)
 (function(){const v='v'+VERSAO_APP;try{document.title='Leads MBP '+v;document.querySelectorAll('.app-version').forEach(e=>e.textContent=v+' 🔄');const b=document.getElementById('versao-btn');if(b)b.textContent='🔄 '+v;}catch(e){}})();
 function paraEnvio(lead,mud){const o={...lead,extras:{...((lead.extras&&typeof lead.extras==='object')?lead.extras:{}),_ts:lead._localTs||Date.now(),_dev:DEV_ID}};delete o._mudou;delete o._full;delete o._qver;if(mud)o._mudou=mud;o._ver=VERSAO_APP;return o;}
@@ -3203,6 +3203,11 @@ async function guardar(lead,_undoDesc){
     else if(novas.some(t=>/^📅/.test(t)))linhas=linhas.filter(x=>!/^(Estado|Follow-up)/.test(x));
     if(novas.some(t=>/^🎁 Observações da entrega/.test(t)))linhas=linhas.filter(x=>!/Observações da entrega/.test(x));
     if(linhas.length)pushRegisto(lead,linhas.map(x=>'⚙️ '+x).join('\n'));}}catch(e){console.warn('registo',e);}
+  // Agendamento (reunião, TD, entrega) marcado com menos de 24h de antecedência: não precisa de lembrete de véspera
+  try{const antO=_antS?JSON.parse(_antS):null,antK=antO?chavesAgendamentos(antO).map(x=>x.key):[];
+    chavesAgendamentos(lead).forEach(x=>{if(antK.includes(x.key))return;const t=new Date(String(x.dt).replace(' ','T')).getTime();
+      if(!isNaN(t)&&t-Date.now()<24*3600*1000&&t>Date.now()-12*3600*1000){if(!lead.lembretes_estado||typeof lead.lembretes_estado!=='object')lead.lembretes_estado={};if(!lead.lembretes_estado[x.key])lead.lembretes_estado[x.key]='curto';}});
+  }catch(e){}
   // o que mudou desde a última versão conhecida (sem versão anterior = lead nova, grava-se inteira)
   let mud=null;
   try{if(_antS)mud=calcMudou(JSON.parse(_antS),lead);}catch(e){mud=null;}
@@ -8765,10 +8770,10 @@ function pedirConfirmacaoCliente(id,agendType){
   const l=leads.find(x=>String(x.id)===String(id));if(!l)return;
   let ov=document.getElementById('cf-ov');if(ov)ov.remove();
   ov=document.createElement('div');ov.id='cf-ov';ov.className='sr-ov';
-  const nome={td:'test drive',reuniao:'reunião',entrega:'entrega'}[agendType]||'agendamento';
+  const nome={td:'test drive',reuniao:'reunião',entrega:'entrega'}[agendType]||'agendamento',daNome=({td:'do test drive',reuniao:'da reunião',entrega:'da entrega'}[agendType]||'do agendamento');
   ov.innerHTML=`<div class="sr-box">
     <div style="font-size:15px;font-weight:700;">📨 Enviar a confirmação por escrito</div>
-    <div style="font-size:13px;color:#555;margin-top:6px;">Envia ao cliente a confirmação da ${nome}, com data, hora e local.</div>
+    <div style="font-size:13px;color:#555;margin-top:6px;">Envia ao cliente a confirmação ${daNome}, com data, hora e local.</div>
     <div style="display:flex;gap:8px;margin-top:.9rem;">
       <button class="btn" style="flex:1;border-color:#1e7a4a;color:#1e7a4a;" onclick="confirmacaoClienteVia('${String(l.id)}','${agendType}','wa')">💬 WhatsApp</button>
       <button class="btn" style="flex:1;" onclick="confirmacaoClienteVia('${String(l.id)}','${agendType}','sms')">📱 SMS</button>
@@ -8777,6 +8782,7 @@ function pedirConfirmacaoCliente(id,agendType){
     <div style="display:flex;gap:8px;margin-top:8px;">
       <button class="btn" style="flex:1;" onclick="document.getElementById('cf-ov').remove()">Mais tarde</button>
       <button class="btn" style="flex:1;" onclick="confirmacaoClienteJaEnviada('${String(l.id)}','${agendType}')">Já enviei</button>
+      <button class="btn" style="flex:1;" onclick="confirmacaoClienteNaoPreciso('${String(l.id)}','${agendType}')">Não é preciso</button>
     </div></div>`;
   document.body.appendChild(ov);
 }
@@ -8785,11 +8791,18 @@ function confirmacaoClienteVia(id,agendType,tipo){
   if(fichaId!==String(id))abrirFicha(String(id));
   setTimeout(()=>atalhoAgendamento(tipo,agendType),60);
 }
+function confirmacaoClienteNaoPreciso(id,agendType){
+  const l=leads.find(x=>String(x.id)===String(id));
+  const ov=document.getElementById('cf-ov');if(ov)ov.remove();if(!l)return;
+  const nome={td:'test drive',reuniao:'reunião',entrega:'entrega'}[agendType]||'agendamento',daNome=({td:'do test drive',reuniao:'da reunião',entrega:'da entrega'}[agendType]||'do agendamento');
+  pushNota(l,{data:dstamp(),texto:'📨 Confirmação '+daNome+': não é preciso enviar'});
+  guardar(l);if(fichaId===String(l.id))renderFicha(l);
+}
 function confirmacaoClienteJaEnviada(id,agendType){
   const l=leads.find(x=>String(x.id)===String(id));
   const ov=document.getElementById('cf-ov');if(ov)ov.remove();if(!l)return;
-  const nome={td:'test drive',reuniao:'reunião',entrega:'entrega'}[agendType]||'agendamento';
-  pushNota(l,{data:dstamp(),texto:'📨 Confirmação da '+nome+' enviada ao cliente'});
+  const nome={td:'test drive',reuniao:'reunião',entrega:'entrega'}[agendType]||'agendamento',daNome=({td:'do test drive',reuniao:'da reunião',entrega:'da entrega'}[agendType]||'do agendamento');
+  pushNota(l,{data:dstamp(),texto:'📨 Confirmação '+daNome+' enviada ao cliente'});
   guardar(l);if(fichaId===String(l.id))renderFicha(l);
 }
 function cancelarReuniao(id){
@@ -10567,6 +10580,15 @@ function feriadosAno(a){
 function ehDiaUtil(d){const w=d.getDay();if(w===0||w===6)return false;const k=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');return !feriadosAno(d.getFullYear()).has(k);}
 // Início (00:00) do dia útil anterior à data do agendamento
 function inicioDiaUtilAnterior(d){const x=new Date(d.getFullYear(),d.getMonth(),d.getDate());do{x.setDate(x.getDate()-1);}while(!ehDiaUtil(x));return x.getTime();}
+// Chaves dos agendamentos de uma lead (as mesmas dos lembretes de véspera)
+function chavesAgendamentos(l){
+  const out=[],ei=(l&&l.entrega_info)||{};if(!l||l.tipo_lead==='Tarefa')return out;
+  if(ei.data&&!ei.entregue)out.push({tipo:'entrega',dt:String(ei.data).slice(0,10)+'T'+(ei.hora||'09:00')});
+  if(l.reuniao_data&&!l.reuniao_realizada)out.push({tipo:'reuniao',dt:l.reuniao_data});
+  (l.reunioes_extra||[]).forEach(x=>{if(x&&x.data)out.push({tipo:'reuniao',dt:x.data});});
+  if(l.td_agendado)out.push({tipo:'td',dt:l.td_agendado});
+  out.forEach(x=>x.key=x.tipo+'|'+x.dt+'|'+l.id);return out;
+}
 function eventos24h(todos){
   const agora=Date.now(),out=[];
   leads.forEach(l=>{
@@ -10584,10 +10606,10 @@ function eventos24h(todos){
       const t=d.getTime();if(t<=agora||agora<inicioDiaUtilAnterior(d))return;
       const key=e.tipo+'|'+e.dt+'|'+l.id;
       const st=(l.lembretes_estado||{})[key];
-      const enviado=(l.notas||[]).some(n=>n.lembrete_key===key)||st==='enviado',dispensado=st==='dispensado';
+      const enviado=(l.notas||[]).some(n=>n.lembrete_key===key)||st==='enviado',dispensado=st==='dispensado'||st==='curto',curto=st==='curto';
       const adiadoAte=(typeof st==='number'&&st>Date.now())?st:0,adiado=_lemb24Adiados.has(key)||!!adiadoAte;
       if(!todos&&(adiado||enviado||dispensado))return;
-      out.push({...e,l,key,d,enviado,adiado,adiadoAte,dispensado});
+      out.push({...e,l,key,d,enviado,adiado,adiadoAte,dispensado,curto});
     }
   });
   return out.sort((a,b)=>a.d-b.d);
@@ -10821,6 +10843,7 @@ function abrirLembretesDia(){
     let badge,acoes='';
     const mostrar=`<button class="btn sm" onclick="lembreteMostrarAgora('${e.l.id}','${e.key}')">Mostrar agora</button>`;
     if(e.enviado)badge=est('Lembrete enviado','#1e7a4a','#e6f4ec');
+    else if(e.curto){badge=est('Marcado com menos de 24h','#777','#f0efec');acoes=mostrar;}
     else if(e.dispensado){badge=est('Não é preciso','#777','#f0efec');acoes=mostrar;}
     else if(e.adiadoAte){badge=est('Adiado até '+(new Date(e.adiadoAte).toDateString()===new Date().toDateString()?'':'amanhã ')+hm(new Date(e.adiadoAte)),'#7a4e08','#fff4e0');acoes=mostrar;}
     else if(e.adiado){badge=est('Fechado sem enviar','#7a4e08','#fff4e0');acoes=mostrar;}
