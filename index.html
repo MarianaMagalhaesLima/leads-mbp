@@ -559,9 +559,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <button class="back-btn" onclick="fecharImport()">← Cancelar</button>
   <div style="padding:0 1rem 6rem;">
     <p class="stitle" style="margin-bottom:.5rem;">Importar lead</p>
-    <p style="font-size:13px;color:#888;margin-bottom:1rem;">Cola aqui o código que o Claude te deu.</p>
-    <textarea class="finput" id="import-input" style="height:200px;margin-bottom:8px;" placeholder="Cola o código aqui..."></textarea>
-    <button class="btn primary full" onclick="importarLead()">⬇ Importar lead</button>
+    <p style="font-size:13px;color:#888;margin-bottom:1rem;">Copia o código que o Claude te deu e carrega no botão (ou Enter).</p>
+    <button class="btn primary full" id="import-colar" onclick="colarEImportar()" style="margin-bottom:10px;">📋 Colar e importar</button>
+    <textarea class="finput" id="import-input" style="height:160px;margin-bottom:8px;" placeholder="Ou cola o código aqui à mão e carrega no botão" onkeydown="if(event.key==='Enter'&&(event.ctrlKey||event.metaKey)){event.preventDefault();colarEImportar();}"></textarea>
   </div>
 </div>
 
@@ -1392,6 +1392,31 @@ async function verificarContactoExistente(l,tel,email){
     box().style.color='#b5451b';
   }
 }
+// Nome para juntar esta lead ao contacto que já está no telemóvel (o nome da pessoa e o PCS/CCS ficam como estão):
+//  mesmo dia  → "Daniel Mendonça Opp MBP + Lead SCCS 26112026 PCS"
+//  outro dia  → "Daniel Mendonça Lead SCCS 20052026 / Lead MBP 26112026 PCS"
+// Devolve {nome, foraFormato} ou null quando não dá para juntar.
+function nomeContactoJunto(existente,l){
+  const ex=String(existente||'').trim();if(!ex||!l)return null;
+  if(ehGestoraFrota(l)&&intermediario(l).nome)return null;
+  const novo=nomeContactoApp(l),base=String(l.nome||'').trim();
+  if(!novo.startsWith(base))return null;
+  const seg=novo.slice(base.length).replace(/\s+PCS$/,'').trim();
+  const ms=seg.match(/^(.*\S)\s+(\d{8})$/);if(!ms)return null;
+  const tipo=ms[1],data=ms[2];
+  const m=ex.match(/^(.*?)\s+(PCS|CCS)$/);
+  if(!m)return{nome:ex+' '+tipo+' '+data+' PCS',foraFormato:true};
+  let corpo=m[1];const suf=m[2];
+  const md=corpo.match(/^(.*?)\s+(\d{8})$/);
+  if(md){
+    const ultimo=md[1].split(' / ').pop();
+    if(md[2]===data){
+      if(ultimo.split(' + ').some(x=>x.trim().endsWith(tipo)))return{nome:ex,igual:true};
+      corpo=md[1]+' + '+tipo+' '+data;
+    }else corpo=corpo+' / '+tipo+' '+data;
+  }else corpo=corpo+' '+tipo+' '+data;
+  return{nome:corpo+' '+suf};
+}
 function mostrarVerificacaoContacto(l,tel,email,j){
   const box=()=>document.getElementById('ct-dup');if(!box())return;
   const esc=x=>String(x||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
@@ -1417,6 +1442,15 @@ function mostrarVerificacaoContacto(l,tel,email,j){
       <div style="font-size:11px;color:#7a4e08;margin-top:6px;">"Acrescentar a este" junta o que faltar (telefone/email) ao contacto existente, sem mudar o nome. "Mudar nome e atualizar" faz o mesmo e muda o nome para o que está escrito em cima. Ou cria um novo na mesma.</div>
     </div>`;
     const ok=document.getElementById('ct-ok');if(ok)ok.textContent='Criar novo na mesma';mostrarBotaoJaTinha(l);
+    // um só contacto: o NOME passa a ser a junção com o que já está no telemóvel (só muda se carregares em "Mudar nome e atualizar")
+    if(enc.length===1){
+      const nm=document.getElementById('ct-nome'),jn=nomeContactoJunto(enc[0].nome,l);
+      if(nm&&jn&&nm.value.trim()===nomeContactoApp(l)){
+        nm.value=jn.nome;
+        const dica=jn.foraFormato?'No telemóvel está como «'+escH(enc[0].nome)+'», sem PCS nem CCS. Em cima fica a sugestão; corrige se for preciso.':jn.igual?'O contacto no telemóvel já tem esta lead no nome.':'Em cima fica o nome junto com o que já está no telemóvel.';
+        box().insertAdjacentHTML('beforeend','<div style="font-size:11.5px;color:#7a4e08;margin-top:6px;font-weight:600;">'+dica+'</div>');
+      }
+    }
   }
 }
 async function ligarContactoExistente(id,resource,nome,renomear){
@@ -2002,7 +2036,7 @@ function gerarMsgAgendamento(agendType, acao, saudacao, lang, l){
     if(modeloLine)linhas.push(modeloLine);
     const ret=agendType==='entrega'&&(l.entrega_info||{}).retoma_entrega==='Sim'?'\n\n'+retomaListaTrazer(l.entrega_info,true):'';
     return {subject:(agendType==='td'?'Test Drive':agendType==='entrega'?'Entrega':'Reunião')+' Mercedes-Benz | Sociedade Comercial C. Santos',
-      body:saud+',\n\nVenho por este meio '+verbo+' o seu agendamento:\n\n'+linhas.join('\n')+ret+'\n\nPara a eventualidade de surgir alguma alteração, pedia-lhe que entrasse em contacto comigo com a devida antecedência.\nMuito obrigada.\n\nAté breve,\nMariana Magalhães — Sociedade Comercial C. Santos - Mercedes-Benz'};
+      body:saud+',\n\nVenho por este meio '+verbo+' o seu agendamento:\n\n'+linhas.join('\n')+ret+(agendType==='entrega'&&acao!=='confirmar'?'':'\n\nPara a eventualidade de surgir alguma alteração, pedia-lhe que entrasse em contacto comigo com a devida antecedência.\nMuito obrigada.')+'\n\nAté breve,\nMariana Magalhães — Sociedade Comercial C. Santos - Mercedes-Benz'};
   } else {
     const abertura=acao==='confirmar'?'I am pleased to confirm your appointment. Please find the details below:':'I would like to remind you of your upcoming appointment. Please find the details below:';
     const linhas=['Appointment type: '+tipoLabel,'Date: '+data,'Time: '+hora,'Location: '+localTexto];
@@ -2010,7 +2044,7 @@ function gerarMsgAgendamento(agendType, acao, saudacao, lang, l){
     if(modeloLine)linhas.push(modeloLine);
     const ret=agendType==='entrega'&&(l.entrega_info||{}).retoma_entrega==='Sim'?'\n\n'+retomaListaTrazer(l.entrega_info,false):'';
     return {subject:(agendType==='td'?'Test Drive':agendType==='entrega'?'Delivery':'Meeting')+' Mercedes-Benz | Sociedade Comercial C. Santos',
-      body:saud+',\n\n'+abertura+'\n\n'+linhas.join('\n')+ret+'\n\nIf you are unable to attend or need to reschedule, please let me know in advance.\nThank you very much.\n\nKind regards,\nMariana Magalhães — Sociedade Comercial C. Santos - Mercedes-Benz'};
+      body:saud+',\n\n'+abertura+'\n\n'+linhas.join('\n')+ret+(agendType==='entrega'&&acao!=='confirmar'?'':'\n\nIf you are unable to attend or need to reschedule, please let me know in advance.\nThank you very much.')+'\n\nKind regards,\nMariana Magalhães — Sociedade Comercial C. Santos - Mercedes-Benz'};
   }
 }
 function labelAgendType(agendType,lang){return agendType==='td'?(lang==='pt'?'🚗 Test Drive':'🚗 Test Drive'):agendType==='entrega'?(lang==='pt'?'🎁 Entrega':'🎁 Delivery'):(lang==='pt'?'📅 Reunião':'📅 Meeting');}
@@ -3044,7 +3078,7 @@ const SYNC_QUEUE_KEY='leads_sync_queue';
 // que chegue depois de uma mais recente (ex: a fila a reenviar uma cópia antiga depois de já teres fechado a lead).
 const DEV_ID=(()=>{try{let d=localStorage.getItem('dev_id');if(!d){d='d'+Date.now().toString(36)+Math.random().toString(36).slice(2,7);localStorage.setItem('dev_id',d);}return d;}catch(e){return 'd-sem-storage';}})();
 // Versão da app enviada em cada gravação: o servidor recusa gravações de versões antigas (com a falha das cópias antigas)
-const VERSAO_APP='2.3.363';
+const VERSAO_APP='2.3.367';
 // O número da versão no ecrã e no separador vem sempre daqui (antes estava escrito à mão e ficava para trás)
 (function(){const v='v'+VERSAO_APP;try{document.title='Leads MBP '+v;document.querySelectorAll('.app-version').forEach(e=>e.textContent=v+' 🔄');const b=document.getElementById('versao-btn');if(b)b.textContent='🔄 '+v;}catch(e){}})();
 function paraEnvio(lead,mud){const o={...lead,extras:{...((lead.extras&&typeof lead.extras==='object')?lead.extras:{}),_ts:lead._localTs||Date.now(),_dev:DEV_ID}};delete o._mudou;delete o._full;delete o._qver;if(mud)o._mudou=mud;o._ver=VERSAO_APP;return o;}
@@ -4852,6 +4886,7 @@ function avisosEntrega(l){
   if(ei.entregue)return out;
   const tipo=ei.tipo_entrega||(l.fecho_info&&l.fecho_info.tipo)||'';
   const empresa=ehTipoEmpresaSocio(l.tipo);
+  if(ei.preparacao_pronta&&!ei.data)out.push('Preparação pronta: agendar a entrega');
   if(!ei.financiamento_modo||ei.financiamento_modo==='Indeciso')out.push('PP ou financiamento por definir');
   else if((ei.financiamento_modo==='Financiamento'||ei.financiamento_modo==='Financiamento Externo')&&!ei.financiamento_aprovado_chk)out.push('Financiamento ainda não aprovado');
   if(tipo!=='Usado'){
@@ -9705,7 +9740,18 @@ async function criarLead(){
   pedirCriarContacto(nova);
 }
 
-function abrirImport(){document.getElementById('ov-import').classList.add('open');}
+function abrirImport(){document.getElementById('ov-import').classList.add('open');setTimeout(()=>{try{document.getElementById('import-colar').focus();}catch(e){}},60);}
+// Um clique (ou Enter): se a caixa já tiver código, importa-o; senão lê o que copiaste e importa
+async function colarEImportar(){
+  const inp=document.getElementById('import-input');
+  if(!inp.value.trim()){
+    let txt='';
+    try{txt=await navigator.clipboard.readText();}catch(e){}
+    if(!String(txt||'').trim()){alert('Não consegui ler o que copiaste. Cola o código na caixa (Ctrl+V) e carrega outra vez no botão.');inp.focus();return;}
+    inp.value=txt;
+  }
+  importarLead();
+}
 
 function criarTarefaObjeto(texto,data,hora,fixada){
   const agora=new Date();
